@@ -5,7 +5,8 @@ import { DLD, streamState } from '../api'
 import {
   appState, currentModelDef, computeCost, LAST_OPEN_CONV_KEY, ACTIVE_RESULT_TAB_KEY,
   saveConversationProducts, readConversationProducts, PRODUCT_CACHE_KEY,
-  getConversationProducts, readConvIdMap, writeConvIdMap, currentResultConversationId
+  getConversationProducts, readConvIdMap, writeConvIdMap, currentResultConversationId,
+  writeCachedMessages, hasCachedMessages
 } from './state'
 import {
   chatState, ChatMessage, makeMessage, ensureView, activeView,
@@ -437,6 +438,11 @@ export async function send(regenerate = false, silent = false, silentUi: any = n
     if (!preserveAutoReport) appState.autoReport = null
     const timers = getTimers(ai.id)
     if (timers.sbTimer) { clearTimeout(timers.sbTimer); timers.sbTimer = undefined }
+    // 轮次结束：消息本地落盘（刷新/接口失败后历史可恢复）
+    const persistView = chatState.views[convKey]
+    if (persistView && persistView.messages.length) {
+      writeCachedMessages(persistView.convId || convKey, persistView.messages)
+    }
   }
   const showError = (msg: string) => {
     runEnded = true
@@ -470,7 +476,8 @@ export async function send(regenerate = false, silent = false, silentUi: any = n
     }
     const key = currentAccount.value.id
     const list = sessionsFor(key)
-    const newList = list.filter(s => s.id !== convKey && !s.draft)
+    // 有本地消息缓存的草稿保留（离线创建的历史不丢）
+    const newList = list.filter(s => s.id !== convKey && (!s.draft || hasCachedMessages(s.id)))
     newList.unshift({ id: conversationId, convId: conversationId, appCode, title, tag: appCode, time: '刚刚', timestamp: Date.now() })
     accountState.sessionsByAccount[key] = newList
     convKey = conversationId
