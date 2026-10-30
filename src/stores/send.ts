@@ -28,6 +28,7 @@ import {
 } from '../utils/workflow'
 import { chatflowProductsToOffers } from '../utils/productFields'
 import { renderAiAnswerHtml, extractProductJson, extractSearchKw, setReportHooks } from '../utils/markdown'
+import { extract1688Id, generateMockProductData } from '../utils/ali1688Mock'
 
 // —— 报告渲染钩子注入（避免 markdown ↔ panel 循环依赖） ——
 setReportHooks({
@@ -106,6 +107,50 @@ export async function send(regenerate = false, silent = false, silentUi: any = n
   appState.initialPreviewGuard = false
   const text = chatState.inputText.trim()
   if (!text && chatState.attaches.length === 0) return
+
+  // 1688商品链接/ID自动识别
+  const productId = extract1688Id(text)
+  if (productId) {
+    // 确定目标会话 key
+    let convKey = chatState.activeConvKey
+    if (convKey && String(convKey).startsWith('draft-')) {
+      try {
+        const draftView = chatState.views[convKey]
+        const hasDraftMsgs = !!(draftView && draftView.messages.length)
+        const lastOpen = String(localStorage.getItem(LAST_OPEN_CONV_KEY + ':' + currentAccount.value.id) || '').trim()
+        if (!hasDraftMsgs && draftView && !draftView.explicitNew && lastOpen && !lastOpen.startsWith('draft-')) {
+          convKey = lastOpen
+          chatState.activeConvKey = lastOpen
+          writeConvIdMap(lastOpen, lastOpen)
+        }
+      } catch (e) {}
+    }
+    if (!convKey) {
+      convKey = 'draft-' + Date.now() + '-' + (++chatState.draftSeq)
+      chatState.activeConvKey = convKey
+      ensureView(convKey)
+    }
+
+    const view = ensureView(convKey)
+    view.loaded = true
+
+    // 构建用户消息
+    const userMsg = makeMessage({ role: 'user', content: text })
+    view.messages.push(userMsg)
+
+    // 清空输入
+    chatState.inputText = ''
+
+    // 创建AI消息并直接填充商品数据
+    const ai = makeMessage({ role: 'assistant', content: '', phase: 'done', statusText: '· 已完成' })
+    ai.ali1688Product = generateMockProductData(productId)
+    view.messages.push(ai)
+
+    // 滚动到底部
+    scrollBottomCb()
+    return
+  }
+
   // 确定目标会话 key
   let convKey = chatState.activeConvKey
   // 刷新后直接在"新建对话"草稿里发言：自动续接上次会话（显式"＋新建对话"不受影响）

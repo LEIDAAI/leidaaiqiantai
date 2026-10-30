@@ -9,6 +9,7 @@ import { MSG_ACT_ICONS } from './svg'
 import { currentAccount } from '../stores/account'
 import { send } from '../stores/send'
 import { appState } from '../stores/state'
+import AliProductCard from './AliProductCard.vue'
 
 const props = defineProps<{ msg: ChatMessage; prev?: ChatMessage }>()
 
@@ -164,6 +165,11 @@ function onSuggest(item: { q: string }) {
 
         <!-- 历史报告卡片 -->
         <div v-if="msg.reportCardHtml" v-html="msg.reportCardHtml"></div>
+
+        <!-- 1688商品详情卡片 -->
+        <div v-if="msg.ali1688Product" class="ali1688-wrapper">
+          <AliProductCard :data="msg.ali1688Product" />
+        </div>
 
         <!-- 最终富文本 -->
         <div v-if="msg.phase === 'done' && msg.finalHtml" class="final-answer" v-html="msg.finalHtml"></div>

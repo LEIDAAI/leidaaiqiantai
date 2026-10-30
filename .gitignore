@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 pnpm-lock.yaml
 
 # Build output
@@ -15,6 +14,9 @@ build/
 .env
 .env.*
 !.env.example
+
+# TypeScript build cache
+*.tsbuildinfo
 
 # IDE
 .vscode/

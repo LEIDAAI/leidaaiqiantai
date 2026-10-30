@@ -6,11 +6,22 @@ import ChatPane from './components/ChatPane.vue'
 import RightPanel from './components/RightPanel.vue'
 import Modals from './components/Modals.vue'
 import ExpertPanel from './components/ExpertPanel.vue'
+import TopNavbar from './components/TopNavbar.vue'
 import { chatState } from './stores/chat'
 import { panel, setCollapsed } from './stores/panel'
 import { accountState } from './stores/account'
+import { expertState } from './stores/expert'
 
 const workEl = ref<HTMLElement | null>(null)
+let sidebarObserver: ResizeObserver | null = null
+
+/* 跟随侧栏实际尺寸，包括折叠动画和拖动。 */
+function syncSidebarWidth() {
+  const el = workEl.value?.querySelector<HTMLElement>('.col-left')
+  if (el) {
+    document.documentElement.style.setProperty('--sidebar-w', el.getBoundingClientRect().right + 'px')
+  }
+}
 
 /* ===================== 三栏拖动（原 bindHorizontalDrag） ===================== */
 const MID_MIN = 360
@@ -73,14 +84,22 @@ function onDragUp() {
   dragging.handle.classList.remove('dragging')
   dragging = null
   document.body.style.userSelect = ''
+  syncSidebarWidth()
 }
 onMounted(() => {
   window.addEventListener('mousemove', onDragMove)
   window.addEventListener('mouseup', onDragUp)
+  syncSidebarWidth()
+  const sidebar = workEl.value?.querySelector('.col-left')
+  sidebarObserver = new ResizeObserver(syncSidebarWidth)
+  if (sidebar) sidebarObserver.observe(sidebar)
+  window.addEventListener('resize', syncSidebarWidth)
 })
 onBeforeUnmount(() => {
   window.removeEventListener('mousemove', onDragMove)
   window.removeEventListener('mouseup', onDragUp)
+  window.removeEventListener('resize', syncSidebarWidth)
+  sidebarObserver?.disconnect()
 })
 
 const leftStyle = computed(() => {
@@ -94,23 +113,26 @@ const rightStyle = computed(() => {
 </script>
 
 <template>
-  <div class="work" ref="workEl">
-    <!-- 左：会话列表 -->
-    <Sidebar :style="leftStyle" />
-    <div class="col-left-resizer" @mousedown="onDragStart($event, 'left')"></div>
+  <div class="app-container">
+    <TopNavbar />
+    <div class="work" ref="workEl">
+      <!-- 左：会话列表 -->
+      <Sidebar :style="leftStyle" />
+      <div class="col-left-resizer" @mousedown="onDragStart($event, 'left')"></div>
 
-    <!-- 中：对话内容 -->
-    <ChatPane />
-    <div class="col-mid-resizer"></div>
+      <!-- 中：对话内容 / 专家工作台 -->
+      <ChatPane v-if="!expertState.open" />
+      <ExpertPanel v-else />
+      <div class="col-mid-resizer"></div>
 
-    <!-- 右：预览面板 -->
-    <div class="col-right-resizer" @mousedown="onDragStart($event, 'right')"></div>
-    <RightPanel :style="rightStyle" />
+      <!-- 右：预览面板 -->
+      <div class="col-right-resizer" @mousedown="onDragStart($event, 'right')"></div>
+      <RightPanel :style="rightStyle" />
+    </div>
+
+    <!-- 账号切换顶部加载条 -->
+    <div class="account-loading" :class="{ show: accountState.accountSwitching }"></div>
+
+    <Modals />
   </div>
-
-  <!-- 账号切换顶部加载条 -->
-  <div class="account-loading" :class="{ show: accountState.accountSwitching }"></div>
-
-  <ExpertPanel />
-  <Modals />
 </template>

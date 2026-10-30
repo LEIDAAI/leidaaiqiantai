@@ -15,8 +15,37 @@ import { agentOpening } from './opening'
 import { flashToast, formatRelativeTime } from '../utils/common'
 import { dldLqGet, dldLqSet } from '../utils/workflow'
 import { REPORT_CACHE_KEY, getConversationReports, readConversationReports, getConversationViewMode } from './state'
+import { expertState } from './expert'
 
 export interface MsgAttachment { name: string; size: number; ext: string; type: string; icon: string }
+
+export interface Ali1688ProductData {
+  product: {
+    title: string
+    images: string[]
+    price: string
+    moq: string
+    attributes: Array<{ label: string; value: string }>
+  }
+  reviews: {
+    rating: number
+    count: number
+    keywords: string[]
+    samples: Array<{ user: string; content: string; rating: number; time: string }>
+  }
+  shop: {
+    name: string
+    level: string
+    transactionData: string
+    mainCategory: string
+  }
+  hotSKUs: Array<{
+    spec: string
+    price: string
+    sales: number
+    stock: number
+  }>
+}
 
 export interface ChatMessage {
   id: string
@@ -52,6 +81,7 @@ export interface ChatMessage {
   query: string              // 重新发起用（AI 消息记录对应提问）
   reportCardHtml: string     // 历史恢复的报告卡片
   showAnalyzeDone: null | { kw: string }  // 历史恢复静态"搜索分析完成"卡
+  ali1688Product: null | Ali1688ProductData  // 1688商品分析数据
 }
 
 export interface ConvView {
@@ -108,7 +138,8 @@ export function makeMessage(partial: Partial<ChatMessage> & { role: 'user' | 'as
     hidden: false,
     query: partial.query || '',
     reportCardHtml: '',
-    showAnalyzeDone: null
+    showAnalyzeDone: null,
+    ali1688Product: null
   }) as ChatMessage
 }
 
@@ -121,6 +152,8 @@ export function ensureView(key: string): ConvView {
 
 /* ==================== 新建对话（原 showEmptyConversation） ==================== */
 export function newConversation() {
+  // 切回聊天视图（退出专家工作台）
+  expertState.open = false
   // 并行模式：清理未发言的草稿
   Object.keys(chatState.views).forEach(k => {
     if (k.startsWith('draft-') && !chatState.runningTasks[k] && !chatState.views[k].messages.length) delete chatState.views[k]

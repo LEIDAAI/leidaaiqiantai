@@ -5,6 +5,7 @@ import { chatState } from '../stores/chat'
 import { modals, openInputMenu, closeInputMenu } from '../stores/modals'
 import { flashToast, writeClipboard } from '../utils/common'
 import { send } from '../stores/send'
+import { openExpertPanel } from '../stores/expert'
 
 const props = defineProps<{ running: boolean }>()
 const emit = defineEmits<{ (e: 'send'): void; (e: 'stop'): void }>()
@@ -201,12 +202,36 @@ function removeAttach(idx: number) {
     <!-- 底部工具栏 -->
     <div class="composer-bar">
       <input type="file" ref="fileInput" multiple hidden @change="onFileChange" />
-      <button class="cb-go" :class="{ busy: running, 'stop-state': running }" type="button" :title="running ? '停止当前会话生成' : '开始查询（Enter）'" @click="onClickSend">
-        <span class="btn-label">{{ running ? '停止生成' : '开始查询' }}</span>
-        <span class="go-ic"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 12h13M12.5 5.5L19 12l-6.5 6.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <span class="stop-sq"></span>
-        <span class="spin"></span>
-      </button>
+      <div class="cb-tools">
+        <button class="cb-tool" type="button" title="上传文件" @click="onFilePick">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          上传
+        </button>
+        <button class="cb-tool" type="button" title="电商专家" @click="() => openExpertPanel()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          电商专家
+        </button>
+        <button class="cb-tool" type="button" title="连接器">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          连接器
+        </button>
+        <button class="cb-tool" type="button" title="MCP">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          MCP
+        </button>
+      </div>
+      <div class="cb-right">
+        <span class="cb-coin-info">
+          <svg class="cc-icon-sm" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="#FFC53D" stroke="#E8A200" stroke-width="1.2"/><path d="M4.3 3.8 6 5.9m1.7-2.1L6 5.9m0 0v2.5M4.7 6.5h2.6M4.7 7.9h2.6" stroke="#A66F00" stroke-width=".9" stroke-linecap="round"/></svg>
+          500 积分/千
+        </span>
+        <button class="cb-go" :class="{ busy: running, 'stop-state': running }" type="button" :title="running ? '停止当前会话生成' : '开始查询（Enter）'" @click="onClickSend">
+          <span class="btn-label">{{ running ? '停止生成' : '开始查询' }}</span>
+          <span class="go-ic"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 12h13M12.5 5.5L19 12l-6.5 6.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="stop-sq"></span>
+          <span class="spin"></span>
+        </button>
+      </div>
     </div>
   </div>
 

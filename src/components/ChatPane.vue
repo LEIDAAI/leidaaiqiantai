@@ -12,9 +12,31 @@ import { accountState, currentAccount, isMainAccount, switchAccount, resetToMain
 import { openSettings, openWallet, modals } from '../stores/modals'
 import { resetRightPreview } from '../stores/panel'
 import { PERSON_SVG } from './svg'
+import { expertState, openExpertPanel } from '../stores/expert'
 
 const streamEl = ref<HTMLElement | null>(null)
 const showJumpLatest = ref(false)
+
+const welcomeTab = ref<'expert' | 'skill'>('expert')
+const welcomePlatform = ref('全部')
+const welcomeScene = ref('推荐')
+const welcomePlatforms = ['全部', '1688', 'Ozon', '亚马逊', 'Temu']
+const welcomeScenes = ['推荐', '选品与开发', '产品视觉', '产品运营', '营销广告', '数据分析', '选品/热点', '合规检测']
+
+const welcomeExperts = [
+  { platform: '1688', name: '1688选品专家', desc: '货源洞察 · 供应链分析', icon: '1688' },
+  { platform: 'Ozon', name: 'Ozon选品专家', desc: '市场需求 · 类目竞争', icon: 'O' },
+  { platform: '亚马逊', name: '亚马逊选品专家', desc: '市场机会 · 竞品分析', icon: 'A' },
+  { platform: 'Temu', name: 'Temu选品专家', desc: '热销榜 · 动销分析', icon: 'T' }
+]
+
+// Welcome skills: filtered from state.skills (official only)
+const welcomeSkills = computed(() =>
+  expertState.skills.filter(s => s.source === 'official').filter(s =>
+    (welcomePlatform.value === '全部' || s.tags.includes(welcomePlatform.value)) &&
+    (welcomeScene.value === '推荐' || s.scenario === welcomeScene.value)
+  )
+)
 
 const view = activeView
 
@@ -210,11 +232,49 @@ void selectConversation
           <!-- 开场白空态 -->
           <div v-if="!view.messages.length" class="empty-state">
             <div class="empty-inner">
-              <div class="empty-mark">AI</div>
-              <div class="empty-title">{{ agentOpening.title }}</div>
-              <div v-if="agentOpening.desc" class="empty-desc">{{ agentOpening.desc }}</div>
-              <div v-if="agentOpening.prompts.length" class="empty-prompts">
-                <button v-for="q in agentOpening.prompts" :key="q" @click="onSuggestion(q)">{{ q }}</button>
+              <div class="welcome-header">
+                <div class="welcome-title">雷达AI · 跨境电商选品 Agent</div>
+                <div class="welcome-sub">懂数据、会选品、深调研、精分析</div>
+              </div>
+              <div class="welcome-tabs">
+                <button class="welcome-tab" :class="{ active: welcomeTab === 'expert' }" @click="welcomeTab = 'expert'">专家</button>
+                <button class="welcome-tab" :class="{ active: welcomeTab === 'skill' }" @click="welcomeTab = 'skill'">技能</button>
+              </div>
+              <div v-if="welcomeTab === 'expert'" class="welcome-experts">
+                <div v-for="exp in welcomeExperts" :key="exp.platform" class="welcome-card" :class="'wc-' + exp.platform">
+                  <div class="wc-icon" :class="'wci-' + exp.platform">{{ exp.icon }}</div>
+                  <div class="wc-name">{{ exp.name }}</div>
+                  <div class="wc-desc">{{ exp.desc }}</div>
+                  <div class="wc-actions">
+                    <button class="wc-btn wc-btn-outline" @click="() => openExpertPanel()">查看详情</button>
+                    <button class="wc-btn wc-btn-primary" @click="() => openExpertPanel()">开始使用</button>
+                  </div>
+                </div>
+              </div>
+              <div v-else>
+                <!-- 技能筛选行 -->
+                <div class="welcome-filters">
+                  <div class="welcome-filter-row">
+                    <span class="welcome-filter-label">平台</span>
+                    <button v-for="p in welcomePlatforms" :key="p" class="welcome-filter-btn" :class="{ active: welcomePlatform === p }" @click="welcomePlatform = p">{{ p }}</button>
+                  </div>
+                  <div class="welcome-filter-row">
+                    <span class="welcome-filter-label">场景</span>
+                    <button v-for="s in welcomeScenes" :key="s" class="welcome-filter-btn" :class="{ active: welcomeScene === s }" @click="welcomeScene = s">{{ s }}</button>
+                  </div>
+                </div>
+                <div class="welcome-experts">
+                  <div v-for="skill in welcomeSkills" :key="skill.name" class="welcome-card wc-skill">
+                    <div class="wc-icon wci-skill">{{ skill.name[0] }}</div>
+                    <div class="wc-name">{{ skill.name }}</div>
+                    <div class="wc-desc">{{ skill.desc }}</div>
+                    <div class="wc-actions">
+                      <button class="wc-btn wc-btn-outline" @click="() => openExpertPanel()">查看详情</button>
+                      <button class="wc-btn wc-btn-primary" @click="() => openExpertPanel()">开始使用</button>
+                    </div>
+                  </div>
+                  <div v-if="!welcomeSkills.length" class="welcome-empty">暂无符合条件的技能，请调整筛选条件。</div>
+                </div>
               </div>
             </div>
           </div>
