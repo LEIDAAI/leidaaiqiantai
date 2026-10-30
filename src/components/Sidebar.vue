@@ -87,7 +87,7 @@ function onToggleLeft() {
 </script>
 
 <template>
-  <aside class="col-left" :class="{ collapsed: chatState.leftCollapsed }">
+  <aside class="col-left" :class="{ collapsed: chatState.leftCollapsed, 'mobile-open': chatState.mobileSidebar }">
     <div class="left-head">
       <button class="new-btn" @click="navigatePage('chat'); newConversation()">＋ 新建对话</button>
       <button class="expert-btn" :class="{ selected: modals.page === 'experts' }" @click="navigatePage('experts')">电商专家</button>
