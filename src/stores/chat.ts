@@ -6,7 +6,8 @@ import { DLD } from '../api'
 import {
   appState, RunningTask, SessionItem, LAST_OPEN_CONV_KEY, PRODUCT_CACHE_KEY, CONV_ID_MAP_KEY,
   readConversationProducts, readConvIdMap, writeConvIdMap, saveConversationProducts,
-  getConversationProducts
+  getConversationProducts, readCachedMessages, writeCachedMessages, deleteCachedMessages,
+  hasCachedMessages, renameCachedMessages
 } from './state'
 import {
   accountState, currentAccount, sessionsFor, notifyConversationsLoaded
@@ -159,19 +160,21 @@ export function ensureView(key: string): ConvView {
 export function newConversation() {
   // 切回聊天视图（退出专家工作台）
   expertState.open = false
-  // 并行模式：清理未发言的草稿
+  // 并行模式：清理未发言的草稿（有消息或有本地缓存的草稿一律保留，防止历史丢失）
   Object.keys(chatState.views).forEach(k => {
-    if (k.startsWith('draft-') && !chatState.runningTasks[k] && !chatState.views[k].messages.length) delete chatState.views[k]
+    if (k.startsWith('draft-') && !chatState.runningTasks[k] && !chatState.views[k].messages.length && !hasCachedMessages(k)) delete chatState.views[k]
   })
   const key = 'draft-' + Date.now() + '-' + (++chatState.draftSeq)
   chatState.activeConvKey = key
   chatState.mobileSidebar = false
   chatState.selectedExpert = null
   chatState.selectedSkill = null
-  // 左栏清理旧草稿条目，保留一个临时列表项
+  // 左栏清理旧草稿条目：仅删除"无消息且无本地缓存"的草稿，有内容的保留
   const sessions = sessionsFor()
   for (let i = sessions.length - 1; i >= 0; i--) {
-    if (sessions[i].draft && sessions[i].id !== key) sessions.splice(i, 1)
+    const s = sessions[i]
+    const hasMsg = !!(chatState.views[s.id] && chatState.views[s.id].messages.length) || hasCachedMessages(s.id)
+    if (s.draft && s.id !== key && !hasMsg) sessions.splice(i, 1)
   }
   sessions.unshift({ id: key, convId: '', appCode: '1', title: '新建对话', tag: 'AI', time: '刚刚', timestamp: Date.now(), draft: true })
   const view = ensureView(key)
@@ -204,7 +207,13 @@ export function selectConversation(id: string, options: { restorePreview?: boole
     loadRealMessages(target, view)
     return
   }
-  // 无 convId 的草稿：开场白空态
+  // 无 convId 的草稿：优先恢复本地缓存消息（离线/接口失败场景），否则开场白空态
+  const cachedDraft = readCachedMessages(id)
+  if (cachedDraft.length) {
+    view.messages = cachedDraft
+    view.loaded = true
+    return
+  }
   view.loaded = true
 }
 
@@ -250,6 +259,14 @@ export async function loadRealMessages(target: SessionItem, view: ConvView) {
       localStorage.setItem('dld_conv_rounds_v1', JSON.stringify(saved))
     } catch (e) {}
     if (!messages.length) {
+      // 服务端为空：优先回退本地缓存消息，避免历史"看似被删"
+      const cachedEmpty = readCachedMessages(target.convId || target.id)
+      if (cachedEmpty.length) {
+        view.messages = cachedEmpty
+        view.loaded = true
+        view.loading = false
+        return
+      }
       view.messages = []
       view.loaded = true
       view.loading = false
@@ -261,9 +278,19 @@ export async function loadRealMessages(target: SessionItem, view: ConvView) {
     view.messages = built
     view.loading = false
     view.loaded = true
+    // 历史消息落盘：刷新/接口失败后仍可恢复
+    writeCachedMessages(target.convId || target.id, built)
     restoreHistoryPanel(target, messages)
   } catch (e) {
     console.warn('[DLD] conversationMessages 失败：', (e as Error).message)
+    // 接口失败：回退本地缓存消息兜底
+    const cached = readCachedMessages(target.convId || target.id)
+    if (cached.length) {
+      view.messages = cached
+      view.loaded = true
+      view.loading = false
+      return
+    }
     view.loading = false
     view.loaded = false
     view.messages = [makeMessage({ role: 'assistant', content: '', errorText: (e as Error).message, phase: 'error', statusText: '· 失败' })]
@@ -341,6 +368,8 @@ export async function deleteConversation(target: SessionItem): Promise<boolean> 
     Object.keys(idMap).forEach(key => { if (key === target.id || idMap[key] === target.convId) delete idMap[key] })
     localStorage.setItem(CONV_ID_MAP_KEY, JSON.stringify(idMap))
   } catch (e) { console.warn('[DLD] 删除会话缓存清理失败：', (e as Error).message) }
+  // 同步清理本地持久化的消息缓存
+  deleteCachedMessages(target.id, target.convId)
   delete chatState.views[target.id]
   const sessions = sessionsFor()
   const idx = sessions.indexOf(target)
@@ -421,8 +450,15 @@ export function onAccountSwitched() {
   if (target) selectConversation(target.id, { restorePreview: true })
 }
 
-// 首次进入：落在无内容的工作台首页（hero），历史会话从左栏进入
+// 首次进入：有历史会话时恢复上次打开的会话（刷新 / 重开浏览器后历史不丢），
+// 无历史才落在无内容的工作台首页（hero）
 export function initialSelect() {
+  const sessions = sessionsFor()
+  if (!sessions.length) { newConversation(); return }
+  let lastId = ''
+  try { lastId = localStorage.getItem(LAST_OPEN_CONV_KEY + ':' + accountState.currentAccountId) || '' } catch (e) {}
+  const target = (lastId && sessions.find(s => String(s.id) === String(lastId) || String(s.convId || '') === String(lastId))) || sessions[0]
+  if (target) { selectConversation(target.id, { restorePreview: true }); return }
   newConversation()
 }
 
@@ -452,7 +488,8 @@ export async function syncOfficialConversationTitle(conversationId: string) {
     } else {
       localList.unshift({ id: conversationId, convId: conversationId, appCode: remote.appCode, title: officialTitle, tag: String(remote.appCode || 'chat').slice(0, 8), time: remote.lastMessageAt ? formatRelativeTime(remote.lastMessageAt) : '刚刚', timestamp: remote.lastMessageAt ? new Date(remote.lastMessageAt).getTime() : Date.now() })
     }
-    accountState.sessionsByAccount[key] = localList.filter(item => !item.draft || item.id === conversationId)
+    // 有本地消息缓存的草稿保留（离线创建的历史不丢）
+    accountState.sessionsByAccount[key] = localList.filter(item => !item.draft || item.id === conversationId || hasCachedMessages(item.id))
     notifyConversationsLoaded(accountState.sessionsByAccount[key], true)
     if (chatState.activeConvKey === conversationId) chatState.chatTitle = officialTitle
   } catch (e) {
@@ -483,6 +520,8 @@ export function migrateDraftCaches(fromKey: string, toKey: string) {
   } catch (e) {}
   if (dldLqGet(fromKey)) { dldLqSet(toKey, dldLqGet(fromKey)); dldLqSet(fromKey, '') }
   writeConvIdMap(fromKey, toKey)
+  // 消息缓存同步迁移（draft-xxx → conversationId）
+  renameCachedMessages(fromKey, toKey)
 }
 
 export { getConversationViewMode, flashToast, agentOpening }
