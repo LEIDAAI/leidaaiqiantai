@@ -1,8 +1,9 @@
 <script setup lang="ts">
 /* Composer：附件 chips + 自适应输入框 + 发送/停止同位按钮 + 右键菜单 */
-import { ref, watch, nextTick, computed } from 'vue'
+import { ref, watch, nextTick, computed, onMounted, onBeforeUnmount } from 'vue'
 import { chatState } from '../stores/chat'
-import { modals, openInputMenu, closeInputMenu, navigatePage } from '../stores/modals'
+import { modals, openInputMenu, closeInputMenu } from '../stores/modals'
+import { expertState, type ExpertItem, type SkillItem } from '../stores/expert'
 import { flashToast, writeClipboard } from '../utils/common'
 import { send } from '../stores/send'
 
@@ -170,10 +171,65 @@ function formatSize(b: number) {
 function removeAttach(idx: number) {
   chatState.attaches.splice(idx, 1)
 }
+
+/* —— 电商专家 / 技能 浮窗选择（青虎AI 式：按钮上方弹出面板，点击外部/Esc 关闭） —— */
+const composerEl = ref<HTMLElement | null>(null)
+const pop = ref<'expert' | 'skill' | null>(null)
+const popSearch = ref('')
+const expertSearchEl = ref<HTMLInputElement | null>(null)
+const skillSearchEl = ref<HTMLInputElement | null>(null)
+const PLATFORM_COLOR: Record<string, string> = { '1688': '#ff6a00', 'Ozon': '#005bff', '亚马逊': '#ff9900', 'Temu': '#fb7701' }
+const PLATFORM_INITIAL: Record<string, string> = { '1688': '1688', 'Ozon': 'O', '亚马逊': 'A', 'Temu': 'T' }
+
+function togglePop(kind: 'expert' | 'skill') {
+  pop.value = pop.value === kind ? null : kind
+  popSearch.value = ''
+  if (pop.value) nextTick(() => { (pop.value === 'expert' ? expertSearchEl : skillSearchEl).value?.focus() })
+}
+function closePop() { pop.value = null; popSearch.value = '' }
+const popExperts = computed(() => {
+  const q = popSearch.value.trim().toLowerCase()
+  const list = expertState.experts.filter(e => e.source === 'official')
+  if (!q) return list
+  return list.filter(e => (e.name + e.desc + e.platform + e.category + e.tags.join()).toLowerCase().includes(q))
+})
+const popSkills = computed(() => {
+  const q = popSearch.value.trim().toLowerCase()
+  const list = expertState.skills.filter(s => s.source === 'official')
+  if (!q) return list
+  return list.filter(s => (s.name + s.desc + (s.scenario || '') + s.tags.join()).toLowerCase().includes(q))
+})
+function pickExpert(e: ExpertItem) {
+  chatState.selectedExpert = chatState.selectedExpert?.id === e.id ? null : e
+  if (chatState.selectedExpert) flashToast('已选择专家「' + e.name + '」，随消息一起发送')
+  closePop()
+}
+function pickSkill(s: SkillItem) {
+  chatState.selectedSkill = chatState.selectedSkill?.id === s.id ? null : s
+  if (chatState.selectedSkill) flashToast('已选择技能「' + s.name + '」，随消息一起发送')
+  closePop()
+}
+function onDocMouseDown(e: MouseEvent) {
+  if (!pop.value) return
+  if (composerEl.value && composerEl.value.contains(e.target as Node)) return
+  closePop()
+}
+function onDocKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && pop.value) closePop()
+}
+onMounted(() => {
+  document.addEventListener('mousedown', onDocMouseDown)
+  document.addEventListener('keydown', onDocKeydown)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', onDocMouseDown)
+  document.removeEventListener('keydown', onDocKeydown)
+})
+
 </script>
 
 <template>
-  <div class="composer" id="composer" @drop="onDrop" @dragenter="onDragenter" @dragover.prevent="onDragenter" @dragleave="onDragleave">
+  <div ref="composerEl" class="composer" id="composer" @drop="onDrop" @dragenter="onDragenter" @dragover.prevent="onDragenter" @dragleave="onDragleave">
     <!-- 已选附件 -->
     <div class="attach-row" :class="{ show: chatState.attaches.length > 0 }">
       <div class="attach-list" ref="attachListEl" @scroll="updateArrows">
@@ -190,6 +246,20 @@ function removeAttach(idx: number) {
       <button class="ar-nav ar-right" :class="{ show: arRightShow }" type="button" title="向右滑动" @click="scrollAttach(1)">›</button>
     </div>
 
+    <!-- 已选专家 / 技能 chips（可单独移除） -->
+    <div v-if="chatState.selectedExpert || chatState.selectedSkill" class="sel-row">
+      <span v-if="chatState.selectedExpert" class="sel-chip expert">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        电商专家 · {{ chatState.selectedExpert.name }}
+        <button class="sel-rm" type="button" title="移除专家" @click="chatState.selectedExpert = null">✕</button>
+      </span>
+      <span v-if="chatState.selectedSkill" class="sel-chip skill">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+        技能 · {{ chatState.selectedSkill.name }}
+        <button class="sel-rm" type="button" title="移除技能" @click="chatState.selectedSkill = null">✕</button>
+      </span>
+    </div>
+
     <textarea
       ref="inputEl"
       v-model="chatState.inputText"
@@ -198,26 +268,74 @@ function removeAttach(idx: number) {
       @contextmenu="onContext"
     ></textarea>
 
-    <!-- 底部工具栏 -->
+    <!-- 底部工具栏：仅 上传 / 电商专家 / 技能（浮窗选择） -->
     <div class="composer-bar">
       <input type="file" ref="fileInput" multiple hidden @change="onFileChange" />
       <div class="cb-tools">
         <button class="cb-tool" type="button" title="上传文件" @click="onFilePick">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-          上传
+          上传文件
         </button>
-        <button class="cb-tool" type="button" title="电商专家" @click="navigatePage('experts')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          电商专家
-        </button>
-        <button class="cb-tool" type="button" title="连接器">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          连接器
-        </button>
-        <button class="cb-tool" type="button" title="MCP">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-          MCP
-        </button>
+        <div class="cb-pop-wrap">
+          <button class="cb-tool" :class="{ open: pop === 'expert', active: !!chatState.selectedExpert }" type="button" title="选择电商专家" @click="togglePop('expert')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            电商专家
+            <svg class="cb-caret" width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3.5 5 6.5 8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <transition name="pop">
+            <div v-if="pop === 'expert'" class="cb-pop" @mousedown.stop>
+              <div class="cb-pop-head">选择电商专家<small>选中后随本条消息一起发送</small></div>
+              <div class="cb-pop-search">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <input ref="expertSearchEl" v-model="popSearch" type="text" placeholder="搜索专家" />
+              </div>
+              <div class="cb-pop-list">
+                <button v-for="e in popExperts" :key="e.id" class="cb-pop-item" :class="{ on: chatState.selectedExpert?.id === e.id }" type="button" @click="pickExpert(e)">
+                  <span class="bp-ava" :style="{ background: PLATFORM_COLOR[e.platform] || '#00A83E' }">{{ (PLATFORM_INITIAL[e.platform] || 'E') }}</span>
+                  <span class="bp-meta">
+                    <b>{{ e.name }}</b>
+                    <i>{{ e.platform }} · {{ e.desc }}</i>
+                  </span>
+                  <span class="bp-check">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                  </span>
+                </button>
+                <div v-if="!popExperts.length" class="cb-pop-empty">未找到匹配的专家</div>
+              </div>
+            </div>
+          </transition>
+        </div>
+        <div class="cb-pop-wrap skill">
+          <button class="cb-tool" :class="{ open: pop === 'skill', active: !!chatState.selectedSkill }" type="button" title="选择技能" @click="togglePop('skill')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+            技能
+            <svg class="cb-caret" width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3.5 5 6.5 8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <transition name="pop">
+            <div v-if="pop === 'skill'" class="cb-pop" @mousedown.stop>
+              <div class="cb-pop-head">选择技能<small>选中后随本条消息一起发送</small></div>
+              <div class="cb-pop-search">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <input ref="skillSearchEl" v-model="popSearch" type="text" placeholder="搜索技能" />
+              </div>
+              <div class="cb-pop-list">
+                <button v-for="s in popSkills" :key="s.id" class="cb-pop-item" :class="{ on: chatState.selectedSkill?.id === s.id }" type="button" @click="pickSkill(s)">
+                  <span class="bp-ava skill">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+                  </span>
+                  <span class="bp-meta">
+                    <b>{{ s.name }}</b>
+                    <i>{{ s.scenario || '通用' }} · {{ s.desc }}</i>
+                  </span>
+                  <span class="bp-check">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                  </span>
+                </button>
+                <div v-if="!popSkills.length" class="cb-pop-empty">未找到匹配的技能</div>
+              </div>
+            </div>
+          </transition>
+        </div>
       </div>
       <div class="cb-right">
         <span class="cb-coin-info">
