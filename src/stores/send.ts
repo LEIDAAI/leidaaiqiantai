@@ -200,6 +200,10 @@ export async function send(regenerate = false, silent = false, silentUi: any = n
     const lastQ = dldLqGet(convKey)
     if (lastQ) outgoingText = lastQ + '，' + text
   }
+  // Composer 指定的电商专家/技能随消息上下文一并发送
+  const expertTag = chatState.selectedExpert ? `（指定专家：${chatState.selectedExpert.name}）` : ''
+  const skillTag = chatState.selectedSkill ? `（指定技能：${chatState.selectedSkill.name}）` : ''
+  if (expertTag || skillTag) outgoingText = expertTag + skillTag + outgoingText
   view.loaded = true
 
   // 构建用户消息
@@ -212,6 +216,8 @@ export async function send(regenerate = false, silent = false, silentUi: any = n
   const attachCount = chatState.attaches.length
   chatState.attaches = []
   chatState.inputText = ''
+  chatState.selectedExpert = null
+  chatState.selectedSkill = null
 
   // 静默补检索复用首轮报告气泡
   let ai: ChatMessage
