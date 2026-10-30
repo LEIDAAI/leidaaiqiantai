@@ -152,6 +152,8 @@ const chatHero = computed(() => modals.page === 'chat' && (!activeView.value || 
       <!-- 左：会话列表（首页态隐藏） -->
       <Sidebar v-if="modals.page === 'chat' && !chatHero" :style="leftStyle" />
       <div v-if="modals.page === 'chat' && !chatHero" class="col-left-resizer" @mousedown="onDragStart($event, 'left')"></div>
+      <!-- 移动端：会话抽屉打开时的遮罩 -->
+      <button v-if="modals.page === 'chat' && !chatHero && chatState.mobileSidebar" class="mobile-mask" aria-label="关闭会话列表" @click="chatState.mobileSidebar = false"></button>
 
       <!-- 中：对话内容 / 专家·技能发现页 -->
       <ChatPane v-if="modals.page === 'chat'" />
