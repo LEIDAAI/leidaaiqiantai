@@ -15,7 +15,7 @@ import { agentOpening } from './opening'
 import { flashToast, formatRelativeTime } from '../utils/common'
 import { dldLqGet, dldLqSet } from '../utils/workflow'
 import { REPORT_CACHE_KEY, getConversationReports, readConversationReports, getConversationViewMode } from './state'
-import { expertState } from './expert'
+import { expertState, type ExpertItem, type SkillItem } from './expert'
 
 export interface MsgAttachment { name: string; size: number; ext: string; type: string; icon: string }
 
@@ -103,6 +103,11 @@ export const chatState = reactive({
   searchQuery: '',
   inputText: '',
   attaches: [] as Array<MsgAttachment & { file: File }>,
+  /* Composer 浮窗选择的电商专家 / 技能（随消息发送后清空） */
+  selectedExpert: null as ExpertItem | null,
+  selectedSkill: null as SkillItem | null,
+  /* 移动端会话列表抽屉开关 */
+  mobileSidebar: false,
   leftCollapsed: (() => { try { return localStorage.getItem('dld_left_collapsed') === '1' } catch (e) { return false } })(),
   leftWidth: (() => { const n = Number(localStorage.getItem('dld_left_width')); return n && !chatStateLeftGuard() ? n : 0 })(),
   rightWidth: (() => { const n = Number(localStorage.getItem('dld_right_width')); return n || 0 })()
@@ -160,6 +165,9 @@ export function newConversation() {
   })
   const key = 'draft-' + Date.now() + '-' + (++chatState.draftSeq)
   chatState.activeConvKey = key
+  chatState.mobileSidebar = false
+  chatState.selectedExpert = null
+  chatState.selectedSkill = null
   // 左栏清理旧草稿条目，保留一个临时列表项
   const sessions = sessionsFor()
   for (let i = sessions.length - 1; i >= 0; i--) {
@@ -181,6 +189,7 @@ export function selectConversation(id: string, options: { restorePreview?: boole
     // 切换到另一条会话时，右侧结果与新会话重新隔离（由 panel.resetRightPreview 承担，App 层监听处理）
   }
   chatState.activeConvKey = id
+  chatState.mobileSidebar = false
   try { localStorage.setItem(LAST_OPEN_CONV_KEY + ':' + currentAccount.value.id, String(id)) } catch (e) {}
   const sessions = sessionsFor()
   const target = sessions.find(s => s.id === id)
