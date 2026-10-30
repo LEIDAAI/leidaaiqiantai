@@ -1,63 +1,60 @@
 <script setup lang="ts">
-/* 中栏：头部（标题/账号/积分）+ 消息流 + Composer */
+/* 中栏：hero 首页（空态）或对话详情（头部+消息流+Composer） */
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import MessageBubble from './MessageBubble.vue'
 import Composer from './Composer.vue'
 import {
-  chatState, activeView, isRunning, stopTask, selectConversation
+  chatState, activeView, isRunning, stopTask, newConversation
 } from '../stores/chat'
-import { agentOpening } from '../stores/opening'
 import { appState } from '../stores/state'
 import { accountState, currentAccount, isMainAccount, switchAccount, resetToMain, getSwitchableAccounts } from '../stores/account'
-import { openSettings, openWallet, modals } from '../stores/modals'
+import { openSettings, openWallet, modals, openFeedback, openPricing, openAccount } from '../stores/modals'
 import { resetRightPreview } from '../stores/panel'
 import { PERSON_SVG } from './svg'
-import { expertState, openExpertPanel } from '../stores/expert'
+import { expertState, type ExpertItem, type SkillItem } from '../stores/expert'
 
 const streamEl = ref<HTMLElement | null>(null)
 const showJumpLatest = ref(false)
-
-const welcomeTab = ref<'expert' | 'skill'>('expert')
-const welcomePlatform = ref('全部')
-const welcomeScene = ref('推荐')
-const welcomePlatforms = ['全部', '1688', 'Ozon', '亚马逊', 'Temu']
-const welcomeScenes = ['推荐', '选品与开发', '产品视觉', '产品运营', '营销广告', '数据分析', '选品/热点', '合规检测']
-
-const welcomeExperts = [
-  { platform: '1688', name: '1688选品专家', desc: '货源洞察 · 供应链分析', icon: '1688' },
-  { platform: 'Ozon', name: 'Ozon选品专家', desc: '市场需求 · 类目竞争', icon: 'O' },
-  { platform: '亚马逊', name: '亚马逊选品专家', desc: '市场机会 · 竞品分析', icon: 'A' },
-  { platform: 'Temu', name: 'Temu选品专家', desc: '热销榜 · 动销分析', icon: 'T' }
-]
-
-// Welcome skills: filtered from state.skills (official only)
-const welcomeSkills = computed(() =>
-  expertState.skills.filter(s => s.source === 'official').filter(s =>
-    (welcomePlatform.value === '全部' || s.tags.includes(welcomePlatform.value)) &&
-    (welcomeScene.value === '推荐' || s.scenario === welcomeScene.value)
-  )
-)
-
 const view = activeView
 
-// 切换会话时重置右侧预览 + 滚动到底
+/* —— hero 首页 —— */
+const chatHero = computed(() => !view.value || view.value.messages.length === 0)
+const homeTab = ref<'expert' | 'skill'>('expert')
+const homeChip = ref('推荐')
+const expertChips = ['全部', '推荐', '选品上架', '店铺运营', '商品管理', '评论分析']
+const skillChips = ['全部', '推荐', '选品与开发', '产品运营', '数据分析', '选品/热点']
+const homeExperts = computed(() => {
+  const list = expertState.experts.filter(e => e.source === 'official')
+  if (homeChip.value === '全部') return list.slice(0, 9)
+  if (homeChip.value === '推荐') return list.slice(0, 6)
+  return list.filter(e => e.category === homeChip.value || e.tags.includes(homeChip.value)).slice(0, 9)
+})
+const homeSkills = computed(() => {
+  const list = expertState.skills.filter(s => s.source === 'official')
+  if (homeChip.value === '全部') return list.slice(0, 9)
+  if (homeChip.value === '推荐') return list.slice(0, 6)
+  return list.filter(s => s.scenario === homeChip.value || s.tags.includes(homeChip.value)).slice(0, 9)
+})
+const caseItem = ref<ExpertItem | SkillItem | null>(null)
+const isCaseSkill = computed(() => !!caseItem.value && 'version' in caseItem.value)
+function useExpert(e: ExpertItem) { chatState.inputText = e.prompts?.[0] || e.desc }
+function useSkill(s: SkillItem) { chatState.inputText = s.instructions || s.desc }
+const platformColor: Record<string, string> = { '1688': '#ff6a00', 'Ozon': '#005bff', '亚马逊': '#ff9900', 'Temu': '#fb7701' }
+const platformInitial: Record<string, string> = { '1688': '1688', 'Ozon': 'O', '亚马逊': 'A', 'Temu': 'T' }
+
+/* —— 会话滚动 —— */
 watch(() => chatState.activeConvKey, (nv, ov) => {
   if (ov && nv && ov !== nv) {
     try { resetRightPreview() } catch (e) {}
   }
   nextTick(() => scrollToBottom(false))
 })
-
-// 消息数量/流式内容变化时智能跟随
 watch(() => {
   const v = view.value
   if (!v) return 0
   const last = v.messages[v.messages.length - 1]
   return v.messages.length + (last ? (last.liveText.length + (last.finalHtml ? 1 : 0) + (last.phase === 'done' ? 1 : 0)) : 0)
-}, () => {
-  followBottom()
-})
-
+}, () => { followBottom() })
 function scrollToBottom(smooth = true) {
   const el = streamEl.value
   if (!el) return
@@ -77,8 +74,6 @@ function onStreamScroll() {
   showJumpLatest.value = dist > 120
 }
 onMounted(() => nextTick(() => scrollToBottom(false)))
-
-// 注入滚动回调给 send 链路
 import { send, setScrollBottom as registerScroll } from '../stores/send'
 registerScroll(() => followBottom())
 
@@ -87,7 +82,6 @@ const popoverOpen = ref(false)
 const accountChipEl = ref<HTMLElement | null>(null)
 const popoverEl = ref<HTMLElement | null>(null)
 const popStyle = ref({ left: '0px', top: '0px' })
-
 function openAccountPopover() {
   const r = accountChipEl.value?.getBoundingClientRect()
   const popW = 264
@@ -98,17 +92,9 @@ function openAccountPopover() {
   popStyle.value = { left: left + 'px', top: top + 'px' }
   popoverOpen.value = true
 }
-function togglePopover(e: Event) {
-  e.stopPropagation()
-  popoverOpen.value = !popoverOpen.value
-}
-function closePopover() {
-  popoverOpen.value = false
-}
-function onSwitchAccount(id: string) {
-  closePopover()
-  switchAccount(id)
-}
+function togglePopover(e: Event) { e.stopPropagation(); popoverOpen.value = !popoverOpen.value }
+function closePopover() { popoverOpen.value = false }
+function onSwitchAccount(id: string) { closePopover(); switchAccount(id) }
 function onResetMain() {
   const switched = resetToMain()
   if (!switched) openAccountPopover()
@@ -123,13 +109,9 @@ function onDocClick(e: MouseEvent) {
   if (popoverOpen.value && popoverEl.value && !popoverEl.value.contains(e.target as Node) && accountChipEl.value && !accountChipEl.value.contains(e.target as Node)) {
     closePopover()
   }
-  const t = e.target as HTMLElement
-  if (modals.convMenu && !t.closest('.conv-menu') && !t.closest('.conv-trigger')) modals.convMenu = false
-  if (modals.inputMenu && !t.closest('.input-menu')) modals.inputMenu = false
 }
 onMounted(() => document.addEventListener('click', onDocClick))
 onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
-
 const switchableList = computed(() => getSwitchableAccounts().filter(a => a.id !== currentAccount.value.id))
 const accountNameShort = computed(() => {
   const n = currentAccount.value.name
@@ -137,7 +119,7 @@ const accountNameShort = computed(() => {
 })
 const coinText = computed(() => appState.totalCoins.toLocaleString())
 
-/* —— 发送/停止同位按钮 —— */
+/* —— 发送/停止 —— */
 const running = computed(() => isRunning.value)
 function onSendClick() {
   if (chatState.activeConvKey && chatState.runningTasks[chatState.activeConvKey]) {
@@ -146,29 +128,141 @@ function onSendClick() {
   }
   send()
 }
-function onSuggestion(q: string) {
-  chatState.inputText = q
-  send()
-}
-function onInputKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    if (chatState.activeConvKey && chatState.runningTasks[chatState.activeConvKey]) {
-      // 由 Composer 处理
-    }
-  }
-}
-void onInputKeydown
-void selectConversation
 </script>
 
 <template>
-  <section class="col-mid">
-    <div class="chat-card">
+  <section class="col-mid" :class="{ 'is-hero': chatHero }">
+    <!-- ============ hero 首页 ============ -->
+    <div v-if="chatHero" class="chat-card hero-card">
+      <div class="home-top">
+        <div class="home-search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="text" placeholder="搜索专家、技能" />
+        </div>
+        <button class="home-icon-btn" title="设置" @click="openSettings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+        <button class="home-plan-btn" @click="openPricing">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          套餐购买
+        </button>
+        <button class="home-avatar" title="个人中心" @click="openAccount">
+          <span v-html="PERSON_SVG"></span>
+        </button>
+      </div>
+
+      <div class="home-scroll">
+        <div class="home-hero">
+          <div class="home-hero-head">
+            <h1 class="home-title">你好，今天想聊点什么？</h1>
+            <div class="home-mode">
+              <button :class="{ on: homeTab === 'expert' }" @click="homeTab = 'expert'; homeChip = '推荐'">专家</button>
+              <button :class="{ on: homeTab === 'skill' }" @click="homeTab = 'skill'; homeChip = '推荐'">技能</button>
+            </div>
+          </div>
+          <div class="home-sec">
+            <div class="home-tabs">
+              <button v-for="c in (homeTab === 'expert' ? expertChips : skillChips)" :key="c" class="home-chip" :class="{ on: homeChip === c }" @click="homeChip = c">{{ c }}</button>
+            </div>
+            <div class="home-grid">
+              <template v-if="homeTab === 'expert'">
+                <div v-for="e in homeExperts" :key="e.id" class="home-card">
+                  <div class="hc-head">
+                    <span class="hc-ava" :style="{ background: platformColor[e.platform] || '#00A83E' }">{{ platformInitial[e.platform] || 'E' }}</span>
+                    <div class="hc-meta">
+                      <div class="hc-name">{{ e.name }}</div>
+                      <div class="hc-tags">{{ e.platform }} · {{ e.category }}</div>
+                    </div>
+                  </div>
+                  <div class="hc-desc">{{ e.desc }}</div>
+                  <div class="hc-foot">
+                    <button class="hc-btn ghost" @click="caseItem = e">看案例</button>
+                    <button class="hc-btn main" @click="useExpert(e)">立即使用</button>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <div v-for="s in homeSkills" :key="s.id" class="home-card skill">
+                  <div class="hc-head">
+                    <span class="hc-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+                    </span>
+                    <div class="hc-meta">
+                      <div class="hc-name">{{ s.name }}</div>
+                      <div class="hc-tags">{{ s.scenario || '通用' }} · v{{ s.version }}</div>
+                    </div>
+                  </div>
+                  <div class="hc-desc">{{ s.desc }}</div>
+                  <div class="hc-foot">
+                    <button class="hc-btn main full" @click="useSkill(s)">前往使用 →</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-bottom">
+        <Composer :running="false" @send="onSendClick" @stop="() => {}" />
+        <div class="home-disclaimer">内容由AI大模型生成，请仔细甄别</div>
+      </div>
+
+      <div class="home-floats">
+        <button class="hf-btn" data-tip="新建对话" @click="newConversation()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button class="hf-btn" data-tip="用户反馈" @click="openFeedback()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
+      </div>
+
+      <!-- 案例弹窗 -->
+      <div v-if="caseItem" class="case-mask" @click.self="caseItem = null">
+        <div class="case-pop">
+          <div class="case-head">
+            <div class="case-title">{{ caseItem.name }}</div>
+            <button class="case-close" @click="caseItem = null">✕</button>
+          </div>
+          <div class="case-body">
+            <template v-if="!isCaseSkill">
+              <div class="case-label">{{ (caseItem as ExpertItem).caseTitle }}</div>
+              <div class="case-metrics">
+                <div v-for="m in (caseItem as ExpertItem).caseMetrics || []" :key="m.label" class="cm-item">
+                  <div class="cm-val">{{ m.value }}</div>
+                  <div class="cm-lab">{{ m.label }}</div>
+                </div>
+              </div>
+              <table class="case-table">
+                <tbody>
+                  <tr v-for="(row, ri) in (caseItem as ExpertItem).caseRows || []" :key="ri">
+                    <td v-for="(cell, ci) in row" :key="ci">{{ cell }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="case-conclusion">{{ (caseItem as ExpertItem).caseConclusion }}</div>
+              <div class="case-label">试试这样问</div>
+              <button v-for="(p, pi) in (caseItem as ExpertItem).prompts || []" :key="pi" class="case-prompt" @click="useExpert(caseItem as ExpertItem); caseItem = null">{{ p }}</button>
+            </template>
+            <template v-else>
+              <div class="case-label">执行步骤</div>
+              <ol class="case-steps">
+                <li v-for="(st, si) in (caseItem as SkillItem).steps || []" :key="si">{{ st }}</li>
+              </ol>
+              <div class="case-label">输出示例</div>
+              <pre class="case-output">{{ (caseItem as SkillItem).outputExample }}</pre>
+              <button class="case-prompt main" @click="useSkill(caseItem as SkillItem); caseItem = null">立即使用该技能</button>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 对话详情 ============ -->
+    <div v-else class="chat-card">
       <div class="chat-head">
         <span class="title">{{ chatState.chatTitle }}</span>
         <div class="right">
-          <!-- 主/子账号胶囊 -->
           <span class="account-chip" ref="accountChipEl" :class="{ open: popoverOpen }" title="切换账号" @click="togglePopover">
             <span class="ac-avatar" :class="{ slave: !isMainAccount }" aria-hidden="true" v-html="PERSON_SVG"></span>
             <span>{{ accountNameShort }}</span>
@@ -176,12 +270,10 @@ void selectConversation
             <span class="ac-role" :data-role="isMainAccount ? 'main' : 'slave'">{{ currentAccount.roleLabel }}</span>
             <span class="ac-arrow"><svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3.5 5 6.5 8 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           </span>
-          <!-- 积分胶囊 -->
           <span class="coin-chip" title="点击充值积分" role="button" tabindex="0" @click="openWalletFromCoinChip" @keydown.enter="openWalletFromCoinChip">
             <svg class="cc-icon" width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="#FFC53D" stroke="#E8A200" stroke-width="1.2"/><path d="M4.3 3.8 6 5.9m1.7-2.1L6 5.9m0 0v2.5M4.7 6.5h2.6M4.7 7.9h2.6" stroke="#A66F00" stroke-width=".9" stroke-linecap="round"/></svg>
             <span>{{ coinText }}</span>
           </span>
-          <!-- 账号下拉 -->
           <div class="account-popover" ref="popoverEl" :class="{ open: popoverOpen }" :style="popStyle">
             <div class="account-self">
               <div class="as-avatar" :class="{ slave: !isMainAccount }" v-html="PERSON_SVG"></div>
@@ -229,65 +321,13 @@ void selectConversation
 
       <div class="chat-body" ref="streamEl" @scroll="onStreamScroll">
         <template v-if="view">
-          <!-- 开场白空态 -->
-          <div v-if="!view.messages.length" class="empty-state">
-            <div class="empty-inner">
-              <div class="welcome-header">
-                <div class="welcome-title">雷达AI · 跨境电商选品 Agent</div>
-                <div class="welcome-sub">懂数据、会选品、深调研、精分析</div>
-              </div>
-              <div class="welcome-tabs">
-                <button class="welcome-tab" :class="{ active: welcomeTab === 'expert' }" @click="welcomeTab = 'expert'">专家</button>
-                <button class="welcome-tab" :class="{ active: welcomeTab === 'skill' }" @click="welcomeTab = 'skill'">技能</button>
-              </div>
-              <div v-if="welcomeTab === 'expert'" class="welcome-experts">
-                <div v-for="exp in welcomeExperts" :key="exp.platform" class="welcome-card" :class="'wc-' + exp.platform">
-                  <div class="wc-icon" :class="'wci-' + exp.platform">{{ exp.icon }}</div>
-                  <div class="wc-name">{{ exp.name }}</div>
-                  <div class="wc-desc">{{ exp.desc }}</div>
-                  <div class="wc-actions">
-                    <button class="wc-btn wc-btn-outline" @click="() => openExpertPanel()">查看详情</button>
-                    <button class="wc-btn wc-btn-primary" @click="() => openExpertPanel()">开始使用</button>
-                  </div>
-                </div>
-              </div>
-              <div v-else>
-                <!-- 技能筛选行 -->
-                <div class="welcome-filters">
-                  <div class="welcome-filter-row">
-                    <span class="welcome-filter-label">平台</span>
-                    <button v-for="p in welcomePlatforms" :key="p" class="welcome-filter-btn" :class="{ active: welcomePlatform === p }" @click="welcomePlatform = p">{{ p }}</button>
-                  </div>
-                  <div class="welcome-filter-row">
-                    <span class="welcome-filter-label">场景</span>
-                    <button v-for="s in welcomeScenes" :key="s" class="welcome-filter-btn" :class="{ active: welcomeScene === s }" @click="welcomeScene = s">{{ s }}</button>
-                  </div>
-                </div>
-                <div class="welcome-experts">
-                  <div v-for="skill in welcomeSkills" :key="skill.name" class="welcome-card wc-skill">
-                    <div class="wc-icon wci-skill">{{ skill.name[0] }}</div>
-                    <div class="wc-name">{{ skill.name }}</div>
-                    <div class="wc-desc">{{ skill.desc }}</div>
-                    <div class="wc-actions">
-                      <button class="wc-btn wc-btn-outline" @click="() => openExpertPanel()">查看详情</button>
-                      <button class="wc-btn wc-btn-primary" @click="() => openExpertPanel()">开始使用</button>
-                    </div>
-                  </div>
-                  <div v-if="!welcomeSkills.length" class="welcome-empty">暂无符合条件的技能，请调整筛选条件。</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- 消息列表 -->
           <template v-for="(m, i) in view.messages" :key="m.id + '-' + i">
             <MessageBubble :msg="m" :prev="view.messages[i - 1]" />
           </template>
         </template>
-        <!-- 加载态 -->
         <div v-if="view && view.loading" class="loading-state" style="padding:40px;text-align:center;color:#909399">消息加载中…</div>
       </div>
 
-      <!-- 回到底部浮动按钮 -->
       <button class="jump-latest" :class="{ show: showJumpLatest }" type="button" title="回到最新消息" aria-label="回到最新消息" @click="scrollToBottom()">
         <span class="jl-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v13M6 12.5l6 6 6-6" stroke="#10ad53" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </button>

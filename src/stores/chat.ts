@@ -412,15 +412,9 @@ export function onAccountSwitched() {
   if (target) selectConversation(target.id, { restorePreview: true })
 }
 
-// 首次进入：恢复上次打开的会话或新建
+// 首次进入：落在无内容的工作台首页（hero），历史会话从左栏进入
 export function initialSelect() {
-  const sessions = sessionsFor()
-  if (!sessions.length) { newConversation(); return }
-  let lastId = ''
-  try { lastId = localStorage.getItem(LAST_OPEN_CONV_KEY + ':' + accountState.currentAccountId) || '' } catch (e) {}
-  const target = (lastId && sessions.find(s => String(s.id) === String(lastId) || String(s.convId || '') === String(lastId))) || sessions[0]
-  if (target) selectConversation(target.id, { restorePreview: true })
-  else newConversation()
+  newConversation()
 }
 
 /* ==================== 首次会话正式标题刷新（原 syncOfficialConversationTitle） ==================== */

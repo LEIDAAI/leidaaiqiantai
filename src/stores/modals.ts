@@ -6,6 +6,7 @@ import { reactive } from 'vue'
 
 export const modals = reactive({
   settings: false,
+  page: 'chat' as 'chat' | 'experts' | 'skills' | 'account' | 'pricing',
   wallet: false,
   ledger: false,
   ledgerBlock: 'buy' as 'buy' | 'consume',
@@ -33,6 +34,9 @@ export function openSettings() { modals.settings = true }
 export function closeSettings() { modals.settings = false }
 export function openWallet() { modals.wallet = true; modals.walletRunsTip = '' }
 export function closeWallet() { modals.wallet = false }
+export function navigatePage(page: typeof modals.page) { modals.page = page; modals.wallet = false; modals.ledger = false }
+export function openPricing() { navigatePage('pricing') }
+export function openAccount() { navigatePage('account') }
 export function openLedgerBlock(block: 'buy' | 'consume') { modals.ledgerBlock = block; modals.ledger = true }
 export function closeLedger() { modals.ledger = false }
 export function openFeedback() { modals.feedback = true; modals.feedbackSubmitted = false }

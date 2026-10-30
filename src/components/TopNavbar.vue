@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /* 全局顶部导航栏 */
-import { openWallet } from '../stores/modals'
+import { openAccount, openPricing } from '../stores/modals'
 import { currentAccount } from '../stores/account'
 import { computed } from 'vue'
 
@@ -25,8 +25,8 @@ const accountName = computed(() => currentAccount.value?.name || '雷达6861')
     </div>
 
     <div class="navbar-right">
-      <a href="#" class="nav-link" @click.prevent="openWallet()">购买积分</a>
-      <div class="nav-avatar" @click="openWallet()">
+      <button class="nav-link nav-button" @click="openPricing">套餐购买</button>
+      <button class="nav-avatar" @click="openAccount">
         <div class="avatar-circle">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="8" r="4" fill="#fff"/>
@@ -34,7 +34,7 @@ const accountName = computed(() => currentAccount.value?.name || '雷达6861')
           </svg>
         </div>
         <span class="avatar-name">{{ accountName }}</span>
-      </div>
+      </button>
     </div>
   </header>
 </template>

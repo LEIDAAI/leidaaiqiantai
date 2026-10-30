@@ -32,12 +32,16 @@ export const walletState = reactive({
   pageSize: 10,
   blockPages: { buy: 1, consume: 1 } as Record<string, number>,
   // 套餐（演示；接口就绪后由 getMemberVerObj 真数据替换）
+  billingCycle: 'monthly' as 'monthly' | 'yearly',
+  currentPackage: '基础版',
+  expiresAt: '2026-11-13',
+  usedCoins: 4696,
   packages: [
-    { name: '体验包', coins: 500, price: 9.9 },
-    { name: '常用包', coins: 2000, price: 29.9, selected: true },
-    { name: '专业包', coins: 10000, price: 99 }
-  ] as Array<{ name: string; coins: number; price: number | null; selected?: boolean }>,
-  packageTip: '演示价格，正式版接入支付',
+    { name: '基础版', coins: 5600, price: 99, yearlyPrice: 949, compareMonthly: 179, saving: 239, modelCost: ['0.937', '0.265', '0.071'], limits: ['图片/视频并发：10 / 1 个任务', '约每月生成 1,400 张图片或 373 条视频', '每月约查询 74 次或生成 31 份报告'], featured: false, features: ['选品调研、合规检测', 'Listing 生成和优化', '关键词库和商品库管理', '定时任务与自定义流程', '跨境工具技能库', '商品图设计器与模板：无限量', '支持所有单任务生图/生视频功能'] },
+    { name: '高级版', coins: 22000, price: 299, yearlyPrice: 2870, compareMonthly: 589, saving: 718, modelCost: ['0.720', '0.204', '0.054'], limits: ['图片/视频并发：30 / 10 个任务', '约每月生成 5,500 张图片或 1,466 条视频', '每月约查询 293 次或生成 122 份报告'], featured: true, features: ['选品调研、合规检测', 'Listing 生成和优化', '关键词库和商品库管理', '定时任务与自定义流程', '跨境工具技能库', '商品图设计器与模板：无限量', '支持批量任务'] },
+    { name: '团队版', coins: 52500, price: 499, yearlyPrice: 4788, compareMonthly: 999, saving: 7180, modelCost: ['0.715', '0.202', '0.054'], limits: ['每席位同时创建：图片 50 / 视频 25 个任务', '约每月生成 13,125 张图片或 3,500 条视频', '支持团队成员协同管理'], featured: false, features: ['选品调研、合规检测', 'Listing 生成和优化', '关键词库和商品库管理', '定时任务与自定义流程', '跨境工具技能库', '商品图设计器与模板：无限量', '团队协同与批量任务'] }
+  ] as Array<{ name: string; coins: number; price: number | null; yearlyPrice: number; compareMonthly: number; saving: number; modelCost: string[]; limits: string[]; features: string[]; featured: boolean; selected?: boolean }>,
+  packageTip: '当前套餐信息以账号实际权益为准',
   buyRange: { start: '', end: '' },
   consumeRange: { start: '', end: '' },
   consumeChip: '7d'

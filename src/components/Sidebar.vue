@@ -5,13 +5,12 @@ import {
   chatState, newConversation, selectConversation, stopTask,
   groupedSessions, togglePin, commitRename, deleteConversation
 } from '../stores/chat'
-import { openConvMenu, openDeleteConfirm, openRename, closeConvMenu } from '../stores/modals'
+import { openConvMenu, openDeleteConfirm, openRename, closeConvMenu, navigatePage, modals } from '../stores/modals'
 import { accountState, currentAccount } from '../stores/account'
 import { saveGroupState, loadGroupState } from '../stores/state'
 import { DLD } from '../api'
 import { send } from '../stores/send'
 import { agentOpening } from '../stores/opening'
-import { toggleExpertPanel } from '../stores/expert'
 
 const GROUP_ORDER = ['pinned', 'today', 'yesterday', 'thisWeek', 'earlier'] as const
 const GROUP_LABELS: Record<string, { cls: string; label: string; text: string }> = {
@@ -37,7 +36,7 @@ function onToggleGroup(key: string) {
 }
 function isGroupCollapsed(key: string) { return !!groupState[key] }
 
-function onSelect(id: string) { selectConversation(id) }
+function onSelect(id: string) { navigatePage('chat'); selectConversation(id) }
 
 function onContext(e: MouseEvent, id: string) {
   e.preventDefault()
@@ -73,7 +72,6 @@ function modals_target() {
   }
   return modalsRef?.convMenuTarget
 }
-import { modals } from '../stores/modals'
 modalsRef = modals
 ;(window as any).__dldModals = modals
 
@@ -91,8 +89,9 @@ function onToggleLeft() {
 <template>
   <aside class="col-left" :class="{ collapsed: chatState.leftCollapsed }">
     <div class="left-head">
-      <button class="new-btn" @click="newConversation">＋ 新建对话</button>
-      <button class="expert-btn" @click="toggleExpertPanel()">专家 · 技能 · MCP</button>
+      <button class="new-btn" @click="navigatePage('chat'); newConversation()">＋ 新建对话</button>
+      <button class="expert-btn" :class="{ selected: modals.page === 'experts' }" @click="navigatePage('experts')">电商专家</button>
+      <button class="expert-btn" :class="{ selected: modals.page === 'skills' }" @click="navigatePage('skills')">技能库</button>
     </div>
     <!-- 搜索框 -->
     <div class="left-search">
