@@ -3367,6 +3367,8 @@
 .side-card:hover svg { color: var(--brand); }
 .side-card.selected { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-dark); }
 .side-card.selected svg { color: var(--brand); }
+.side-card.side-full { grid-column: 1 / -1; flex-direction: row; justify-content: flex-start; gap: 8px; padding: 9px 12px; }
+.side-card.side-full span { font-size: 12.5px; }
 
 .expert-panel {
   flex: 1;
@@ -3439,6 +3441,7 @@
 .account-menu button:hover, .account-menu button.active { background: #e6f5eb; color: #008f35; }
 .account-details { padding: 24px 30px; }
 .account-details h2 { margin: 0 0 24px; font-size: 17px; }
+.account-details h2 small { margin-left: 10px; font-size: 12px; font-weight: 400; color: #8b93a3; }
 .account-details dl { display: grid; grid-template-columns: 150px 1fr; gap: 18px; padding-bottom: 22px; color: #434a56; }
 .account-details dt { color: #8b93a3; }
 .pricing-title { display: flex; justify-content: space-between; align-items: center; }
