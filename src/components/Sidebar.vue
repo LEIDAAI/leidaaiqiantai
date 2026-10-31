@@ -103,7 +103,7 @@ function onToggleLeft() {
 <template>
   <aside class="col-left" :class="{ collapsed: chatState.leftCollapsed, 'mobile-open': chatState.mobileSidebar }">
     <div class="left-head">
-      <button class="new-btn" @click="navigatePage('chat'); newConversation()">
+      <button class="new-btn" :class="{ muted: !!chatState.selectedExpert || !!chatState.selectedSkill }" @click="navigatePage('chat'); newConversation()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         新建对话
       </button>
