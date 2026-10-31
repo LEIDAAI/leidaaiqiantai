@@ -97,16 +97,6 @@ function exportReport() {
   a.click()
   URL.revokeObjectURL(url)
 }
-function printReport() {
-  const html = buildReportHtml()
-  if (!html) return
-  const w = window.open('', '_blank')
-  if (!w) { exportReport(); return }
-  w.document.write(html)
-  w.document.close()
-  w.addEventListener('load', () => { w.focus(); w.print() })
-}
-
 /* —— 会话滚动 —— */
 watch(() => chatState.activeConvKey, (nv, ov) => {
   if (ov && nv && ov !== nv) {
@@ -360,7 +350,6 @@ function onSendClick() {
                 </template>
               </div>
               <div class="case-float">
-                <button class="cf-btn" @click="printReport">打印 / 另存 PDF</button>
                 <button class="cf-btn main" @click="exportReport">导出报告</button>
               </div>
             </div>
