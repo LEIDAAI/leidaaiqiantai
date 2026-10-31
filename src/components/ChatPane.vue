@@ -32,17 +32,15 @@ const matchesHomePlatform = (item: ExpertItem | SkillItem) => {
 const homeScenarios = computed(() => {
   const list = homeTab.value === 'skill' ? expertState.skills : expertState.experts
   const values = list.filter(item => matchesHomePlatform(item)).map(item => 'platform' in item ? item.category : item.scenario).filter(Boolean) as string[]
-  return ['推荐', '全部', ...Array.from(new Set(values))]
+  return ['推荐', ...Array.from(new Set(values))]
 })
 const homeExperts = computed(() => {
   const list = expertState.experts.filter(e => e.source === 'official' && matchesHomePlatform(e))
-  if (homeChip.value === '全部') return list.slice(0, 9)
   if (homeChip.value === '推荐') return list.slice(0, 6)
   return list.filter(e => e.category === homeChip.value || e.tags.includes(homeChip.value)).slice(0, 9)
 })
 const homeSkills = computed(() => {
   const list = expertState.skills.filter(s => s.source === 'official' && matchesHomePlatform(s))
-  if (homeChip.value === '全部') return list.slice(0, 9)
   if (homeChip.value === '推荐') return list.slice(0, 6)
   return list.filter(s => s.scenario === homeChip.value || s.tags.includes(homeChip.value)).slice(0, 9)
 })
