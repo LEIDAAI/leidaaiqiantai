@@ -120,40 +120,18 @@ const rightStyle = computed(() => {
 })
 /* 首页态：chat 页且会话为空 —— 中央渲染 hero + 底部输入区（预览栏隐藏，会话栏常显） */
 const chatHero = computed(() => modals.page === 'chat' && (!activeView.value || activeView.value.messages.length === 0))
+/* 会话列表是唯一左侧导航：对话 / 专家 / 技能 页常显 */
+const showSidebar = computed(() => modals.page === 'chat' || modals.page === 'experts' || modals.page === 'skills')
 </script>
 
 <template>
   <div class="app-container">
     <div class="work" ref="workEl">
-      <!-- 最左：80px 图标导航栏 -->
-      <nav class="workspace-rail" aria-label="工作区导航">
-        <div class="rail-logo" title="雷达AI">
-          <svg width="34" height="34" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" fill="#00A83E"/><path d="M14 8v6l3.5 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
-        </div>
-        <button :class="{ 'rail-active': modals.page === 'chat' }" title="对话" @click="modals.page = 'chat'">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <span>对话</span>
-        </button>
-        <button :class="{ 'rail-active': modals.page === 'experts' }" title="专家" @click="modals.page = 'experts'">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
-          <span>专家</span>
-        </button>
-        <button :class="{ 'rail-active': modals.page === 'skills' }" title="技能" @click="modals.page = 'skills'">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>
-          <span>技能</span>
-        </button>
-        <div class="rail-spacer"></div>
-        <button :class="{ 'rail-active': modals.page === 'account' }" title="个人中心" @click="modals.page = 'account'">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <span>账户</span>
-        </button>
-      </nav>
-
       <!-- 左：会话列表（常显） -->
-      <Sidebar v-if="modals.page === 'chat'" :style="leftStyle" />
-      <div v-if="modals.page === 'chat'" class="col-left-resizer" @mousedown="onDragStart($event, 'left')"></div>
+      <Sidebar v-if="showSidebar" :style="leftStyle" />
+      <div v-if="showSidebar" class="col-left-resizer" @mousedown="onDragStart($event, 'left')"></div>
       <!-- 移动端：会话抽屉打开时的遮罩 -->
-      <button v-if="modals.page === 'chat' && chatState.mobileSidebar" class="mobile-mask" aria-label="关闭会话列表" @click="chatState.mobileSidebar = false"></button>
+      <button v-if="showSidebar && chatState.mobileSidebar" class="mobile-mask" aria-label="关闭会话列表" @click="chatState.mobileSidebar = false"></button>
 
       <!-- 中：对话内容 / 专家·技能发现页 -->
       <ChatPane v-if="modals.page === 'chat'" />
