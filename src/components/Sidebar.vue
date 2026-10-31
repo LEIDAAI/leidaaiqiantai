@@ -1,16 +1,26 @@
 <script setup lang="ts">
-/* 左栏：新建对话 / 搜索 / 分组会话列表 / 折叠 */
-import { computed } from 'vue'
+/* 左栏：新建对话 / 搜索 / 分组会话列表 / 底部账号 hover 弹层 / 折叠 */
+import { computed, ref } from 'vue'
 import {
   chatState, newConversation, selectConversation, stopTask,
   groupedSessions, togglePin, commitRename, deleteConversation
 } from '../stores/chat'
 import { openConvMenu, openDeleteConfirm, openRename, closeConvMenu, navigatePage, modals } from '../stores/modals'
 import { accountState, currentAccount } from '../stores/account'
-import { saveGroupState, loadGroupState } from '../stores/state'
+import { appState, saveGroupState, loadGroupState } from '../stores/state'
+import { walletState } from '../stores/wallet'
 import { DLD } from '../api'
 import { send } from '../stores/send'
 import { agentOpening } from '../stores/opening'
+
+/* 底部账号卡：hover 弹出个人面板（积分 / 套餐 / 入口），离开延迟关闭 */
+const userPop = ref(false)
+let popTimer: ReturnType<typeof setTimeout> | undefined
+function openUserPop() { if (popTimer) clearTimeout(popTimer); userPop.value = true }
+function closeUserPop() { if (popTimer) clearTimeout(popTimer); popTimer = setTimeout(() => { userPop.value = false }, 180) }
+function popGo(page: 'account' | 'pricing') { userPop.value = false; navigatePage(page) }
+function popWallet() { userPop.value = false; modals.wallet = true }
+const cycleText = computed(() => walletState.billingCycle === 'monthly' ? '月付' : '年付')
 
 const GROUP_ORDER = ['pinned', 'today', 'yesterday', 'thisWeek', 'earlier'] as const
 const GROUP_LABELS: Record<string, { cls: string; label: string; text: string }> = {
@@ -89,9 +99,20 @@ function onToggleLeft() {
 <template>
   <aside class="col-left" :class="{ collapsed: chatState.leftCollapsed, 'mobile-open': chatState.mobileSidebar }">
     <div class="left-head">
-      <button class="new-btn" @click="navigatePage('chat'); newConversation()">＋ 新建对话</button>
-      <button class="expert-btn" :class="{ selected: modals.page === 'experts' }" @click="navigatePage('experts')">电商专家</button>
-      <button class="expert-btn" :class="{ selected: modals.page === 'skills' }" @click="navigatePage('skills')">技能库</button>
+      <button class="new-btn" @click="navigatePage('chat'); newConversation()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        新建对话
+      </button>
+      <div class="side-grid">
+        <button class="side-card" :class="{ selected: modals.page === 'experts' }" @click="navigatePage('experts')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2z"/></svg>
+          <span>电商专家</span>
+        </button>
+        <button class="side-card" :class="{ selected: modals.page === 'skills' }" @click="navigatePage('skills')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+          <span>技能库</span>
+        </button>
+      </div>
     </div>
     <!-- 搜索框 -->
     <div class="left-search">
@@ -135,12 +156,60 @@ function onToggleLeft() {
       </template>
       <div v-else class="conv-empty">该账号暂无历史对话</div>
     </div>
-    <!-- 底部：个人中心入口 -->
-    <button class="left-foot" :class="{ on: modals.page === 'account' }" title="个人中心" @click="navigatePage('account')">
-      <span class="lf-ava">{{ (currentAccount?.name || '雷达用户').slice(0, 1) }}</span>
-      <span class="lf-name">{{ currentAccount?.name || '雷达用户' }}</span>
-      <span class="lf-tip">个人中心</span>
-    </button>
+    <!-- 底部：账号卡，hover 弹出个人面板 -->
+    <div class="user-zone" :class="{ open: userPop }" @mouseenter="openUserPop" @mouseleave="closeUserPop">
+      <button class="uc-trigger" :class="{ on: modals.page === 'account' }">
+        <span class="uc-ava">{{ (currentAccount?.name || '雷达用户').slice(0, 1) }}</span>
+        <span class="uc-info">
+          <b class="uc-name">{{ currentAccount?.name || '雷达用户' }}</b>
+          <i class="uc-sub">{{ currentAccount?.phone || '个人中心' }}</i>
+        </span>
+        <svg class="uc-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+      </button>
+
+      <transition name="ucfade">
+        <div v-if="userPop" class="uc-pop" role="menu">
+          <div class="ucp-head">
+            <span class="uc-ava big">{{ (currentAccount?.name || '雷达用户').slice(0, 1) }}</span>
+            <div class="ucp-id">
+              <b>{{ currentAccount?.name || '雷达用户' }}</b>
+              <span>个人账号 · {{ currentAccount?.phone || '176****6666' }}</span>
+            </div>
+          </div>
+          <div class="ucp-coins">
+            <div class="ucp-coin">
+              <strong>{{ appState.totalCoins.toLocaleString() }}</strong>
+              <span>可用积分</span>
+            </div>
+            <div class="ucp-coin">
+              <strong>{{ walletState.usedCoins.toLocaleString() }}</strong>
+              <span>已使用</span>
+            </div>
+          </div>
+          <div class="ucp-plan">
+            <div class="ucp-plan-info">
+              <b>{{ walletState.currentPackage }}（{{ cycleText }}）</b>
+              <span>套餐到期：{{ walletState.expiresAt }}</span>
+            </div>
+            <button class="ucp-up" @click="popGo('pricing')">升级套餐</button>
+          </div>
+          <div class="ucp-menu">
+            <button @click="popGo('account')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+              个人中心
+            </button>
+            <button @click="popGo('pricing')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              套餐购买
+            </button>
+            <button @click="popWallet()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+              订单中心
+            </button>
+          </div>
+        </div>
+      </transition>
+    </div>
     <button class="col-left-toggle" @click="onToggleLeft" aria-label="折叠侧栏">
       <span class="cl-arrow">{{ chatState.leftCollapsed ? '›' : '‹' }}</span>
       <span class="cl-tip">{{ chatState.leftCollapsed ? '展开侧栏' : '折叠侧栏' }}</span>
