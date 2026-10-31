@@ -8,9 +8,10 @@ import Modals from './components/Modals.vue'
 import ExpertPanel from './components/ExpertPanel.vue'
 import DateRangePicker from './components/DateRangePicker.vue'
 import { modals, openBuyConfirm } from './stores/modals'
-import { walletState, filteredBuy, filteredConsume } from './stores/wallet'
+import { walletState, filteredBuy, filteredConsume, type BuyRecord } from './stores/wallet'
 import { appState, pad } from './stores/state'
 import { currentAccount } from './stores/account'
+import { flashToast } from './utils/common'
 import { chatState, activeView } from './stores/chat'
 import { panel, setCollapsed } from './stores/panel'
 import { accountState } from './stores/account'
@@ -159,6 +160,19 @@ const buyPage = computed(() => {
   }
 })
 const consumeFiltered = computed(() => filteredConsume())
+/* 订单详情抽屉 */
+const orderDetail = ref<BuyRecord | null>(null)
+function orderTypeName(t?: string) { return t === 'plan' ? '套餐订购' : '积分加油包' }
+function orderStatusLabel(item: BuyRecord) { return item.status === 'refunded' ? '已退款' : '支付成功' }
+function orderDuration(item: BuyRecord) {
+  if (item.type === 'plan') return /年付/.test(item.pkg) ? '12 个月' : '1 个月'
+  return '长期有效'
+}
+function fmtMoney(n: number | null | undefined) { return n == null ? '—' : '¥' + n.toFixed(2) }
+async function copyOrderId(id: string) {
+  try { await navigator.clipboard.writeText(id); flashToast('订单编号已复制') }
+  catch { flashToast('复制失败，请手动选择复制') }
+}
 const consumePage = computed(() => {
   const list = consumeFiltered.value
   const total = Math.max(1, Math.ceil(list.length / walletState.pageSize))
@@ -246,28 +260,55 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
               </div>
             </template>
             <template v-else-if="modals.page === 'orders'">
-              <h2>订单中心<small>购买积分记录</small></h2>
-              <div class="ledger-filter lf-buy">
+              <h2>订单中心<small>套餐订购与积分充值记录</small></h2>
+              <div class="ledger-filter of-bar">
+                <label class="of-field">
+                  <span>订单类型</span>
+                  <select v-model="walletState.orderType" @change="walletState.blockPages.buy = 1">
+                    <option value="">全部</option>
+                    <option value="plan">套餐订购</option>
+                    <option value="pack">积分加油包</option>
+                  </select>
+                </label>
+                <label class="of-field">
+                  <span>订单状态</span>
+                  <select v-model="walletState.orderStatus" @change="walletState.blockPages.buy = 1">
+                    <option value="">全部</option>
+                    <option value="paid">支付成功</option>
+                    <option value="refunded">已退款</option>
+                  </select>
+                </label>
                 <DateRangePicker :range="walletState.buyRange" @change="walletState.blockPages.buy = 1" />
               </div>
-              <table class="ledger-table">
+              <table class="ledger-table ot-table">
                 <thead>
                   <tr>
-                    <th style="width:190px">订单号</th>
+                    <th style="width:186px">订单号</th>
+                    <th style="width:96px">订单类型</th>
                     <th>充值套餐</th>
-                    <th style="width:150px">支付时间</th>
-                    <th style="width:90px">积分数量</th>
+                    <th style="width:96px">实付金额</th>
+                    <th style="width:92px">支付方式</th>
+                    <th style="width:148px">支付时间</th>
+                    <th style="width:106px">订单状态</th>
+                    <th style="width:60px">操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-if="!buyPage.count">
-                    <td colspan="4" style="text-align:center;padding:24px;color:var(--text-dim)">暂无充值记录</td>
+                    <td colspan="8" style="text-align:center;padding:24px;color:var(--text-dim)">暂无订单记录</td>
                   </tr>
                   <tr v-for="item in buyPage.slice" :key="item.id">
                     <td class="lt-id">{{ item.id }}</td>
-                    <td>{{ item.pkg || '—' }}</td>
-                    <td>{{ item.time }}</td>
-                    <td class="lt-amount" :class="item.amount >= 0 ? 'plus' : 'minus'">{{ item.amount >= 0 ? '+' : '' }}{{ item.amount.toLocaleString() }}</td>
+                    <td>{{ orderTypeName(item.type) }}</td>
+                    <td>
+                      <div class="ot-pkg">{{ item.pkg || '—' }}</div>
+                      <small class="ot-coins">{{ item.amount >= 0 ? '+' : '' }}{{ item.amount.toLocaleString() }} 积分</small>
+                    </td>
+                    <td class="ot-paid">{{ fmtMoney(item.paid) }}</td>
+                    <td>{{ item.pay || '—' }}</td>
+                    <td>{{ item.status === 'refunded' ? '—' : item.time }}</td>
+                    <td><span class="od-pill" :class="item.status === 'refunded' ? 'refund' : 'ok'">● {{ orderStatusLabel(item) }}</span></td>
+                    <td><button class="ot-detail" type="button" @click="orderDetail = item">详情</button></td>
                   </tr>
                 </tbody>
               </table>
@@ -278,6 +319,38 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
                   <button v-for="i in buyPage.total" :key="i" :class="{ active: i === buyPage.cur }" @click="setBuyPage(i)">{{ i }}</button>
                   <button :disabled="buyPage.cur >= buyPage.total" @click="setBuyPage(buyPage.cur + 1)">›</button>
                 </div>
+              </div>
+              <div v-if="orderDetail" class="od-mask" @click.self="orderDetail = null">
+                <aside class="od-drawer">
+                  <header class="od-head">
+                    <strong>订单详情</strong>
+                    <button class="od-close" type="button" @click="orderDetail = null">×</button>
+                  </header>
+                  <div class="od-body">
+                    <section class="od-section">
+                      <div class="od-caption">基本信息</div>
+                      <div class="od-row"><span>订单编号</span><strong class="od-id">{{ orderDetail.id }}<button class="od-copy" type="button" @click="copyOrderId(orderDetail.id)">复制</button></strong></div>
+                      <div class="od-row"><span>订单状态</span><strong><span class="od-pill" :class="orderDetail.status === 'refunded' ? 'refund' : 'ok'">● {{ orderStatusLabel(orderDetail) }}</span></strong></div>
+                      <div class="od-row"><span>创建时间</span><strong>{{ orderDetail.createdAt || orderDetail.time }}</strong></div>
+                      <div class="od-row"><span>支付时间</span><strong>{{ orderDetail.status === 'refunded' ? '—' : orderDetail.time }}</strong></div>
+                    </section>
+                    <section class="od-section">
+                      <div class="od-caption">订单详情</div>
+                      <div class="od-row"><span>订购商户</span><strong>店雷达 AI</strong></div>
+                      <div class="od-row"><span>订单类型</span><strong>{{ orderTypeName(orderDetail.type) }}</strong></div>
+                      <div class="od-row"><span>套餐名称</span><strong>{{ orderDetail.pkg || '—' }}</strong></div>
+                      <div class="od-row"><span>套餐内容</span><strong>{{ Math.abs(orderDetail.amount).toLocaleString() }} 积分</strong></div>
+                      <div class="od-row"><span>有效时长</span><strong>{{ orderDuration(orderDetail) }}</strong></div>
+                    </section>
+                    <section class="od-section">
+                      <div class="od-caption">支付详情</div>
+                      <div class="od-row"><span>支付方式</span><strong>{{ orderDetail.pay || '—' }}</strong></div>
+                      <div class="od-row"><span>订单原价</span><strong class="od-orig">{{ orderDetail.orig ? '¥' + orderDetail.orig.toFixed(2) : '—' }}</strong></div>
+                      <div class="od-row"><span>优惠金额</span><strong class="od-disc">{{ orderDetail.disc ? '-¥' + orderDetail.disc.toFixed(2) : '—' }}</strong></div>
+                      <div class="od-row od-paid-row"><span>实付金额</span><strong class="od-paid">{{ fmtMoney(orderDetail.paid) }}</strong></div>
+                    </section>
+                  </div>
+                </aside>
               </div>
             </template>
             <template v-else>
