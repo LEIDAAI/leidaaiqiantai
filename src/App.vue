@@ -142,6 +142,11 @@ function applyConsumeRange(key: string) {
 function onChip(key: string) { applyConsumeRange(key); walletState.blockPages.consume = 1 }
 function onConsumeRangeChange() { walletState.consumeChip = ''; walletState.blockPages.consume = 1 }
 // 分页（computed 内只做显示层 clamp，写回 state 由点击处理负责）
+// 个人信息页展示名：不暴露「主账号」概念（侧栏账号胶囊仍依赖 store 原名）
+const profileName = computed(() => {
+  const n = currentAccount.value?.name || ''
+  return !n || n === '主账号' ? '雷达用户' : n
+})
 const buyFiltered = computed(() => filteredBuy())
 const buyPage = computed(() => {
   const list = buyFiltered.value
@@ -215,9 +220,30 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
           </aside>
           <div class="account-details">
             <template v-if="modals.page === 'account'">
-              <h2>个人信息</h2>
-              <dl><dt>账号</dt><dd>{{ currentAccount?.name || '雷达用户' }}</dd><dt>手机号</dt><dd>{{ currentAccount?.phone || '暂未绑定' }}</dd><dt>账号类型</dt><dd>{{ currentAccount?.roleLabel || '主账号' }}</dd><dt>剩余积分</dt><dd>{{ appState.totalCoins.toLocaleString() }}</dd></dl>
-              <button class="page-primary" @click="modals.page = 'pricing'">查看套餐权益</button>
+              <h2>个人信息<small>账号资料与账户资产</small></h2>
+              <div class="profile-card">
+                <div class="profile-avatar">{{ currentAccount?.avatar || '👤' }}</div>
+                <div class="profile-meta">
+                  <strong>{{ profileName }}</strong>
+                  <small>{{ currentAccount?.phone || '暂未绑定手机号' }}</small>
+                </div>
+                <span class="profile-badge">{{ walletState.currentPackage }} · {{ walletState.billingCycle === 'monthly' ? '月付' : '年付' }}</span>
+              </div>
+              <div class="profile-grid">
+                <section class="profile-section">
+                  <div class="ps-caption">基本信息</div>
+                  <div class="ps-row"><span>账号名称</span><strong>{{ profileName }}</strong></div>
+                  <div class="ps-row"><span>手机号</span><strong>{{ currentAccount?.phone || '暂未绑定' }}</strong></div>
+                  <div class="ps-row"><span>最近活跃</span><strong>{{ currentAccount?.lastActive || '—' }}</strong></div>
+                </section>
+                <section class="profile-section">
+                  <div class="ps-caption">账户资产</div>
+                  <div class="ps-row"><span>当前套餐</span><strong>{{ walletState.currentPackage }}</strong><button class="ps-link" type="button" @click="modals.page = 'pricing'">升级套餐</button></div>
+                  <div class="ps-row"><span>套餐到期</span><strong>{{ walletState.expiresAt }}</strong></div>
+                  <div class="ps-row"><span>剩余积分</span><strong class="ps-coins">{{ appState.totalCoins.toLocaleString() }}</strong><button class="ps-link" type="button" @click="modals.page = 'consume'">查看明细</button></div>
+                  <div class="ps-row"><span>累计消耗</span><strong>{{ walletState.usedCoins.toLocaleString() }}</strong></div>
+                </section>
+              </div>
             </template>
             <template v-else-if="modals.page === 'orders'">
               <h2>订单中心<small>购买积分记录</small></h2>
