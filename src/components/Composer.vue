@@ -102,21 +102,17 @@ function scrollAttach(dir: number) {
   attachListEl.value?.scrollBy({ left: dir * 220, behavior: 'smooth' })
 }
 function onFilePick() { fileInput.value?.click() }
+function pushAttach(f: File) {
+  const meta = detectFileType(f.name)
+  chatState.attaches.push({ file: f, name: f.name, size: f.size, ...meta, url: meta.type === 'img' ? URL.createObjectURL(f) : undefined })
+}
 function onFileChange(e: Event) {
-  const files = Array.from((e.target as HTMLInputElement).files || [])
-  files.forEach(f => {
-    const meta = detectFileType(f.name)
-    chatState.attaches.push({ file: f, name: f.name, size: f.size, ...meta })
-  })
+  Array.from((e.target as HTMLInputElement).files || []).forEach(pushAttach)
   // 允许重复选同一文件：清空 value
   ;(e.target as HTMLInputElement).value = ''
 }
 function onDrop(e: DragEvent) {
-  const files = Array.from((e.dataTransfer && e.dataTransfer.files) || [])
-  files.forEach(f => {
-    const meta = detectFileType(f.name)
-    chatState.attaches.push({ file: f, name: f.name, size: f.size, ...meta })
-  })
+  Array.from((e.dataTransfer && e.dataTransfer.files) || []).forEach(pushAttach)
 }
 function onDragenter(e: DragEvent) { e.preventDefault(); (e.currentTarget as HTMLElement).classList.add('dragging') }
 function onDragleave(e: DragEvent) { e.preventDefault(); (e.currentTarget as HTMLElement).classList.remove('dragging') }
@@ -169,8 +165,20 @@ function formatSize(b: number) {
   return (b / 1024 / 1024).toFixed(2) + ' MB'
 }
 function removeAttach(idx: number) {
+  const a = chatState.attaches[idx]
+  if (a && a.url) URL.revokeObjectURL(a.url)
   chatState.attaches.splice(idx, 1)
 }
+
+/* —— 图片附件放大预览（lightbox） —— */
+const previewUrl = ref<string | null>(null)
+const previewName = ref('')
+function openPreview(a: { url?: string; name: string }) {
+  if (!a.url) return
+  previewUrl.value = a.url
+  previewName.value = a.name
+}
+function closePreview() { previewUrl.value = null; previewName.value = '' }
 
 /* —— 电商专家 / 技能 浮窗选择（青虎AI 式：按钮上方弹出面板，点击外部/Esc 关闭） —— */
 const composerEl = ref<HTMLElement | null>(null)
@@ -215,7 +223,10 @@ function onDocMouseDown(e: MouseEvent) {
   closePop()
 }
 function onDocKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && pop.value) closePop()
+  if (e.key === 'Escape') {
+    if (previewUrl.value) { closePreview(); return }
+    if (pop.value) closePop()
+  }
 }
 onMounted(() => {
   document.addEventListener('mousedown', onDocMouseDown)
@@ -234,7 +245,10 @@ onBeforeUnmount(() => {
     <div class="attach-row" :class="{ show: chatState.attaches.length > 0 }">
       <div class="attach-list" ref="attachListEl" @scroll="updateArrows">
         <div v-for="(a, idx) in chatState.attaches" :key="idx" class="attach-chip" :title="a.name + ' · ' + formatSize(a.size)">
-          <span class="ac-icon" :class="chipIconSVG(a.type).cls" v-html="chipIconSVG(a.type).svg"></span>
+          <button v-if="a.type === 'img' && a.url" class="ac-thumb" type="button" title="点击放大预览" @click.stop="openPreview(a)">
+            <img :src="a.url" :alt="a.name" />
+          </button>
+          <span v-else class="ac-icon" :class="chipIconSVG(a.type).cls" v-html="chipIconSVG(a.type).svg"></span>
           <span class="ac-info">
             <span class="ac-name">{{ a.name }}</span>
             <span class="ac-meta">{{ a.ext || 'FILE' }} · {{ formatSize(a.size) }}</span>
@@ -368,6 +382,15 @@ onBeforeUnmount(() => {
       <div class="im-item" :class="{ disabled: !chatState.inputText.length }" @click="onMenuAct('selectAll')">
         <span class="im-ic">▢</span><span>全选</span><span class="im-kbd">Ctrl+A</span>
       </div>
+    </div>
+  </Teleport>
+
+  <!-- 图片附件放大预览层（点击遮罩 / 关闭按钮 / Esc 关闭） -->
+  <Teleport to="body">
+    <div v-if="previewUrl" class="img-lightbox" @click="closePreview">
+      <img :src="previewUrl" :alt="previewName" @click.stop />
+      <button class="il-close" type="button" title="关闭 (Esc)" @click="closePreview">✕</button>
+      <div class="il-name">{{ previewName }}</div>
     </div>
   </Teleport>
 </template>
