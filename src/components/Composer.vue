@@ -170,15 +170,44 @@ function removeAttach(idx: number) {
   chatState.attaches.splice(idx, 1)
 }
 
-/* —— 图片附件放大预览（lightbox） —— */
-const previewUrl = ref<string | null>(null)
-const previewName = ref('')
+/* —— 图片附件放大预览（浅色 lightbox：多图分页 + 缩放 + 拖拽平移） —— */
+const previewList = computed(() => chatState.attaches.filter(a => a.type === 'img' && a.url))
+const previewIdx = ref(-1)
+const previewUrl = computed(() => (previewIdx.value >= 0 ? previewList.value[previewIdx.value]?.url : null) || null)
+const previewName = computed(() => (previewIdx.value >= 0 ? previewList.value[previewIdx.value]?.name : '') || '')
+const zoomPct = ref(100)
+const pan = ref({ x: 0, y: 0 })
 function openPreview(a: { url?: string; name: string }) {
-  if (!a.url) return
-  previewUrl.value = a.url
-  previewName.value = a.name
+  const i = previewList.value.findIndex(x => x.url === a.url)
+  if (i < 0) return
+  previewIdx.value = i
+  resetView()
 }
-function closePreview() { previewUrl.value = null; previewName.value = '' }
+function closePreview() { previewIdx.value = -1 }
+function resetView() { zoomPct.value = 100; pan.value = { x: 0, y: 0 } }
+function stepZoom(dir: number) {
+  zoomPct.value = Math.min(300, Math.max(25, zoomPct.value + dir * 25))
+  if (zoomPct.value === 100) pan.value = { x: 0, y: 0 }
+}
+function navPreview(dir: number) {
+  const n = previewList.value.length
+  if (n < 2) return
+  previewIdx.value = (previewIdx.value + dir + n) % n
+  resetView()
+}
+/* 放大后拖拽平移（鼠标按下图片拖动） */
+let lbDragging = false, lbDragStart = { x: 0, y: 0 }, lbPanStart = { x: 0, y: 0 }
+function onLbImgDown(e: MouseEvent) {
+  if (zoomPct.value <= 100) return
+  lbDragging = true
+  lbDragStart = { x: e.clientX, y: e.clientY }
+  lbPanStart = { ...pan.value }
+}
+function onLbImgMove(e: MouseEvent) {
+  if (!lbDragging) return
+  pan.value = { x: lbPanStart.x + (e.clientX - lbDragStart.x), y: lbPanStart.y + (e.clientY - lbDragStart.y) }
+}
+function onLbImgUp() { lbDragging = false }
 
 /* —— 电商专家 / 技能 浮窗选择（青虎AI 式：按钮上方弹出面板，点击外部/Esc 关闭） —— */
 const composerEl = ref<HTMLElement | null>(null)
@@ -224,8 +253,12 @@ function onDocMouseDown(e: MouseEvent) {
 }
 function onDocKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
-    if (previewUrl.value) { closePreview(); return }
+    if (previewIdx.value >= 0) { closePreview(); return }
     if (pop.value) closePop()
+  }
+  if (previewIdx.value >= 0 && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+    e.preventDefault()
+    navPreview(e.key === 'ArrowLeft' ? -1 : 1)
   }
 }
 onMounted(() => {
@@ -244,10 +277,10 @@ onBeforeUnmount(() => {
     <!-- 已选附件 -->
     <div class="attach-row" :class="{ show: chatState.attaches.length > 0 }">
       <div class="attach-list" ref="attachListEl" @scroll="updateArrows">
-        <div v-for="(a, idx) in chatState.attaches" :key="idx" class="attach-chip" :title="a.name + ' · ' + formatSize(a.size)">
-          <button v-if="a.type === 'img' && a.url" class="ac-thumb" type="button" title="点击放大预览" @click.stop="openPreview(a)">
-            <img :src="a.url" :alt="a.name" />
-          </button>
+        <div v-for="(a, idx) in chatState.attaches" :key="idx" class="attach-chip" :class="{ clickable: a.type === 'img' && a.url }" :title="a.type === 'img' && a.url ? a.name + ' · ' + formatSize(a.size) + '（点击放大预览）' : a.name + ' · ' + formatSize(a.size)" @click="a.type === 'img' && a.url && openPreview(a)">
+          <span v-if="a.type === 'img' && a.url" class="ac-thumb">
+            <img :src="a.url" :alt="a.name" draggable="false" />
+          </span>
           <span v-else class="ac-icon" :class="chipIconSVG(a.type).cls" v-html="chipIconSVG(a.type).svg"></span>
           <span class="ac-info">
             <span class="ac-name">{{ a.name }}</span>
@@ -385,12 +418,38 @@ onBeforeUnmount(() => {
     </div>
   </Teleport>
 
-  <!-- 图片附件放大预览层（点击遮罩 / 关闭按钮 / Esc 关闭） -->
+  <!-- 图片附件放大预览层：浅色遮罩 + 底部工具栏（分页 / 缩放），点击遮罩 / 关闭按钮 / Esc 关闭 -->
   <Teleport to="body">
-    <div v-if="previewUrl" class="img-lightbox" @click="closePreview">
-      <img :src="previewUrl" :alt="previewName" @click.stop />
-      <button class="il-close" type="button" title="关闭 (Esc)" @click="closePreview">✕</button>
-      <div class="il-name">{{ previewName }}</div>
+    <div v-if="previewIdx >= 0 && previewUrl" class="img-lightbox" @click="closePreview" @mousemove="onLbImgMove" @mouseup="onLbImgUp" @mouseleave="onLbImgUp">
+      <div class="il-name" :title="previewName">{{ previewName }}</div>
+      <button class="il-close" type="button" title="关闭 (Esc)" @click="closePreview">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+      <img
+        :src="previewUrl" :alt="previewName" draggable="false"
+        :style="{ transform: 'translate(' + pan.x + 'px,' + pan.y + 'px) scale(' + zoomPct / 100 + ')' }"
+        :class="{ grabbable: zoomPct > 100, grabbing: lbDragging }"
+        @click.stop @mousedown.prevent="onLbImgDown"
+      />
+      <div class="il-toolbar" @click.stop>
+        <template v-if="previewList.length > 1">
+          <button class="il-btn" type="button" title="上一张 (←)" @click="navPreview(-1)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M14.5 5 8 12l6.5 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <span class="il-page">{{ previewIdx + 1 }} / {{ previewList.length }}</span>
+          <button class="il-btn" type="button" title="下一张 (→)" @click="navPreview(1)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9.5 5 16 12l-6.5 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <span class="il-sep"></span>
+        </template>
+        <button class="il-btn" type="button" title="缩小" @click="stepZoom(-1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-3.8-3.8M8.5 11h5"/></svg>
+        </button>
+        <button class="il-pct" type="button" title="点击恢复 100%" @click="resetView">{{ zoomPct }}%</button>
+        <button class="il-btn" type="button" title="放大" @click="stepZoom(1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-3.8-3.8M8.5 11h5M11 8.5v5"/></svg>
+        </button>
+      </div>
     </div>
   </Teleport>
 </template>
