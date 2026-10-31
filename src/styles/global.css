@@ -1614,7 +1614,7 @@
   .attach-chip:hover .ac-rm { display: flex; }
   .attach-chip .ac-rm:hover { background: var(--red); border-color: var(--red); color: #fff; }
 
-  /* ---- 底部工具栏：上传 ｜ 电商专家 ｜ 连接器 ｜ MCP ｜ 积分 ｜ 开始查询 ---- */
+  /* ---- 底部工具栏：上传 ｜ 电商专家 ｜ 技能 ｜ 积分 ｜ 开始查询 ---- */
   .composer-bar {
     display: flex; align-items: center; justify-content: space-between;
     gap: 8px; padding: 0 0 2px;
