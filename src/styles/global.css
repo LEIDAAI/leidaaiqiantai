@@ -4230,6 +4230,12 @@
 }
 .cb-pop-item.on .bp-check { opacity: 1; transform: scale(1); }
 .cb-pop-empty { padding: 22px 0 16px; text-align: center; font-size: 12px; color: #a2a8a3; }
+/* 弹层两级筛选：平台分段器 + 场景 chips（复用首页 seg/home-chip 样式，弹层内紧凑化） */
+.cb-pop-filters { margin: 0 12px 8px; display: flex; flex-direction: column; gap: 6px; }
+.cb-pop-filters .seg-track { width: 100%; }
+.cb-pop-filters .seg-btn { flex: 1 1 0; height: 26px; padding: 0 6px; font-size: 12px; }
+.cb-pop-scenes { display: flex; flex-wrap: wrap; gap: 6px; }
+.cb-pop-scenes .home-chip { height: 26px; padding: 0 11px; font-size: 12px; }
 /* 弹出过渡 */
 .pop-enter-active, .pop-leave-active { transition: opacity .16s ease, transform .16s ease; }
 .pop-enter-from, .pop-leave-to { opacity: 0; transform: translateY(6px) scale(.98); }
