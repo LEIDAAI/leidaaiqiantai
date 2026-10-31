@@ -21,20 +21,35 @@ const view = activeView
 const chatHero = computed(() => !view.value || view.value.messages.length === 0)
 const homeTab = ref<'expert' | 'skill'>('expert')
 const homeChip = ref('推荐')
-const expertChips = ['全部', '推荐', '选品上架', '店铺运营', '商品管理', '评论分析']
-const skillChips = ['全部', '推荐', '选品与开发', '产品运营', '数据分析', '选品/热点']
+const homePlatform = ref('全部')
+const homePlatforms = ['全部', '1688', 'OZON', '亚马逊', 'TEMU']
+const platformAliases: Record<string, string[]> = { 'OZON': ['Ozon', 'OZON'], 'TEMU': ['Temu', 'TEMU'] }
+const matchesHomePlatform = (item: ExpertItem | SkillItem) => {
+  if (homePlatform.value === '全部') return true
+  if ('platform' in item) return (platformAliases[homePlatform.value] || [homePlatform.value]).includes(item.platform)
+  return item.tags.some(tag => (platformAliases[homePlatform.value] || [homePlatform.value]).includes(tag))
+}
+const homeScenarios = computed(() => {
+  const list = homeTab.value === 'skill' ? expertState.skills : expertState.experts
+  const values = list.filter(item => matchesHomePlatform(item)).map(item => 'platform' in item ? item.category : item.scenario).filter(Boolean) as string[]
+  return ['推荐', '全部', ...Array.from(new Set(values))]
+})
 const homeExperts = computed(() => {
-  const list = expertState.experts.filter(e => e.source === 'official')
+  const list = expertState.experts.filter(e => e.source === 'official' && matchesHomePlatform(e))
   if (homeChip.value === '全部') return list.slice(0, 9)
   if (homeChip.value === '推荐') return list.slice(0, 6)
   return list.filter(e => e.category === homeChip.value || e.tags.includes(homeChip.value)).slice(0, 9)
 })
 const homeSkills = computed(() => {
-  const list = expertState.skills.filter(s => s.source === 'official')
+  const list = expertState.skills.filter(s => s.source === 'official' && matchesHomePlatform(s))
   if (homeChip.value === '全部') return list.slice(0, 9)
   if (homeChip.value === '推荐') return list.slice(0, 6)
   return list.filter(s => s.scenario === homeChip.value || s.tags.includes(homeChip.value)).slice(0, 9)
 })
+function selectHomePlatform(value: string) {
+  homePlatform.value = value
+  if (!homeScenarios.value.includes(homeChip.value)) homeChip.value = '推荐'
+}
 const caseItem = ref<ExpertItem | SkillItem | null>(null)
 const isCaseSkill = computed(() => !!caseItem.value && 'version' in caseItem.value)
 function useExpert(e: ExpertItem) { chatState.inputText = e.prompts?.[0] || e.desc }
@@ -161,8 +176,15 @@ function onSendClick() {
             </div>
           </div>
           <div class="home-sec">
+            <div class="home-seg-row">
+              <div class="seg-track">
+                <button v-for="p in homePlatforms" :key="p" class="seg-btn" :class="{ on: homePlatform === p }" @click="selectHomePlatform(p)">
+                  <span v-if="p !== '全部'" class="seg-dot" :style="{ background: platformColor[p === 'OZON' ? 'Ozon' : p === 'TEMU' ? 'Temu' : p] || '#00A83E' }"></span>{{ p }}
+                </button>
+              </div>
+            </div>
             <div class="home-tabs">
-              <button v-for="c in (homeTab === 'expert' ? expertChips : skillChips)" :key="c" class="home-chip" :class="{ on: homeChip === c }" @click="homeChip = c">{{ c }}</button>
+              <button v-for="c in homeScenarios" :key="c" class="home-chip" :class="{ on: homeChip === c }" @click="homeChip = c">{{ c }}</button>
             </div>
             <div class="home-grid">
               <template v-if="homeTab === 'expert'">
