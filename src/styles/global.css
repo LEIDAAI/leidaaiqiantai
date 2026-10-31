@@ -1618,49 +1618,86 @@
   .attach-chip:hover .ac-rm { display: flex; }
   .attach-chip .ac-rm:hover { background: var(--red); border-color: var(--red); color: #fff; }
 
-  /* 附件图片缩略图：替代图标，点击放大预览 */
+  /* 附件图片缩略图：替代图标；整个 chip 可点击放大 */
+  .attach-chip.clickable { cursor: zoom-in; }
+  .attach-chip.clickable:hover { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(0, 168, 62, .12); }
   .attach-chip .ac-thumb {
     position: relative; width: 34px; height: 34px; flex-shrink: 0;
-    border: 0; padding: 0; border-radius: 9px; overflow: hidden;
-    background: #ececf0; cursor: zoom-in;
+    border-radius: 9px; overflow: hidden;
+    background: #ececf0;
   }
-  .attach-chip .ac-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .attach-chip .ac-thumb::after {
+  .attach-chip .ac-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; }
+  .attach-chip.clickable .ac-thumb::after {
     content: ''; position: absolute; inset: 0;
-    background: rgba(0, 0, 0, .32) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round'><circle cx='11' cy='11' r='6.5'/><path d='m20 20-3.8-3.8'/></svg>") center / 14px no-repeat;
+    background: rgba(0, 0, 0, .28) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round'><circle cx='11' cy='11' r='6.5'/><path d='m20 20-3.8-3.8'/></svg>") center / 14px no-repeat;
     opacity: 0; transition: opacity .15s ease;
   }
-  .attach-chip .ac-thumb:hover::after { opacity: 1; }
+  .attach-chip.clickable:hover .ac-thumb::after { opacity: 1; }
 
-  /* 图片放大预览层（lightbox） */
+  /* 图片放大预览层（浅色 lightbox：盖住左侧边栏 z-index 1200，故取 1300） */
   .img-lightbox {
-    position: fixed; inset: 0; z-index: 300;
-    background: rgba(15, 18, 22, .78);
+    position: fixed; inset: 0; z-index: 1300;
+    background: rgba(244, 245, 247, .94);
     display: flex; align-items: center; justify-content: center;
     cursor: zoom-out;
     animation: lbIn .18s ease;
   }
   .img-lightbox img {
-    max-width: 88vw; max-height: 84vh;
-    border-radius: 12px; box-shadow: 0 24px 80px rgba(0, 0, 0, .5);
-    background: #fff; cursor: default;
+    max-width: 82vw; max-height: 80vh;
+    border-radius: 12px; box-shadow: 0 24px 80px rgba(15, 23, 42, .22), 0 4px 16px rgba(15, 23, 42, .12);
+    background: #fff;
+    transform-origin: center center;
+    user-select: none;
   }
+  .img-lightbox img.grabbable { cursor: grab; }
+  .img-lightbox img.grabbing { cursor: grabbing; }
   .img-lightbox .il-close {
     position: absolute; top: 22px; right: 26px;
-    width: 36px; height: 36px; border-radius: 50%;
-    border: 0; background: rgba(255, 255, 255, .14); color: #fff;
+    width: 36px; height: 36px; border-radius: 10px;
+    border: 1px solid #e3e6ea; background: #fff; color: #4b5563;
     font-size: 15px; line-height: 1; cursor: pointer; padding: 0;
     display: flex; align-items: center; justify-content: center;
-    transition: background .15s ease;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .08);
+    transition: background .15s ease, color .15s ease, box-shadow .15s ease;
   }
-  .img-lightbox .il-close:hover { background: rgba(255, 255, 255, .3); }
+  .img-lightbox .il-close:hover { background: #f5f6f8; color: #111; box-shadow: 0 4px 12px rgba(15, 23, 42, .12); }
   .img-lightbox .il-name {
-    position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
-    max-width: 70vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    color: rgba(255, 255, 255, .88); font-size: 12.5px;
-    background: rgba(0, 0, 0, .38); padding: 5px 14px; border-radius: 999px;
+    position: absolute; top: 26px; left: 50%; transform: translateX(-50%);
+    max-width: 60vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: #4b5563; font-size: 12.5px;
+    background: rgba(255, 255, 255, .9); border: 1px solid #e9ebef;
+    padding: 5px 14px; border-radius: 999px;
     pointer-events: none;
   }
+  .img-lightbox .il-toolbar {
+    position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 2px;
+    background: #fff; border: 1px solid #e7e9ee; border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, .14);
+    padding: 5px 8px;
+  }
+  .img-lightbox .il-btn {
+    width: 30px; height: 30px; border-radius: 8px;
+    border: 0; background: transparent; color: #4b5563;
+    cursor: pointer; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s ease, color .15s ease;
+  }
+  .img-lightbox .il-btn:hover { background: #f0f2f5; color: #111; }
+  .img-lightbox .il-page {
+    min-width: 52px; text-align: center;
+    font-size: 12.5px; font-weight: 600; color: #333;
+    font-variant-numeric: tabular-nums;
+  }
+  .img-lightbox .il-sep { width: 1px; height: 18px; background: #e7e9ee; margin: 0 6px; }
+  .img-lightbox .il-pct {
+    min-width: 52px; height: 30px; border-radius: 8px;
+    border: 0; background: transparent; color: #333;
+    font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+    cursor: pointer; padding: 0 6px;
+    transition: background .15s ease;
+  }
+  .img-lightbox .il-pct:hover { background: #f0f2f5; }
   @keyframes lbIn { from { opacity: 0; } to { opacity: 1; } }
 
   /* ---- 底部工具栏：上传 ｜ 电商专家 ｜ 技能 ｜ 积分 ｜ 开始查询 ---- */
