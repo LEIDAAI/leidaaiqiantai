@@ -3840,9 +3840,11 @@
 .home-mode button { min-width: 76px; height: 30px; border: 0; border-radius: 999px; background: transparent; color: #555; font-size: 13px; cursor: pointer; }
 .home-mode button.on { background: #fff; color: #0a0a0a; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
 .home-tabs { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 14px; }
-.home-chip { height: 30px; padding: 0 14px; border: 0; border-radius: 6px; background: #eaeaea; color: #4d4d4d; font-size: 12.5px; cursor: pointer; }
-.home-chip:hover { background: #e0e0e0; }
-.home-chip.on { background: #fff; color: #090909; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.home-chip { height: 30px; padding: 0 15px; border: 0; border-radius: 999px; background: #edf0ee; color: #5a625c; font-size: 12.5px; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.home-chip:hover { background: #e0e5e2; color: #171b19; }
+.home-chip.on { background: #00A83E; color: #fff; font-weight: 600; }
+.home-chip.on:hover { background: #008F35; }
+.home-seg-row { margin-bottom: 12px; }
 .home-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .home-card { position: relative; display: flex; flex-direction: column; gap: 10px; min-height: 134px; padding: 18px 18px 14px; border: 1px solid #ececec; border-radius: 16px; background: #fff; overflow: hidden; }
 .home-card:hover { border-color: #dcdcdc; box-shadow: 0 6px 18px rgba(0,0,0,.06); }
@@ -3905,10 +3907,20 @@
 .dir-tab.on::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 2px; background: var(--brand); }
 .dir-create-btn { height: 34px; padding: 0 16px; border: 0; border-radius: 8px; background: var(--brand); color: #fff; font-size: 13px; cursor: pointer; }
 .dir-create-btn:hover { background: var(--brand-dark); }
+/* 平台分段滑块（灵感广场 + 首页共用） */
+.dir-filter-label { color: #89928c; font-size: 12px; font-weight: 600; margin: 14px 0 8px; }
+.dir-filter-label:first-child { margin-top: 0; }
+.seg-track { display: inline-flex; max-width: 100%; gap: 2px; padding: 3px; border-radius: 999px; background: #e7eae8; overflow-x: auto; scrollbar-width: none; }
+.seg-track::-webkit-scrollbar { display: none; }
+.seg-btn { display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: #5a625c; font-size: 13px; cursor: pointer; transition: color .15s ease, background .15s ease, box-shadow .15s ease; }
+.seg-btn:hover { color: #171b19; }
+.seg-btn.on { background: #fff; color: #0a0a0a; font-weight: 600; box-shadow: 0 1px 3px rgba(16,24,20,.12); }
+.seg-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; }
 .dir-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.dir-chip { height: 30px; padding: 0 14px; border: 0; border-radius: 6px; background: #eaeaea; color: #4d4d4d; font-size: 12.5px; cursor: pointer; }
-.dir-chip:hover { background: #e0e0e0; }
-.dir-chip.on { background: #fff; color: #090909; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.dir-chip { height: 30px; padding: 0 15px; border: 0; border-radius: 999px; background: #edf0ee; color: #5a625c; font-size: 12.5px; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.dir-chip:hover { background: #e0e5e2; color: #171b19; }
+.dir-chip.on { background: #00A83E; color: #fff; font-weight: 600; }
+.dir-chip.on:hover { background: #008F35; }
 .dir-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
 .dir-card { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 12px; background: #fff; }
 .dir-card:hover { box-shadow: 0 8px 22px rgba(0,0,0,.06); }
