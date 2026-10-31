@@ -4090,14 +4090,12 @@
 /* 步骤 / 输出示例（技能） */
 .cr-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 12.8px; color: #444; line-height: 1.7; }
 .cr-output { margin: 0; padding: 12px 14px; border-radius: 10px; background: #f6f7f8; color: #333; font-size: 12px; line-height: 1.6; font-family: Consolas, Monaco, monospace; white-space: pre-wrap; word-break: break-all; }
-/* 底部悬浮导出栏：鼠标移入悬浮区才展示导出按钮 */
+/* 底部悬浮导出栏：常驻显示 */
 .case-float { position: sticky; bottom: 0; display: flex; justify-content: center; gap: 10px; padding: 14px 0 16px; margin-top: 4px; background: linear-gradient(180deg, rgba(255,255,255,0), #fff 42%); }
-.case-float .cf-btn { height: 38px; padding: 0 22px; border-radius: 999px; border: 1px solid #e2e5e2; background: #fff; color: #333; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.08); transition: all .18s ease; opacity: 0; pointer-events: none; transform: translateY(6px); }
-.case-float:hover .cf-btn { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.case-float .cf-btn { height: 38px; padding: 0 22px; border-radius: 999px; border: 1px solid #e2e5e2; background: #fff; color: #333; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.08); transition: all .18s ease; }
 .case-float .cf-btn:hover { border-color: var(--brand); color: var(--brand); }
 .case-float .cf-btn.main { border: 0; background: linear-gradient(100deg, #00b84a, #00913a); color: #fff; }
 .case-float .cf-btn.main:hover { filter: brightness(1.06); color: #fff; }
-@media (hover: none) { .case-float .cf-btn { opacity: 1; pointer-events: auto; transform: none; } }
 /* 右栏介绍 */
 .cs-head { display: flex; gap: 12px; align-items: center; }
 .cs-ava { flex: none; width: 44px; height: 44px; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
