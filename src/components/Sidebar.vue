@@ -135,6 +135,12 @@ function onToggleLeft() {
       </template>
       <div v-else class="conv-empty">该账号暂无历史对话</div>
     </div>
+    <!-- 底部：个人中心入口 -->
+    <button class="left-foot" :class="{ on: modals.page === 'account' }" title="个人中心" @click="navigatePage('account')">
+      <span class="lf-ava">{{ (currentAccount?.name || '雷达用户').slice(0, 1) }}</span>
+      <span class="lf-name">{{ currentAccount?.name || '雷达用户' }}</span>
+      <span class="lf-tip">个人中心</span>
+    </button>
     <button class="col-left-toggle" @click="onToggleLeft" aria-label="折叠侧栏">
       <span class="cl-arrow">{{ chatState.leftCollapsed ? '›' : '‹' }}</span>
       <span class="cl-tip">{{ chatState.leftCollapsed ? '展开侧栏' : '折叠侧栏' }}</span>
