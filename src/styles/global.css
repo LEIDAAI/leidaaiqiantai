@@ -3438,7 +3438,8 @@
 .account-menu { padding: 16px 10px; border-right: 1px solid #e5e7eb; }
 .account-menu-caption { margin: 8px 10px; color: #9aa1ad; font-size: 12px; }
 .account-menu button { width: 100%; padding: 11px 12px; border: 0; border-radius: 6px; background: transparent; color: #343a46; text-align: left; cursor: pointer; }
-.account-menu button:hover, .account-menu button.active { background: #e6f5eb; color: #008f35; }
+.account-menu button:hover { background: #f2f5f3; }
+.account-menu button.active { background: #e6f5eb; color: #008f35; font-weight: 600; }
 .account-details { padding: 24px 30px; }
 .account-details h2 { margin: 0 0 24px; font-size: 17px; }
 .account-details h2 small { margin-left: 10px; font-size: 12px; font-weight: 400; color: #8b93a3; }
@@ -3491,6 +3492,42 @@
 .ps-row strong.ps-coins { color: #00a83e; font-weight: 700; }
 .ps-link { margin-left: auto; border: 0; background: transparent; color: #008f35; font-size: 12.5px; cursor: pointer; }
 .ps-link:hover { color: #00a83e; text-decoration: underline; }
+/* 订单中心：筛选行 / 表格 / 状态胶囊 / 详情抽屉 */
+.of-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+.of-field { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #8b93a3; }
+.of-field select { min-width: 128px; height: 32px; padding: 0 10px; border: 1px solid #d8dfda; border-radius: 6px; background: #fff; color: #303832; font-size: 12.5px; cursor: pointer; }
+.of-field select:focus { outline: none; border-color: #00a83e; }
+.ot-table td { vertical-align: middle; }
+.ot-pkg { font-weight: 500; color: #202522; }
+.ot-coins { color: #8b93a3; font-size: 11.5px; }
+.ot-paid { font-variant-numeric: tabular-nums; font-weight: 500; }
+.od-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.od-pill.ok { background: #e6f5eb; color: #008f35; }
+.od-pill.refund { background: #fef3e7; color: #d97a16; }
+.ot-detail { border: 0; background: transparent; color: #008f35; font-size: 12.5px; cursor: pointer; padding: 0; }
+.ot-detail:hover { color: #00a83e; text-decoration: underline; }
+.od-mask { position: fixed; inset: 0; z-index: 120; background: rgba(15,23,32,.42); }
+.od-drawer { position: absolute; top: 0; right: 0; bottom: 0; width: 420px; max-width: 92vw; overflow: auto; background: #fff; box-shadow: -12px 0 40px rgba(15,23,32,.18); animation: odIn .22s ease; }
+@keyframes odIn { from { transform: translateX(24px); opacity: .4; } to { transform: none; opacity: 1; } }
+.od-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #eef0f2; }
+.od-head strong { font-size: 15px; }
+.od-close { border: 0; background: transparent; color: #8b93a3; font-size: 20px; line-height: 1; cursor: pointer; padding: 4px 8px; }
+.od-close:hover { color: #202522; }
+.od-body { padding: 18px 20px 28px; }
+.od-section { margin-bottom: 20px; padding-bottom: 6px; border-bottom: 1px solid #f2f4f6; }
+.od-section:last-child { border-bottom: 0; }
+.od-caption { margin-bottom: 4px; color: #9aa1ad; font-size: 12px; }
+.od-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 0; font-size: 13px; }
+.od-row > span { flex-shrink: 0; color: #8b93a3; }
+.od-row strong { font-weight: 500; color: #202522; text-align: right; word-break: break-all; }
+.od-id { display: inline-flex; align-items: center; gap: 8px; }
+.od-copy { border: 1px solid #d8dfda; border-radius: 5px; background: #fff; color: #008f35; font-size: 11px; padding: 2px 8px; cursor: pointer; }
+.od-copy:hover { border-color: #00a83e; background: #f2faf5; }
+.od-row .od-orig { color: #9ea4ad; text-decoration: line-through; }
+.od-row .od-disc { color: #00a83e; }
+.od-paid-row { border-top: 1px dashed #e5e7eb; margin-top: 2px; }
+.od-row .od-paid { color: #00a83e; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) { .od-drawer { width: 100vw; max-width: 100vw; } .of-field select { min-width: 108px; } .ot-table th:nth-child(5), .ot-table td:nth-child(5), .ot-table th:nth-child(6), .ot-table td:nth-child(6) { display: none; } }
 @media (max-width: 760px) { .account-page, .pricing-page { padding: 14px; } .current-plan { grid-template-columns: 1fr 1fr; } .balance-meter { grid-column: 1 / -1; border-left: 0; padding-left: 0; } .account-content { grid-template-columns: 1fr; } .account-menu { border-right: 0; border-bottom: 1px solid #e5e7eb; } .pricing-grid { grid-template-columns: 1fr; } .billing-row { justify-content: flex-start; } .benefit-link { right: 0; } .plan-price { font-size: 30px; } .profile-grid { grid-template-columns: 1fr; } }
 
 /* 头部 */
