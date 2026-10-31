@@ -225,7 +225,7 @@ function onSendClick() {
             <div class="home-seg-row">
               <div class="seg-track">
                 <button v-for="p in homePlatforms" :key="p" class="seg-btn" :class="{ on: homePlatform === p }" @click="selectHomePlatform(p)">
-                  <span v-if="p !== '全部'" class="seg-dot" :style="{ background: platformColor[p === 'OZON' ? 'Ozon' : p === 'TEMU' ? 'Temu' : p] || '#00A83E' }"></span>{{ p }}
+                  <span v-if="p !== '全部'" class="seg-logo" :style="{ background: platformColor[p === 'OZON' ? 'Ozon' : p === 'TEMU' ? 'Temu' : p] || '#00A83E' }">{{ platformInitial[p === 'OZON' ? 'Ozon' : p === 'TEMU' ? 'Temu' : p] || 'E' }}</span>{{ p }}
                 </button>
               </div>
             </div>
