@@ -3913,27 +3913,74 @@
 
 /* ---- 案例 / 技能详情弹窗 ---- */
 .case-mask { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(15,18,16,.45); }
-.case-pop { width: min(620px, 100%); max-height: 80vh; display: flex; flex-direction: column; border-radius: 16px; background: #fff; overflow: hidden; box-shadow: 0 18px 60px rgba(0,0,0,.18); }
-.case-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #f0f0f0; }
-.case-title { font-size: 16px; font-weight: 650; color: #111; }
-.case-close { width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; color: #777; font-size: 13px; cursor: pointer; }
-.case-close:hover { background: #f2f2f2; color: #111; }
-.case-body { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 20px 22px; display: flex; flex-direction: column; gap: 12px; }
-.case-label { margin-top: 4px; font-size: 13px; font-weight: 650; color: #1c1c1c; }
-.case-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.cm-item { padding: 12px; border-radius: 10px; background: #f6f8f7; text-align: center; }
-.cm-val { font-size: 20px; font-weight: 700; color: var(--brand); }
-.cm-lab { margin-top: 3px; font-size: 11.5px; color: #8a8a92; }
-.case-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-.case-table th, .case-table td { padding: 8px 10px; border: 1px solid #eee; text-align: left; }
-.case-table th { background: #f7f8fa; color: #555; font-weight: 600; white-space: nowrap; }
-.case-conclusion { padding: 10px 14px; border-radius: 10px; background: var(--brand-soft); color: #1f6b39; font-size: 12.5px; line-height: 1.6; }
+.case-pop { position: relative; width: min(980px, 100%); max-height: 86vh; border-radius: 16px; background: #fff; overflow: hidden; box-shadow: 0 18px 60px rgba(0,0,0,.18); }
+.case-close { position: absolute; top: 14px; right: 14px; z-index: 3; width: 30px; height: 30px; border: 0; border-radius: 50%; background: rgba(255,255,255,.22); color: #fff; font-size: 13px; cursor: pointer; backdrop-filter: blur(4px); }
+.case-close:hover { background: rgba(255,255,255,.36); }
+.case-grid { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); max-height: 86vh; }
+.case-report { position: relative; min-height: 0; overflow-y: auto; }
+.case-side { min-height: 0; overflow-y: auto; padding: 22px 20px; border-left: 1px solid #eef0ee; background: #fafbfa; display: flex; flex-direction: column; gap: 12px; }
+/* 报告头图 */
+.cr-hero { padding: 26px 24px 22px; background: linear-gradient(125deg, #00b14a 0%, #00913a 55%, #007d30 100%); color: #fff; }
+.cr-hero-tag { display: inline-block; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.18); font-size: 11.5px; letter-spacing: .4px; }
+.cr-hero-title { margin-top: 12px; font-size: 21px; font-weight: 700; line-height: 1.35; }
+.cr-hero-meta { margin-top: 8px; font-size: 12px; color: rgba(255,255,255,.82); }
+/* 报告正文 */
+.cr-body { padding: 18px 22px 6px; display: flex; flex-direction: column; gap: 18px; }
+.cr-sec { display: flex; flex-direction: column; gap: 10px; }
+.cr-h { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: #1c1c1c; }
+.cr-h::before { content: ''; width: 3px; height: 13px; border-radius: 2px; background: var(--brand); }
+.cr-para { margin: 0; font-size: 12.8px; line-height: 1.8; color: #444; }
+/* 指标卡 */
+.cr-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.crm-item { padding: 13px 12px; border: 1px solid #edf0ed; border-radius: 12px; background: linear-gradient(180deg, #f7fbf8, #fff); text-align: center; }
+.crm-val { font-size: 20px; font-weight: 750; color: var(--brand); }
+.crm-lab { margin-top: 3px; font-size: 11.5px; color: #8a8a92; }
+/* 表格 */
+.cr-table { width: 100%; border-collapse: collapse; font-size: 12.3px; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px #ececec; }
+.cr-table th, .cr-table td { padding: 9px 11px; border-bottom: 1px solid #f0f0f0; text-align: left; }
+.cr-table th { background: #f5f7f6; color: #555; font-weight: 600; white-space: nowrap; }
+.cr-table tr:last-child td { border-bottom: 0; }
+.cr-table tbody tr:nth-child(even) { background: #fafbfa; }
+/* 图片 */
+.cr-fig { margin: 0; border-radius: 12px; overflow: hidden; border: 1px solid #ececec; background: #f6f7f6; }
+.cr-fig img { display: block; width: 100%; height: 190px; object-fit: cover; }
+.cr-fig figcaption { padding: 8px 12px; font-size: 11.5px; color: #8a8a92; background: #fff; }
+/* PDF 附件卡 */
+.cr-pdf { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #ececec; border-radius: 12px; background: #fbfbfb; }
+.cr-pdf-icon { flex: none; width: 40px; height: 46px; border-radius: 6px; background: linear-gradient(160deg, #ff6b5e, #e5483a); color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; letter-spacing: .5px; box-shadow: 2px 2px 0 rgba(229,72,58,.18); }
+.cr-pdf-name { font-size: 12.8px; font-weight: 600; color: #222; word-break: break-all; }
+.cr-pdf-meta { margin-top: 3px; font-size: 11.5px; color: #8a8a92; }
+/* 步骤 / 输出示例（技能） */
+.cr-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 12.8px; color: #444; line-height: 1.7; }
+.cr-output { margin: 0; padding: 12px 14px; border-radius: 10px; background: #f6f7f8; color: #333; font-size: 12px; line-height: 1.6; font-family: Consolas, Monaco, monospace; white-space: pre-wrap; word-break: break-all; }
+/* 底部悬浮导出栏 */
+.case-float { position: sticky; bottom: 0; display: flex; justify-content: center; gap: 10px; padding: 14px 0 16px; margin-top: 4px; background: linear-gradient(180deg, rgba(255,255,255,0), #fff 42%); }
+.cf-btn { height: 38px; padding: 0 22px; border-radius: 999px; border: 1px solid #e2e5e2; background: #fff; color: #333; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.08); transition: all .15s; }
+.cf-btn:hover { border-color: var(--brand); color: var(--brand); }
+.cf-btn.main { border: 0; background: linear-gradient(100deg, #00b84a, #00913a); color: #fff; }
+.cf-btn.main:hover { filter: brightness(1.06); color: #fff; }
+/* 右栏介绍 */
+.cs-head { display: flex; gap: 12px; align-items: center; }
+.cs-ava { flex: none; width: 44px; height: 44px; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.cs-ava.skill { background: linear-gradient(135deg, #00b84a, #007d30); }
+.cs-name { font-size: 15.5px; font-weight: 700; color: #111; }
+.cs-tags { margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap; }
+.cs-tag { padding: 2px 8px; border-radius: 999px; background: #eef2ef; color: #4c6b57; font-size: 11px; }
+.cs-desc { margin: 0; font-size: 12.5px; line-height: 1.7; color: #555; }
+.cs-h { margin-top: 2px; font-size: 12.5px; font-weight: 700; color: #1c1c1c; }
+.cs-caps { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 12.3px; color: #555; line-height: 1.6; }
+.cs-meta { font-size: 12.3px; color: #777; }
+.case-side .case-prompt.main { margin-top: auto; }
 .case-prompt { display: block; width: 100%; padding: 10px 14px; border: 1px solid #e6e6e6; border-radius: 10px; background: #fafafa; color: #333; font-size: 12.5px; text-align: left; cursor: pointer; transition: all .15s; }
 .case-prompt:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
 .case-prompt.main { border: 0; background: linear-gradient(100deg, #00b84a, #00913a); color: #fff; text-align: center; font-weight: 600; }
 .case-prompt.main:hover { filter: brightness(1.06); }
-.case-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: #444; line-height: 1.6; }
-.case-output { margin: 0; padding: 12px 14px; border-radius: 10px; background: #f6f7f8; color: #333; font-size: 12px; line-height: 1.6; font-family: Consolas, Monaco, monospace; white-space: pre-wrap; word-break: break-all; max-height: 260px; overflow-y: auto; }
+@media (max-width: 760px) {
+  .case-grid { grid-template-columns: 1fr; overflow-y: auto; }
+  .case-report { overflow: visible; }
+  .case-side { border-left: 0; border-top: 1px solid #eef0ee; }
+  .case-close { background: rgba(255,255,255,.8); color: #333; }
+}
 
 /* ==================== 专家 / 技能发现页 ==================== */
 .dir-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; }
