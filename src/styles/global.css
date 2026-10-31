@@ -1618,6 +1618,51 @@
   .attach-chip:hover .ac-rm { display: flex; }
   .attach-chip .ac-rm:hover { background: var(--red); border-color: var(--red); color: #fff; }
 
+  /* 附件图片缩略图：替代图标，点击放大预览 */
+  .attach-chip .ac-thumb {
+    position: relative; width: 34px; height: 34px; flex-shrink: 0;
+    border: 0; padding: 0; border-radius: 9px; overflow: hidden;
+    background: #ececf0; cursor: zoom-in;
+  }
+  .attach-chip .ac-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .attach-chip .ac-thumb::after {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(0, 0, 0, .32) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round'><circle cx='11' cy='11' r='6.5'/><path d='m20 20-3.8-3.8'/></svg>") center / 14px no-repeat;
+    opacity: 0; transition: opacity .15s ease;
+  }
+  .attach-chip .ac-thumb:hover::after { opacity: 1; }
+
+  /* 图片放大预览层（lightbox） */
+  .img-lightbox {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(15, 18, 22, .78);
+    display: flex; align-items: center; justify-content: center;
+    cursor: zoom-out;
+    animation: lbIn .18s ease;
+  }
+  .img-lightbox img {
+    max-width: 88vw; max-height: 84vh;
+    border-radius: 12px; box-shadow: 0 24px 80px rgba(0, 0, 0, .5);
+    background: #fff; cursor: default;
+  }
+  .img-lightbox .il-close {
+    position: absolute; top: 22px; right: 26px;
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 0; background: rgba(255, 255, 255, .14); color: #fff;
+    font-size: 15px; line-height: 1; cursor: pointer; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s ease;
+  }
+  .img-lightbox .il-close:hover { background: rgba(255, 255, 255, .3); }
+  .img-lightbox .il-name {
+    position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
+    max-width: 70vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: rgba(255, 255, 255, .88); font-size: 12.5px;
+    background: rgba(0, 0, 0, .38); padding: 5px 14px; border-radius: 999px;
+    pointer-events: none;
+  }
+  @keyframes lbIn { from { opacity: 0; } to { opacity: 1; } }
+
   /* ---- 底部工具栏：上传 ｜ 电商专家 ｜ 技能 ｜ 积分 ｜ 开始查询 ---- */
   .composer-bar {
     display: flex; align-items: center; justify-content: space-between;
