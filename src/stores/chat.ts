@@ -18,7 +18,7 @@ import { dldLqGet, dldLqSet } from '../utils/workflow'
 import { REPORT_CACHE_KEY, getConversationReports, readConversationReports, getConversationViewMode } from './state'
 import { expertState, type ExpertItem, type SkillItem } from './expert'
 
-export interface MsgAttachment { name: string; size: number; ext: string; type: string; icon: string }
+export interface MsgAttachment { name: string; size: number; ext: string; type: string; icon: string; url?: string }
 
 export interface Ali1688ProductData {
   product: {
