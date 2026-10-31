@@ -3475,7 +3475,23 @@
 .plan-limits { display: grid; gap: 11px; margin: 20px 0 0; padding: 0; list-style: none; color: #626c7b; font-size: 12px; }
 .plan-limits li::before { content: '✓'; margin-right: 9px; color: #00a83e; }
 .pricing-note { margin-top: 18px; color: #8c929d; font-size: 11px; }
-@media (max-width: 760px) { .account-page, .pricing-page { padding: 14px; } .current-plan { grid-template-columns: 1fr 1fr; } .balance-meter { grid-column: 1 / -1; border-left: 0; padding-left: 0; } .account-content { grid-template-columns: 1fr; } .account-menu { border-right: 0; border-bottom: 1px solid #e5e7eb; } .pricing-grid { grid-template-columns: 1fr; } .billing-row { justify-content: flex-start; } .benefit-link { right: 0; } .plan-price { font-size: 30px; } }
+.profile-card { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; padding: 20px 22px; border: 1px solid #e2e5ee; border-radius: 10px; background: linear-gradient(100deg, #f4faf6, #f7f8fd); }
+.profile-avatar { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 54px; height: 54px; border-radius: 12px; background: #e6f5eb; font-size: 26px; }
+.profile-meta { display: grid; gap: 5px; }
+.profile-meta strong { font-size: 16px; }
+.profile-meta small { color: #8b93a3; font-size: 12.5px; }
+.profile-badge { margin-left: auto; padding: 6px 12px; border-radius: 999px; background: #e6f5eb; color: #008f35; font-size: 12px; font-weight: 600; }
+.profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.profile-section { padding: 4px 22px 10px; border: 1px solid #e5e7eb; border-radius: 10px; }
+.ps-caption { margin: 14px 0 4px; color: #9aa1ad; font-size: 12px; }
+.ps-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid #eef0f2; font-size: 13px; }
+.ps-row:last-child { border-bottom: 0; }
+.ps-row > span { width: 90px; flex-shrink: 0; color: #8b93a3; }
+.ps-row strong { font-weight: 500; color: #202522; }
+.ps-row strong.ps-coins { color: #00a83e; font-weight: 700; }
+.ps-link { margin-left: auto; border: 0; background: transparent; color: #008f35; font-size: 12.5px; cursor: pointer; }
+.ps-link:hover { color: #00a83e; text-decoration: underline; }
+@media (max-width: 760px) { .account-page, .pricing-page { padding: 14px; } .current-plan { grid-template-columns: 1fr 1fr; } .balance-meter { grid-column: 1 / -1; border-left: 0; padding-left: 0; } .account-content { grid-template-columns: 1fr; } .account-menu { border-right: 0; border-bottom: 1px solid #e5e7eb; } .pricing-grid { grid-template-columns: 1fr; } .billing-row { justify-content: flex-start; } .benefit-link { right: 0; } .plan-price { font-size: 30px; } .profile-grid { grid-template-columns: 1fr; } }
 
 /* 头部 */
 .ep-head {
