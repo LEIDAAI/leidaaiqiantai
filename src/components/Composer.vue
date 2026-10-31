@@ -213,28 +213,53 @@ function onLbImgUp() { lbDragging = false }
 const composerEl = ref<HTMLElement | null>(null)
 const pop = ref<'expert' | 'skill' | null>(null)
 const popSearch = ref('')
+const popPlatform = ref('全部')
+const popChip = ref('推荐')
 const expertSearchEl = ref<HTMLInputElement | null>(null)
 const skillSearchEl = ref<HTMLInputElement | null>(null)
 const PLATFORM_COLOR: Record<string, string> = { '1688': '#ff6a00', 'Ozon': '#005bff', '亚马逊': '#ff9900', 'Temu': '#fb7701' }
 const PLATFORM_INITIAL: Record<string, string> = { '1688': '1688', 'Ozon': 'O', '亚马逊': 'A', 'Temu': 'T' }
 
+/* 弹层两级筛选（与首页 hero 一致）：先平台、再场景，列表随二者联动 */
+const POP_PLATFORMS = ['全部', '1688', 'OZON', '亚马逊', 'TEMU']
+const PLATFORM_ALIAS: Record<string, string[]> = { 'OZON': ['Ozon', 'OZON'], 'TEMU': ['Temu', 'TEMU'] }
+const matchPopPlatform = (item: ExpertItem | SkillItem) => {
+  if (popPlatform.value === '全部') return true
+  const allow = PLATFORM_ALIAS[popPlatform.value] || [popPlatform.value]
+  if ('platform' in item) return allow.includes(item.platform)
+  return item.tags.some(tag => allow.includes(tag))
+}
+const popScenarios = computed(() => {
+  const list = (pop.value === 'skill' ? expertState.skills : expertState.experts)
+    .filter(i => i.source === 'official' && matchPopPlatform(i))
+  const values = list.map(i => 'platform' in i ? i.category : i.scenario).filter(Boolean) as string[]
+  return ['推荐', ...Array.from(new Set(values))]
+})
+function selectPopPlatform(p: string) {
+  popPlatform.value = p
+  if (!popScenarios.value.includes(popChip.value)) popChip.value = '推荐'
+}
 function togglePop(kind: 'expert' | 'skill') {
   pop.value = pop.value === kind ? null : kind
   popSearch.value = ''
+  popPlatform.value = '全部'
+  popChip.value = '推荐'
   if (pop.value) nextTick(() => { (pop.value === 'expert' ? expertSearchEl : skillSearchEl).value?.focus() })
 }
 function closePop() { pop.value = null; popSearch.value = '' }
 const popExperts = computed(() => {
+  const base = expertState.experts.filter(e => e.source === 'official' && matchPopPlatform(e))
+  const scoped = popChip.value === '推荐' ? base : base.filter(e => e.category === popChip.value || e.tags.includes(popChip.value))
   const q = popSearch.value.trim().toLowerCase()
-  const list = expertState.experts.filter(e => e.source === 'official')
-  if (!q) return list
-  return list.filter(e => (e.name + e.desc + e.platform + e.category + e.tags.join()).toLowerCase().includes(q))
+  const hit = q ? scoped.filter(e => (e.name + e.desc + e.platform + e.category + e.tags.join()).toLowerCase().includes(q)) : scoped
+  return popChip.value === '推荐' ? hit.slice(0, 6) : hit
 })
 const popSkills = computed(() => {
+  const base = expertState.skills.filter(s => s.source === 'official' && matchPopPlatform(s))
+  const scoped = popChip.value === '推荐' ? base : base.filter(s => s.scenario === popChip.value || s.tags.includes(popChip.value))
   const q = popSearch.value.trim().toLowerCase()
-  const list = expertState.skills.filter(s => s.source === 'official')
-  if (!q) return list
-  return list.filter(s => (s.name + s.desc + (s.scenario || '') + s.tags.join()).toLowerCase().includes(q))
+  const hit = q ? scoped.filter(s => (s.name + s.desc + (s.scenario || '') + s.tags.join()).toLowerCase().includes(q)) : scoped
+  return popChip.value === '推荐' ? hit.slice(0, 6) : hit
 })
 function pickExpert(e: ExpertItem) {
   chatState.selectedExpert = chatState.selectedExpert?.id === e.id ? null : e
@@ -336,6 +361,14 @@ onBeforeUnmount(() => {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
                 <input ref="expertSearchEl" v-model="popSearch" type="text" placeholder="搜索专家" />
               </div>
+              <div class="cb-pop-filters">
+                <div class="seg-track">
+                  <button v-for="p in POP_PLATFORMS" :key="p" class="seg-btn" :class="{ on: popPlatform === p }" type="button" @click="selectPopPlatform(p)">{{ p }}</button>
+                </div>
+                <div class="cb-pop-scenes">
+                  <button v-for="c in popScenarios" :key="c" class="home-chip" :class="{ on: popChip === c }" type="button" @click="popChip = c">{{ c }}</button>
+                </div>
+              </div>
               <div class="cb-pop-list">
                 <button v-for="e in popExperts" :key="e.id" class="cb-pop-item" :class="{ on: chatState.selectedExpert?.id === e.id }" type="button" @click="pickExpert(e)">
                   <span class="bp-ava" :style="{ background: PLATFORM_COLOR[e.platform] || '#00A83E' }">{{ (PLATFORM_INITIAL[e.platform] || 'E') }}</span>
@@ -364,6 +397,14 @@ onBeforeUnmount(() => {
               <div class="cb-pop-search">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
                 <input ref="skillSearchEl" v-model="popSearch" type="text" placeholder="搜索技能" />
+              </div>
+              <div class="cb-pop-filters">
+                <div class="seg-track">
+                  <button v-for="p in POP_PLATFORMS" :key="p" class="seg-btn" :class="{ on: popPlatform === p }" type="button" @click="selectPopPlatform(p)">{{ p }}</button>
+                </div>
+                <div class="cb-pop-scenes">
+                  <button v-for="c in popScenarios" :key="c" class="home-chip" :class="{ on: popChip === c }" type="button" @click="popChip = c">{{ c }}</button>
+                </div>
               </div>
               <div class="cb-pop-list">
                 <button v-for="s in popSkills" :key="s.id" class="cb-pop-item" :class="{ on: chatState.selectedSkill?.id === s.id }" type="button" @click="pickSkill(s)">
