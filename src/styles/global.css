@@ -3978,7 +3978,7 @@
 /* 卡片网格 */
 .ep-card-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 14px;
 }
 .ep-card {
@@ -4360,7 +4360,7 @@
 .dir-chip:hover { background: #e0e5e2; color: #171b19; }
 .dir-chip.on { background: #00A83E; color: #fff; font-weight: 600; }
 .dir-chip.on:hover { background: #008F35; }
-.dir-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.dir-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .dir-card { position: relative; display: flex; flex-direction: column; align-items: stretch; padding: 14px 16px; border-radius: 12px; background: #fff; }
 .dir-card:hover { box-shadow: 0 8px 22px rgba(0,0,0,.06); }
 .dir-body { display: flex; align-items: flex-start; flex: 1; min-width: 0; gap: 12px; }
