@@ -36,20 +36,20 @@ const homeScenarios = computed(() => {
 })
 const homeExperts = computed(() => {
   const list = expertState.experts.filter(e => e.source === 'official' && matchesHomePlatform(e))
-  if (homeChip.value === '推荐') return list.slice(0, 6)
-  return list.filter(e => e.category === homeChip.value || e.tags.includes(homeChip.value)).slice(0, 9)
+  if (homeChip.value === '推荐') return list.slice(0, 8)
+  return list.filter(e => e.category === homeChip.value || e.tags.includes(homeChip.value)).slice(0, 16)
 })
 const homeSkills = computed(() => {
   const list = expertState.skills.filter(s => s.source === 'official' && matchesHomePlatform(s))
-  if (homeChip.value === '推荐') return list.slice(0, 6)
-  return list.filter(s => s.scenario === homeChip.value || s.tags.includes(homeChip.value)).slice(0, 9)
+  if (homeChip.value === '推荐') return list.slice(0, 8)
+  return list.filter(s => s.scenario === homeChip.value || s.tags.includes(homeChip.value)).slice(0, 16)
 })
 function selectHomePlatform(value: string) {
   homePlatform.value = value
   if (!homeScenarios.value.includes(homeChip.value)) homeChip.value = '推荐'
 }
-/* —— hero 卡片分页：每页 2 行 6 张，超出左右翻页 —— */
-const HOME_PAGE_SIZE = 6
+/* —— hero 卡片分页：每页 4 行 8 张（两列），超出左右翻页 —— */
+const HOME_PAGE_SIZE = 8
 const homePage = ref(0)
 const homeActiveList = computed(() => homeTab.value === 'expert' ? homeExperts.value : homeSkills.value)
 const homePageCount = computed(() => Math.max(1, Math.ceil(homeActiveList.value.length / HOME_PAGE_SIZE)))
