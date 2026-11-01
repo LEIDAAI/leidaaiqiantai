@@ -323,26 +323,6 @@
     border-bottom: 1px solid var(--border-light);
     display: flex; flex-direction: column; align-items: stretch; gap: 8px;
   }
-  .new-btn {
-    flex: none;
-    width: 100%;
-    white-space: nowrap;
-    height: 36px;
-    background: var(--brand);
-    color: #fff;
-    border: 0; border-radius: 9px;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: .3px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    box-shadow: 0 2px 8px rgba(0, 168, 62, .2);
-    transition: background .15s ease, transform .15s ease, box-shadow .15s ease;
-  }
-  .new-btn:hover { background: var(--brand-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 168, 62, .28); }
-  .new-btn:active { transform: translateY(0); box-shadow: 0 1px 4px rgba(0, 168, 62, .2); }
-  .new-btn.muted { background: #fff; color: #3a4a40; border: 1px solid var(--border); box-shadow: none; }
-  .new-btn.muted:hover { background: var(--brand-soft); color: var(--brand); border-color: var(--brand); transform: none; box-shadow: none; }
   /* 左侧搜索框 */
   .left-search {
     padding: 10px 12px;
@@ -3379,29 +3359,26 @@
 /* 移动端工作台布局：统一收敛至文件末尾的 @media (max-width: 760px) 块 */
 
 /* ==================== 专家与技能工作区 ==================== */
-.left-head { display: flex; flex-direction: column; gap: 8px; padding-bottom: 10px; }
-.side-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.side-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 9px 4px 8px;
-  border: 1px solid var(--border-light);
-  border-radius: 10px;
-  background: var(--card);
-  color: #5b636b;
-  font-size: 12px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: border-color .15s ease, background .15s ease, color .15s ease, transform .15s ease;
+.left-head { display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px; }
+.lh-agent { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 2px 2px 0; }
+.lh-agent-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.lh-agent-name { font-size: 15px; font-weight: 700; color: #1c1c1c; }
+.lh-agent-sub { font-size: 11.5px; color: #9a9aa2; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.lh-agent-bulb { flex: none; margin-top: 2px; color: var(--brand); }
+.side-menu { display: flex; flex-direction: column; gap: 4px; }
+.sm-item {
+  display: flex; align-items: center; gap: 10px;
+  height: 36px; padding: 0 12px;
+  border: 1px solid transparent; border-radius: 10px;
+  background: transparent; color: #3f4642;
+  font-size: 13px; font-family: inherit; cursor: pointer; text-align: left;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
-.side-card svg { color: #8a929a; transition: color .15s ease; }
-.side-card:hover { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-dark); transform: translateY(-1px); }
-.side-card:hover svg { color: var(--brand); }
-.side-card.selected { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-dark); }
-.side-card.selected svg { color: var(--brand); }
+.sm-item svg { flex: none; color: #6b736d; transition: color .15s ease; }
+.sm-item:hover { background: #f3f6f4; color: #171b19; }
+.sm-item:hover svg { color: var(--brand); }
+.sm-item.selected { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); font-weight: 600; }
+.sm-item.selected svg { color: var(--brand); }
 
 .expert-panel {
   flex: 1;
