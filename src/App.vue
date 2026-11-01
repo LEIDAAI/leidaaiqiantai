@@ -163,7 +163,6 @@ const consumeFiltered = computed(() => filteredConsume())
 /* 订单详情抽屉 */
 const orderDetail = ref<BuyRecord | null>(null)
 function orderTypeName(t?: string) { return t === 'plan' ? '套餐订购' : '积分加油包' }
-function orderStatusLabel(item: BuyRecord) { return item.status === 'refunded' ? '已退款' : '支付成功' }
 function orderDuration(item: BuyRecord) {
   if (item.type === 'plan') return /年付/.test(item.pkg) ? '12 个月' : '1 个月'
   return '长期有效'
@@ -270,14 +269,6 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
                     <option value="pack">积分加油包</option>
                   </select>
                 </label>
-                <label class="of-field">
-                  <span>订单状态</span>
-                  <select v-model="walletState.orderStatus" @change="walletState.blockPages.buy = 1">
-                    <option value="">全部</option>
-                    <option value="paid">支付成功</option>
-                    <option value="refunded">已退款</option>
-                  </select>
-                </label>
                 <DateRangePicker :range="walletState.buyRange" @change="walletState.blockPages.buy = 1" />
               </div>
               <table class="ledger-table ot-table">
@@ -289,13 +280,12 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
                     <th style="width:96px">实付金额</th>
                     <th style="width:92px">支付方式</th>
                     <th style="width:148px">支付时间</th>
-                    <th style="width:106px">订单状态</th>
                     <th style="width:60px">操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-if="!buyPage.count">
-                    <td colspan="8" style="text-align:center;padding:24px;color:var(--text-dim)">暂无订单记录</td>
+                    <td colspan="7" style="text-align:center;padding:24px;color:var(--text-dim)">暂无订单记录</td>
                   </tr>
                   <tr v-for="item in buyPage.slice" :key="item.id">
                     <td class="lt-id">{{ item.id }}</td>
@@ -307,7 +297,6 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
                     <td class="ot-paid">{{ fmtMoney(item.paid) }}</td>
                     <td>{{ item.pay || '—' }}</td>
                     <td>{{ item.status === 'refunded' ? '—' : item.time }}</td>
-                    <td><span class="od-pill" :class="item.status === 'refunded' ? 'refund' : 'ok'">● {{ orderStatusLabel(item) }}</span></td>
                     <td><button class="ot-detail" type="button" @click="orderDetail = item">详情</button></td>
                   </tr>
                 </tbody>
@@ -330,7 +319,6 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
                     <section class="od-section">
                       <div class="od-caption">基本信息</div>
                       <div class="od-row"><span>订单编号</span><strong class="od-id">{{ orderDetail.id }}<button class="od-copy" type="button" @click="copyOrderId(orderDetail.id)">复制</button></strong></div>
-                      <div class="od-row"><span>订单状态</span><strong><span class="od-pill" :class="orderDetail.status === 'refunded' ? 'refund' : 'ok'">● {{ orderStatusLabel(orderDetail) }}</span></strong></div>
                       <div class="od-row"><span>创建时间</span><strong>{{ orderDetail.createdAt || orderDetail.time }}</strong></div>
                       <div class="od-row"><span>支付时间</span><strong>{{ orderDetail.status === 'refunded' ? '—' : orderDetail.time }}</strong></div>
                     </section>
