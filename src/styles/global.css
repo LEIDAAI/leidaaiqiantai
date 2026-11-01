@@ -4236,6 +4236,21 @@
 .cb-pop-filters .seg-btn { flex: 1 1 0; height: 26px; padding: 0 6px; font-size: 12px; }
 .cb-pop-scenes { display: flex; flex-wrap: wrap; gap: 6px; }
 .cb-pop-scenes .home-chip { height: 26px; padding: 0 11px; font-size: 12px; }
+/* 助手下拉框：composer 右下角（替换原「积分/千」位置），向上弹出右对齐 */
+.cb-assist-btn { cursor: pointer; font-family: inherit; background: none; border: 0; padding: 0; white-space: nowrap; transition: color .15s; }
+.cb-assist-btn:hover { color: #5f6660; }
+.cb-assist-btn .cb-caret { transition: transform .15s; }
+.cb-assist-btn.open .cb-caret { transform: rotate(180deg); }
+.cb-pop-wrap.assist .cb-pop { left: auto; right: 0; width: 216px; padding: 4px 0; }
+.assist-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; height: 34px; padding: 0 14px;
+  border: 0; background: none; cursor: pointer; text-align: left;
+  font-size: 12.5px; color: #262b27; font-family: inherit; white-space: nowrap;
+}
+.assist-item:hover { background: #f4f6f4; }
+.assist-item.on { color: var(--brand); font-weight: 600; background: #ecf7f0; }
+.assist-item .bp-check { opacity: 1; transform: scale(1); }
 /* 弹出过渡 */
 .pop-enter-active, .pop-leave-active { transition: opacity .16s ease, transform .16s ease; }
 .pop-enter-from, .pop-leave-to { opacity: 0; transform: translateY(6px) scale(.98); }
