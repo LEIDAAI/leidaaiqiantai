@@ -6,6 +6,7 @@ import ChatPane from './components/ChatPane.vue'
 import RightPanel from './components/RightPanel.vue'
 import Modals from './components/Modals.vue'
 import ExpertPanel from './components/ExpertPanel.vue'
+import TopNavbar from './components/TopNavbar.vue'
 import DateRangePicker from './components/DateRangePicker.vue'
 import { modals, openBuyConfirm } from './stores/modals'
 import { walletState, filteredBuy, filteredConsume, type BuyRecord } from './stores/wallet'
@@ -188,6 +189,8 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
 
 <template>
   <div class="app-container">
+    <!-- 全局固定顶部导航栏（所有页面常显吸顶） -->
+    <TopNavbar />
     <div class="work" ref="workEl">
       <!-- 左：导航（所有页面常显） -->
       <Sidebar :style="leftStyle" />
