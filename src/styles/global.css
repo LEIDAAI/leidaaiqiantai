@@ -4224,13 +4224,6 @@
 .home-chip.on:hover { background: #008F35; }
 .home-seg-row { margin-bottom: 12px; }
 .home-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.home-pager { position: relative; }
-.hp-arrow { position: absolute; z-index: 5; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid #ececec; border-radius: 50%; background: #fff; color: #555; box-shadow: 0 4px 14px rgba(0,0,0,.12); cursor: pointer; transition: color .15s ease, border-color .15s ease, opacity .15s ease, transform .15s ease; }
-.hp-arrow.prev { left: -14px; }
-.hp-arrow.next { right: -14px; }
-.hp-arrow:hover { color: var(--brand); border-color: var(--brand); transform: translateY(-50%) scale(1.06); }
-.hp-arrow:active { transform: translateY(-50%) scale(.96); }
-.hp-arrow:disabled { opacity: .3; pointer-events: none; }
 .home-card { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; border: 1px solid #ececec; border-radius: 12px; background: #fff; overflow: hidden; }
 .home-card:hover { border-color: #dcdcdc; box-shadow: 0 6px 18px rgba(0,0,0,.06); }
 .hc-head { flex: none; display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -4533,9 +4526,6 @@
   .home-hero { padding: 20px 14px 10px; }
   .home-title { font-size: 24px; line-height: 36px; letter-spacing: 0; }
   .home-sub { font-size: 12.5px; }
-  .hp-arrow { width: 30px; height: 30px; }
-  .hp-arrow.prev { left: -8px; }
-  .hp-arrow.next { right: -8px; }
   .home-grid { grid-template-columns: 1fr; }
   .home-card { flex-direction: column; align-items: stretch; gap: 10px; }
   .hc-head { flex-basis: auto; }
