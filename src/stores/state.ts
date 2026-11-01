@@ -217,6 +217,117 @@ export function writeConvIdMap(key: string, convId: string) {
   } catch (e) {}
 }
 
+/* ==================== 历史对话本地持久化兜底 ====================
+ * 接口失败 / 刷新 / 重开浏览器时，会话列表与消息从 localStorage 恢复，
+ * 保证"历史对话不丢失"。服务端可用时仍以服务端为准，本地仅兜底。
+ * ================================================================ */
+export const SESSIONS_CACHE_KEY = 'dld_sessions_v1'
+export const CONV_MSGS_CACHE_KEY = 'dld_conv_msgs_v1'
+const CONV_MSGS_MAX_CONVS = 40
+const CONV_MSGS_MAX_MSGS = 200
+const CACHE_CLIP_LEN = 200000
+
+function clipCacheStr(v: any): any {
+  return typeof v === 'string' && v.length > CACHE_CLIP_LEN ? v.slice(0, CACHE_CLIP_LEN) : v
+}
+function readCacheMap(key: string): Record<string, any> {
+  try { return JSON.parse(localStorage.getItem(key) || '{}') || {} } catch (e) { return {} }
+}
+function writeCacheMap(key: string, map: Record<string, any>) {
+  try {
+    localStorage.setItem(key, JSON.stringify(map))
+    return true
+  } catch (e) { return false }
+}
+
+// 会话列表缓存（按账号维度）
+export function readCachedSessions(accountId?: string): SessionItem[] {
+  const all = readCacheMap(SESSIONS_CACHE_KEY)
+  const arr = all[String(accountId || 'main-001')]
+  return Array.isArray(arr) ? arr : []
+}
+export function writeCachedSessions(accountId: string | undefined, list: SessionItem[]) {
+  try {
+    const key = String(accountId || 'main-001')
+    const all = readCacheMap(SESSIONS_CACHE_KEY)
+    const msgsAll = readCacheMap(CONV_MSGS_CACHE_KEY)
+    // 无消息的草稿不落盘（避免空壳条目）；其余全部保留
+    const kept = (list || []).filter((s: any) => s && s.id && (!s.draft || (Array.isArray(msgsAll[String(s.id)]) && msgsAll[String(s.id)].length)))
+    all[key] = kept.slice(0, 100).map((s: any) => ({
+      id: String(s.id),
+      convId: String(s.convId || ''),
+      appCode: String(s.appCode || ''),
+      title: String(s.title || '(无标题)'),
+      tag: String(s.tag || ''),
+      roundCount: Number(s.roundCount || 0),
+      time: String(s.time || ''),
+      timestamp: Number(s.timestamp || Date.now()),
+      draft: !!s.draft,
+      pinned: !!s.pinned,
+      snippet: String(s.snippet || '').slice(0, 200)
+    }))
+    writeCacheMap(SESSIONS_CACHE_KEY, all)
+  } catch (e) {}
+}
+// 该会话（含草稿key）是否有本地缓存消息
+export function hasCachedMessages(id: string): boolean {
+  if (!id) return false
+  const arr = readCacheMap(CONV_MSGS_CACHE_KEY)[String(id)]
+  return Array.isArray(arr) && arr.length > 0
+}
+// 消息缓存（按会话ID维度）
+export function readCachedMessages(convId: string): any[] {
+  const arr = readCacheMap(CONV_MSGS_CACHE_KEY)[String(convId || '')]
+  return Array.isArray(arr) ? arr : []
+}
+export function writeCachedMessages(convId: string, msgs: any[]) {
+  try {
+    if (!convId || !Array.isArray(msgs) || !msgs.length) return
+    const key = String(convId)
+    const all = readCacheMap(CONV_MSGS_CACHE_KEY)
+    all[key] = msgs.slice(-CONV_MSGS_MAX_MSGS).map((m: any) => {
+      if (!m || typeof m !== 'object') return m
+      return {
+        ...m,
+        liveText: clipCacheStr(m.liveText),
+        finalHtml: clipCacheStr(m.finalHtml),
+        productPreview: clipCacheStr(m.productPreview),
+        reportCardHtml: clipCacheStr(m.reportCardHtml)
+      }
+    })
+    // LRU：仅保留最近写入的 CONV_MSGS_MAX_CONVS 个会话
+    const keys = Object.keys(all).filter(k => k !== key)
+    keys.push(key)
+    const trim = () => { while (keys.length > CONV_MSGS_MAX_CONVS) { const drop = keys.shift() as string; delete all[drop] } }
+    trim()
+    if (!writeCacheMap(CONV_MSGS_CACHE_KEY, all)) {
+      // 超配额：丢弃一半旧会话后重试一次
+      keys.slice(0, Math.max(1, Math.floor(keys.length / 2))).forEach(k => delete all[k])
+      writeCacheMap(CONV_MSGS_CACHE_KEY, all)
+    }
+  } catch (e) {}
+}
+export function deleteCachedMessages(...ids: Array<string | undefined>) {
+  try {
+    const all = readCacheMap(CONV_MSGS_CACHE_KEY)
+    let changed = false
+    ids.forEach(id => { const k = String(id || ''); if (k && k in all) { delete all[k]; changed = true } })
+    if (changed) writeCacheMap(CONV_MSGS_CACHE_KEY, all)
+  } catch (e) {}
+}
+// 草稿转正式：迁移消息缓存 key（draft-xxx → conversationId）
+export function renameCachedMessages(fromId: string, toId: string) {
+  try {
+    if (!fromId || !toId || fromId === toId) return
+    const all = readCacheMap(CONV_MSGS_CACHE_KEY)
+    const src = all[String(fromId)]
+    if (!Array.isArray(src) || !src.length) return
+    all[String(toId)] = src
+    delete all[String(fromId)]
+    writeCacheMap(CONV_MSGS_CACHE_KEY, all)
+  } catch (e) {}
+}
+
 // 已访问预览的会话集合（切回时自动展开右栏）
 export function hasVisitedPreview(convId: string): boolean {
   if (!convId) return false

@@ -5,7 +5,8 @@ import { DLD, streamState } from '../api'
 import {
   appState, currentModelDef, computeCost, LAST_OPEN_CONV_KEY, ACTIVE_RESULT_TAB_KEY,
   saveConversationProducts, readConversationProducts, PRODUCT_CACHE_KEY,
-  getConversationProducts, readConvIdMap, writeConvIdMap, currentResultConversationId
+  getConversationProducts, readConvIdMap, writeConvIdMap, currentResultConversationId,
+  writeCachedMessages, hasCachedMessages
 } from './state'
 import {
   chatState, ChatMessage, makeMessage, ensureView, activeView,
@@ -200,6 +201,10 @@ export async function send(regenerate = false, silent = false, silentUi: any = n
     const lastQ = dldLqGet(convKey)
     if (lastQ) outgoingText = lastQ + '，' + text
   }
+  // Composer 指定的电商专家/技能随消息上下文一并发送
+  const expertTag = chatState.selectedExpert ? `（指定专家：${chatState.selectedExpert.name}）` : ''
+  const skillTag = chatState.selectedSkill ? `（指定技能：${chatState.selectedSkill.name}）` : ''
+  if (expertTag || skillTag) outgoingText = expertTag + skillTag + outgoingText
   view.loaded = true
 
   // 构建用户消息
@@ -212,6 +217,8 @@ export async function send(regenerate = false, silent = false, silentUi: any = n
   const attachCount = chatState.attaches.length
   chatState.attaches = []
   chatState.inputText = ''
+  chatState.selectedExpert = null
+  chatState.selectedSkill = null
 
   // 静默补检索复用首轮报告气泡
   let ai: ChatMessage
@@ -431,6 +438,11 @@ export async function send(regenerate = false, silent = false, silentUi: any = n
     if (!preserveAutoReport) appState.autoReport = null
     const timers = getTimers(ai.id)
     if (timers.sbTimer) { clearTimeout(timers.sbTimer); timers.sbTimer = undefined }
+    // 轮次结束：消息本地落盘（刷新/接口失败后历史可恢复）
+    const persistView = chatState.views[convKey]
+    if (persistView && persistView.messages.length) {
+      writeCachedMessages(persistView.convId || convKey, persistView.messages)
+    }
   }
   const showError = (msg: string) => {
     runEnded = true
@@ -464,7 +476,8 @@ export async function send(regenerate = false, silent = false, silentUi: any = n
     }
     const key = currentAccount.value.id
     const list = sessionsFor(key)
-    const newList = list.filter(s => s.id !== convKey && !s.draft)
+    // 有本地消息缓存的草稿保留（离线创建的历史不丢）
+    const newList = list.filter(s => s.id !== convKey && (!s.draft || hasCachedMessages(s.id)))
     newList.unshift({ id: conversationId, convId: conversationId, appCode, title, tag: appCode, time: '刚刚', timestamp: Date.now() })
     accountState.sessionsByAccount[key] = newList
     convKey = conversationId

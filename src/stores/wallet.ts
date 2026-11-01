@@ -5,29 +5,40 @@ import { reactive } from 'vue'
 import { appState, nowString, pad } from './state'
 import { flashToast } from '../utils/common'
 
-export interface BuyRecord { id: string; pkg: string; amount: number; time: string }
+export interface BuyRecord {
+  id: string; pkg: string; amount: number; time: string
+  type?: 'plan' | 'pack'          // 订单类型：套餐订购 / 积分加油包
+  status?: 'paid' | 'refunded'    // 订单状态（负数为退款单）
+  pay?: string                    // 支付方式
+  paid?: number | null            // 实付金额（元）
+  orig?: number | null            // 订单原价（元）
+  disc?: number | null            // 优惠金额（元）
+  createdAt?: string              // 创建时间
+}
 export interface ConsumeRecord { title: string; conv: string; coins: number; time: string }
 
 export const walletState = reactive({
   // 【对接说明】后端暂未提供充值/消耗流水接口，暂用本地演示数据
   buyLedger: [
-    { id: 'dld20260824102015842', pkg: '常用包', amount: 2000, time: '2026-08-24 10:20:15' },
-    { id: 'dld20260822184110673', pkg: '体验包', amount: 500, time: '2026-08-22 18:41:10' },
-    { id: 'dld20260818091542291', pkg: '—', amount: -200, time: '2026-08-18 09:15:42' }
+    { id: 'dld20261016093241206', pkg: '基础版（月付）', amount: 5600, time: '2026-10-16 09:32:41', type: 'plan', status: 'paid', pay: '支付宝', paid: 99, orig: 199, disc: 100, createdAt: '2026-10-16 09:32:33' },
+    { id: 'dld20260914140527831', pkg: '高级版（年付）', amount: 22000, time: '2026-09-14 14:05:27', type: 'plan', status: 'paid', pay: '微信支付', paid: 2870, orig: 3588, disc: 718, createdAt: '2026-09-14 14:05:18' },
+    { id: 'dld20260824102015842', pkg: '常用包', amount: 2000, time: '2026-08-24 10:20:15', type: 'pack', status: 'paid', pay: '微信支付', paid: 168, orig: null, disc: null, createdAt: '2026-08-24 10:20:09' },
+    { id: 'dld20260822184110673', pkg: '体验包', amount: 500, time: '2026-08-22 18:41:10', type: 'pack', status: 'paid', pay: '支付宝', paid: 45, orig: null, disc: null, createdAt: '2026-08-22 18:41:04' },
+    { id: 'dld20260818091542291', pkg: '—', amount: -200, time: '2026-08-18 09:15:42', type: 'pack', status: 'refunded', pay: '支付宝', paid: null, orig: null, disc: null, createdAt: '2026-08-18 09:15:42' }
   ] as BuyRecord[],
   consumeLedger: [
-    { title: '帮我找一下近30天的连衣裙爆款，要价格和销量对比表', conv: '近30天连衣裙爆款价格', coins: -20, time: '2026-09-21 10:12:36' },
-    { title: '夏季防晒衣现在哪些是热销款？帮我做个选品分析', conv: '夏季防晒衣热销选品', coins: -20, time: '2026-09-20 16:44:02' },
-    { title: '推荐几款厨房收纳好物，最好带销量数据', conv: '厨房收纳好物推荐', coins: -25, time: '2026-09-19 09:38:51' },
-    { title: '宠物用品这个类目帮我分析一下，重点看狗窝和猫爬架', conv: '宠物用品类目分析', coins: -20, time: '2026-09-18 15:20:14' },
-    { title: '母婴用品热销榜单整理一下，要 top20', conv: '母婴用品热销榜单', coins: -30, time: '2026-09-17 11:05:47' },
-    { title: '秋冬男装外套的流行趋势是什么？帮我盘一盘', conv: '秋冬男装外套趋势', coins: -20, time: '2026-09-16 14:52:29' },
-    { title: '帮我出一份家居香薰的选品报告，侧重性价比', conv: '家居香薰选品报告', coins: -25, time: '2026-09-15 10:31:08' },
-    { title: '户外露营装备有哪些蓝海机会？帮我挖掘一下', conv: '户外露营装备挖掘', coins: -20, time: '2026-09-15 08:47:55' },
-    { title: '美妆工具类目的蓝海词帮我分析下', conv: '美妆工具蓝海词分析', coins: -20, time: '2026-09-10 17:23:41' },
-    { title: '汽车内饰爆品帮我盘点一下，要带价格带分布', conv: '汽车内饰爆品盘点', coins: -35, time: '2026-09-08 13:09:26' },
-    { title: '数码配件的价格带怎么分布的？帮我分析', conv: '数码配件价格带分析', coins: -20, time: '2026-09-05 19:40:13' },
-    { title: '健康食品类目帮我调研一下，侧重跨境电商', conv: '健康食品类目调研', coins: -20, time: '2026-09-01 12:28:07' }
+    { title: '帮我找一下近30天的连衣裙爆款，要价格和销量对比表', conv: '近30天连衣裙爆款价格', coins: -20, time: '2026-10-31 10:12:36' },
+    { title: '夏季防晒衣现在哪些是热销款？帮我做个选品分析', conv: '夏季防晒衣热销选品', coins: -20, time: '2026-10-30 16:44:02' },
+    { title: '推荐几款厨房收纳好物，最好带销量数据', conv: '厨房收纳好物推荐', coins: -25, time: '2026-10-29 09:38:51' },
+    { title: '宠物用品这个类目帮我分析一下，重点看狗窝和猫爬架', conv: '宠物用品类目分析', coins: -20, time: '2026-10-28 15:20:14' },
+    { title: '母婴用品热销榜单整理一下，要 top20', conv: '母婴用品热销榜单', coins: -30, time: '2026-10-27 11:05:47' },
+    { title: '秋冬男装外套的流行趋势是什么？帮我盘一盘', conv: '秋冬男装外套趋势', coins: -20, time: '2026-10-26 14:52:29' },
+    { title: '帮我出一份家居香薰的选品报告，侧重性价比', conv: '家居香薰选品报告', coins: -25, time: '2026-10-24 10:31:08' },
+    { title: '户外露营装备有哪些蓝海机会？帮我挖掘一下', conv: '户外露营装备挖掘', coins: -20, time: '2026-10-23 08:47:55' },
+    { title: '美妆工具类目的蓝海词帮我分析下', conv: '美妆工具蓝海词分析', coins: -20, time: '2026-10-18 17:23:41' },
+    { title: '汽车内饰爆品帮我盘点一下，要带价格带分布', conv: '汽车内饰爆品盘点', coins: -35, time: '2026-10-15 13:09:26' },
+    { title: '数码配件的价格带怎么分布的？帮我分析', conv: '数码配件价格带分析', coins: -20, time: '2026-10-08 19:40:13' },
+    { title: '健康食品类目帮我调研一下，侧重跨境电商', conv: '健康食品类目调研', coins: -20, time: '2026-10-03 12:28:07' }
   ] as ConsumeRecord[],
   pageSize: 10,
   blockPages: { buy: 1, consume: 1 } as Record<string, number>,
@@ -43,6 +54,8 @@ export const walletState = reactive({
   ] as Array<{ name: string; coins: number; price: number | null; yearlyPrice: number; compareMonthly: number; saving: number; modelCost: string[]; limits: string[]; features: string[]; featured: boolean; selected?: boolean }>,
   packageTip: '当前套餐信息以账号实际权益为准',
   buyRange: { start: '', end: '' },
+  orderType: '' as '' | 'plan' | 'pack',   // 订单类型筛选：全部 / 套餐订购 / 加油包
+  orderStatus: '' as '' | 'paid' | 'refunded', // 订单状态筛选：全部 / 支付成功 / 已退款
   consumeRange: { start: '', end: '' },
   consumeChip: '7d'
 })
@@ -97,14 +110,22 @@ export function makeOrderId(): string {
   return id
 }
 
-export function confirmPay(pkg: { name: string; coins: number; price: number | null }) {
+export function confirmPay(pkg: { name: string; coins: number; price: number | null; pay?: string }) {
   if (!pkg) return
   appState.totalCoins += pkg.coins
+  const now = nowString()
   walletState.buyLedger.unshift({
     id: makeOrderId(),
     pkg: pkg.name,
     amount: pkg.coins,
-    time: nowString()
+    time: now,
+    type: 'pack',
+    status: 'paid',
+    pay: pkg.pay || '支付宝',
+    paid: pkg.price,
+    orig: null,
+    disc: null,
+    createdAt: now
   })
   walletState.blockPages.buy = 1
   closeBuyConfirmAndToast(pkg.coins)
@@ -117,7 +138,9 @@ function closeBuyConfirmAndToast(coins: number) {
 export function filteredBuy(): BuyRecord[] {
   const { start, end } = walletState.buyRange
   return walletState.buyLedger.filter(item => {
-    if (item.amount < 0) return false
+    if (walletState.orderStatus === 'refunded') { if (item.amount >= 0) return false }
+    else if (item.amount < 0) return false // 默认视图不展示退款单
+    if (walletState.orderType && item.type !== walletState.orderType) return false
     const day = (item.time || '').slice(0, 10)
     if (start && day < start) return false
     if (end && day > end) return false

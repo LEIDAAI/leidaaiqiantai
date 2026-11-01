@@ -1,21 +1,17 @@
 <script setup lang="ts">
-/* 弹层集合：会话右键菜单 / 子账号设置 / 积分中心 / 积分明细（含日期筛选与分页）/
- * 购买确认 / 反馈 / 删除确认 / 重命名。DOM 类名与文案与原版一致，交互对齐 index.html。 */
+/* 弹层集合：会话右键菜单 / 子账号设置 / 积分中心 / 购买确认 / 反馈 / 删除确认 / 重命名。
+ * DOM 类名与文案与原版一致，交互对齐 index.html。 */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
-  modals, closeSettings, closeWallet, openWallet, openLedgerBlock, closeLedger,
+  modals, closeSettings, closeWallet,
   closeFeedback, openDeleteConfirm, closeDeleteConfirm, openRename, closeRename,
-  closeBuyConfirm, openBuyConfirm, closeConvMenu
+  closeBuyConfirm, openBuyConfirm, closeConvMenu, openAccount
 } from '../stores/modals'
 import { accountState, saveSubSettings } from '../stores/account'
-import { walletState, confirmPay, filteredBuy, filteredConsume } from '../stores/wallet'
+import { walletState, confirmPay } from '../stores/wallet'
 import { chatState, togglePin, commitRename, deleteConversation } from '../stores/chat'
 import { appState } from '../stores/state'
 import { flashToast } from '../utils/common'
-import DateRangePicker from './DateRangePicker.vue'
-
-const pad = (n: number) => String(n).padStart(2, '0')
-const fmtDay = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
 /* ==================== 会话右键菜单 ==================== */
 const pinLabel = computed(() => modals.convMenuTarget && modals.convMenuTarget.pinned ? '取消置顶' : '置顶任务')
@@ -54,81 +50,113 @@ function onSettingsSave() {
   closeSettings()
 }
 
-/* ==================== 积分中心 ==================== */
+/* ==================== 积分中心（双栏购买页） ==================== */
 const walletBalance = computed(() => appState.totalCoins.toLocaleString())
-const walletRuns = computed(() => Math.floor(appState.totalCoins / 24))
+// 购买账号：主账号掩码手机号
+const buyAccount = computed(() => {
+  const main = accountState.accounts.find(a => a.role === 'main')
+  return main ? main.phone : '176****6666'
+})
 function onSelectPkg(p: { selected?: boolean }) {
   walletState.packages.forEach(x => { x.selected = false })
   p.selected = true
 }
-
-/* ==================== 积分明细 ==================== */
-const ledgerTitle = computed(() => modals.ledgerBlock === 'buy' ? '充值明细' : '消耗明细')
-const ledgerSub = computed(() => modals.ledgerBlock === 'buy' ? '购买积分记录' : '对话任务积分消耗记录')
-function switchLedgerBlock(block: 'buy' | 'consume') {
-  modals.ledgerBlock = block
-  walletState.blockPages[block] = 1
+// 自定义积分包：拖动滑块即切换为自定义模式（3万—10万，步进1万）
+const customCoins = ref(50000)
+const CUSTOM_RATE = 0.015 // 演示单价：元/积分
+const customPrice = computed(() => Math.round(customCoins.value * CUSTOM_RATE))
+function onCustomSlide() {
+  walletState.packages.forEach(x => { x.selected = false })
 }
-
-const CONSUME_CHIPS = [
-  { key: 'today', label: '今天' },
-  { key: '7d', label: '7天' },
-  { key: '30d', label: '30天' }
-]
-function applyConsumeRange(key: string) {
-  const end = new Date()
-  const start = new Date(end)
-  if (key === '7d') start.setDate(start.getDate() - 6)
-  else if (key === '30d') start.setDate(start.getDate() - 29)
-  walletState.consumeRange.start = fmtDay(start)
-  walletState.consumeRange.end = fmtDay(end)
-  walletState.consumeChip = key
+const payMethod = ref<'微信支付' | '支付宝支付'>('微信支付')
+// 当前订单：选中的固定包，否则为自定义包
+const activePkg = computed(() => walletState.packages.find(p => p.selected) || null)
+const activeCoins = computed(() => activePkg.value ? activePkg.value.coins : customCoins.value)
+const activePrice = computed(() => activePkg.value ? (activePkg.value.price || 0) : customPrice.value)
+const activeOriginPrice = computed(() => activePrice.value * 2)
+const activeDiscount = computed(() => activeOriginPrice.value - activePrice.value)
+// 有效期：购买起 365 天，到期次日清零
+function fmtDay(ms: number) {
+  const d = new Date(ms)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
-function onChip(key: string) {
-  applyConsumeRange(key)
-  walletState.blockPages.consume = 1
+const expireDate = computed(() => fmtDay(Date.now() + 365 * 864e5))
+const clearDate = computed(() => fmtDay(Date.now() + 366 * 864e5))
+function onBuy() {
+  openBuyConfirm({
+    name: activePkg.value ? activePkg.value.name : `自定义积分包（${customCoins.value.toLocaleString()} 积分）`,
+    coins: activeCoins.value,
+    price: activePrice.value,
+    pay: payMethod.value
+  })
 }
-function onConsumeRangeChange() {
-  walletState.consumeChip = '' // 手动选区间/清除后取消 chips 高亮
-  walletState.blockPages.consume = 1
-}
-
-// 分页（computed 内只做显示层 clamp，写回 state 由点击处理负责）
-const buyFiltered = computed(() => filteredBuy())
-const buyPage = computed(() => {
-  const list = buyFiltered.value
-  const total = Math.max(1, Math.ceil(list.length / walletState.pageSize))
-  const cur = Math.min(Math.max(walletState.blockPages.buy || 1, 1), total)
-  return {
-    total, cur, count: list.length,
-    coins: list.reduce((s, x) => s + (x.amount > 0 ? x.amount : 0), 0).toLocaleString(),
-    slice: list.slice((cur - 1) * walletState.pageSize, cur * walletState.pageSize)
-  }
-})
-const consumeFiltered = computed(() => filteredConsume())
-const consumePage = computed(() => {
-  const list = consumeFiltered.value
-  const total = Math.max(1, Math.ceil(list.length / walletState.pageSize))
-  const cur = Math.min(Math.max(walletState.blockPages.consume || 1, 1), total)
-  return {
-    total, cur, count: list.length,
-    coins: list.reduce((s, x) => s + Number(x.coins || 0), 0).toLocaleString(),
-    slice: list.slice((cur - 1) * walletState.pageSize, cur * walletState.pageSize)
-  }
-})
-function setBuyPage(p: number) { walletState.blockPages.buy = p }
-function setConsumePage(p: number) { walletState.blockPages.consume = p }
+function goBenefits() { openAccount() } // navigatePage 内部会关闭积分中心
 
 /* ==================== 购买确认 ==================== */
 const pendingPkg = computed(() => modals.buyPendingPkg)
 const confirmPkgText = computed(() => pendingPkg.value ? (pendingPkg.value.name || '充值包') : '')
 const confirmCoinsText = computed(() => pendingPkg.value ? '+' + Number(pendingPkg.value.coins || 0).toLocaleString() : '')
-const confirmPriceText = computed(() => {
-  if (!pendingPkg.value) return ''
-  return pendingPkg.value.price ? '¥' + pendingPkg.value.price : '价格待定'
+/* ==================== 订单支付（扫码支付） ==================== */
+const paySeconds = ref(15 * 60)
+let payTimer: number | null = null
+const payCountdownText = computed(() => Math.floor(paySeconds.value / 60) + ':' + String(paySeconds.value % 60).padStart(2, '0'))
+const payOrderNo = ref('')
+const payType = computed(() => (pendingPkg.value?.pay || '微信支付').includes('支付宝') ? '支付宝' : '微信')
+const payExpireText = computed(() => {
+  const d = new Date(Date.now() + 365 * 864e5)
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
 })
-function onPay() {
+function startPayTimer() {
+  stopPayTimer()
+  paySeconds.value = 15 * 60
+  payOrderNo.value = String(Date.now()) + String(Math.floor(Math.random() * 1e6)).padStart(6, '0')
+  payTimer = window.setInterval(() => {
+    paySeconds.value--
+    if (paySeconds.value <= 0) {
+      closeBuyConfirm()
+      flashToast('支付超时，订单已自动取消')
+    }
+  }, 1000)
+}
+function stopPayTimer() { if (payTimer) { clearInterval(payTimer); payTimer = null } }
+watch(() => modals.buyConfirm, v => {
+  if (v) { startPayTimer(); nextTick(drawPayQr) } else stopPayTimer()
+})
+/* 演示二维码：确定性伪随机点阵 + 三角定位标 + 微信/支付宝中心 logo */
+function drawPayQr() {
+  const cv = document.getElementById('payQrCanvas') as HTMLCanvasElement | null
+  if (!cv) return
+  const ctx = cv.getContext('2d')
+  if (!ctx) return
+  const N = 29, S = cv.width / N
+  let seed = 0
+  for (const ch of payOrderNo.value) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0
+  const rand = () => { seed = (seed * 1103515245 + 12345) >>> 0; return seed / 4294967296 }
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height)
+  ctx.fillStyle = '#1f2329'
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const inFinder = (x < 8 && y < 8) || (x > N - 9 && y < 8) || (x < 8 && y > N - 9)
+    const inLogo = x > 10 && x < 18 && y > 10 && y < 18
+    if (!inFinder && !inLogo && rand() > 0.52) ctx.fillRect(x * S, y * S, S, S)
+  }
+  const finder = (fx: number, fy: number) => {
+    ctx.fillStyle = '#1f2329'; ctx.fillRect(fx * S, fy * S, 7 * S, 7 * S)
+    ctx.fillStyle = '#fff'; ctx.fillRect((fx + 1) * S, (fy + 1) * S, 5 * S, 5 * S)
+    ctx.fillStyle = '#1f2329'; ctx.fillRect((fx + 2) * S, (fy + 2) * S, 3 * S, 3 * S)
+  }
+  finder(0, 0); finder(N - 7, 0); finder(0, N - 7)
+  const c = cv.width / 2, r = 2.6 * S
+  ctx.fillStyle = payType.value === '支付宝' ? '#1677ff' : '#00a83e'
+  ctx.beginPath(); ctx.arc(c, c, r, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = '#fff'
+  ctx.font = 'bold ' + Math.round(2.4 * S) + 'px sans-serif'
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+  ctx.fillText(payType.value === '支付宝' ? '支' : '微', c, c + 1)
+}
+/* 演示：点击二维码模拟支付成功（真实链路走 confirmPay 记账 + toast） */
+function onQrPaid() {
   if (!modals.buyPendingPkg) return
+  stopPayTimer()
   confirmPay(modals.buyPendingPkg)
   closeBuyConfirm()
 }
@@ -183,8 +211,7 @@ function onDeleteOk() {
 /* ==================== Escape 统一处理 ==================== */
 function onEsc(e: KeyboardEvent) {
   if (e.key !== 'Escape') return
-  if (modals.ledger) { closeLedger(); openWallet() }
-  else if (modals.wallet) closeWallet()
+  if (modals.wallet) closeWallet()
   if (modals.settings) closeSettings()
   if (modals.buyConfirm) closeBuyConfirm()
   if (modals.feedback) closeFeedback(false)
@@ -193,7 +220,6 @@ function onEsc(e: KeyboardEvent) {
 }
 onMounted(() => {
   document.addEventListener('keydown', onEsc)
-  applyConsumeRange('7d') // 默认近7天（对齐原版初始化）
 })
 onBeforeUnmount(() => document.removeEventListener('keydown', onEsc))
 </script>
@@ -273,31 +299,73 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onEsc))
     </div>
   </div>
 
-  <!-- 积分中心弹窗 -->
+  <!-- 积分中心弹窗（双栏购买页） -->
   <div class="wallet-modal" :class="{ open: modals.wallet }" role="dialog" aria-modal="true" @click.self="closeWallet">
     <div class="wallet-dialog">
-      <div class="wallet-head">
-        <span class="wallet-head-icon">🪙</span>
-        <div><div class="wh-title">积分中心</div><div class="wh-sub">用于商品搜索、分析与文件处理</div></div>
-        <div class="wallet-links">
-          <button class="wallet-link buy" @click="closeWallet(); openLedgerBlock('buy')"><span class="wl-ic">+</span>充值明细</button>
-          <button class="wallet-link consume" @click="closeWallet(); openLedgerBlock('consume')"><span class="wl-ic">−</span>消耗明细</button>
+      <!-- 顶部品牌渐变头 -->
+      <div class="wx-head">
+        <div class="wx-user">
+          <div class="wx-avatar">雷</div>
+          <div class="wx-user-info">
+            <div class="wx-user-name">{{ buyAccount }} <span class="wx-plan-badge">{{ walletState.currentPackage }}</span></div>
+            <div class="wx-user-sub">当前可用 <strong>{{ walletBalance }}</strong> 积分</div>
+          </div>
         </div>
+        <button class="wx-benefits" @click="goBenefits">查看全部权益 ›</button>
         <button class="wallet-close" aria-label="关闭积分中心" @click="closeWallet">×</button>
       </div>
-      <div class="wallet-content">
-        <div class="wallet-summary">
-          <div><div class="ws-label">当前可用积分</div><div class="ws-balance"><span>{{ walletBalance }}</span> <small>积分</small></div></div>
-          <div class="ws-tip">预计可完成约 <strong>{{ walletRuns }}</strong> 次标准选品分析</div>
-        </div>
-        <div class="wallet-section-title"><span>充值套餐</span><small>{{ walletState.packageTip }}</small></div>
-        <div class="wallet-packages">
-          <div v-for="(p, i) in walletState.packages" :key="i" class="wallet-package" :class="{ selected: p.selected }" @click="onSelectPkg(p)">
-            <div class="wp-name">{{ p.name }}</div>
-            <div class="wp-coins">{{ p.coins.toLocaleString() }} 积分</div>
-            <div class="wp-price">{{ p.price != null ? '¥' + p.price : '价格待定' }}</div>
-            <div class="wp-actions"><button class="wp-action wp-buy" @click.stop="openBuyConfirm(p)">立即购买</button></div>
+      <div class="wx-body">
+        <!-- 左栏：购买积分包 -->
+        <div class="wx-left">
+          <div class="wx-sec-title">购买积分包</div>
+          <div class="wx-packs">
+            <div v-for="(p, i) in walletState.packages" :key="i" class="wx-pack" :class="{ selected: p.selected }" @click="onSelectPkg(p)">
+              <span class="wx-pack-badge">12个月</span>
+              <div class="wx-pack-name">{{ p.name }}</div>
+              <div class="wx-pack-coins">{{ p.coins.toLocaleString() }}<small> 积分</small></div>
+              <div class="wx-pack-price">{{ p.price != null ? '¥' + p.price : '价格待定' }}</div>
+              <span v-if="p.selected" class="wx-pack-check">✓</span>
+            </div>
           </div>
+          <div class="wx-custom" :class="{ active: !activePkg }">
+            <div class="wx-custom-head">
+              <span>自定义积分包</span>
+              <span class="wx-custom-val">{{ customCoins.toLocaleString() }} 积分 · ¥{{ customPrice }}</span>
+            </div>
+            <input class="wx-slider" type="range" min="30000" max="100000" step="10000" v-model.number="customCoins" @input="onCustomSlide" aria-label="自定义积分数量">
+            <div class="wx-scale"><span>3万</span><span>5万</span><span>7.5万</span><span>10万</span></div>
+          </div>
+          <div class="wx-expire">🗓 积分包有效期至 {{ expireDate }}（购买后 365 天内有效，到期未使用部分次日清零）</div>
+          <div class="wx-sec-title" style="margin-top:16px">支付方式</div>
+          <div class="wx-pays">
+            <button type="button" class="wx-pay" :class="{ active: payMethod === '微信支付' }" @click="payMethod = '微信支付'">
+              <span class="wx-pay-ic wx-pay-wx">微</span>微信支付
+            </button>
+            <button type="button" class="wx-pay" :class="{ active: payMethod === '支付宝支付' }" @click="payMethod = '支付宝支付'">
+              <span class="wx-pay-ic wx-pay-zfb">支</span>支付宝支付
+            </button>
+          </div>
+        </div>
+        <!-- 右栏：订单详情 -->
+        <div class="wx-right">
+          <div class="wx-sec-title">订单详情</div>
+          <div class="wx-order">
+            <div class="wx-orow"><span>购买账号</span><strong>{{ buyAccount }}</strong></div>
+            <div class="wx-orow"><span>订单类型</span><strong>积分加油包</strong></div>
+            <div class="wx-orow"><span>套餐名称</span><strong>{{ activePkg ? activePkg.name : '自定义积分包' }}</strong></div>
+            <div class="wx-orow"><span>获得</span><strong class="wx-green">+{{ activeCoins.toLocaleString() }} 积分</strong></div>
+            <div class="wx-orow"><span>生效时间</span><strong>支付成功后立即生效</strong></div>
+            <div class="wx-orow"><span>到期日期</span><strong>{{ expireDate }}</strong></div>
+            <div class="wx-orow"><span>清零日期</span><strong>{{ clearDate }}</strong></div>
+          </div>
+          <div class="wx-amounts">
+            <div class="wx-orow"><span>订单原价</span><span>¥{{ activeOriginPrice }}</span></div>
+            <div class="wx-orow"><span>优惠金额</span><span class="wx-green">-¥{{ activeDiscount }}</span></div>
+            <div class="wx-orow"><span>应付金额</span><strong>¥{{ activePrice }}</strong></div>
+          </div>
+          <button type="button" class="wx-pay-btn" @click="onBuy">确认支付 ¥{{ activePrice }}</button>
+          <div class="wx-agree">支付即代表同意<a>《服务协议》</a>与<a>《付费授权协议》</a></div>
+          <div class="wx-note">虚拟商品，一经售出不支持退款</div>
         </div>
       </div>
     </div>
@@ -320,116 +388,30 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onEsc))
     </div>
   </div>
 
-  <!-- 积分明细弹窗（独立页，可按入口切换充值/消耗） -->
-  <div class="wallet-modal" :class="{ open: modals.ledger }" role="dialog" aria-modal="true" @click.self="closeLedger">
-    <div class="wallet-dialog">
-      <div class="wallet-head">
-        <button class="wallet-back" aria-label="返回积分中心" @click="closeLedger(); openWallet()">‹</button>
-        <div><div class="wh-title">{{ ledgerTitle }}</div><div class="wh-sub">{{ ledgerSub }}</div></div>
-        <div class="wallet-links">
-          <button class="wallet-link buy" :class="{ active: modals.ledgerBlock === 'buy' }" @click="switchLedgerBlock('buy')"><span class="wl-ic">+</span>充值明细</button>
-          <button class="wallet-link consume" :class="{ active: modals.ledgerBlock === 'consume' }" @click="switchLedgerBlock('consume')"><span class="wl-ic">−</span>消耗明细</button>
-        </div>
-        <button class="wallet-close" aria-label="关闭积分明细" @click="closeLedger">×</button>
-      </div>
-      <div class="wallet-content">
-        <section class="ledger-block" v-show="modals.ledgerBlock === 'buy'">
-          <div class="ledger-block-head"><h3>充值明细</h3><small>购买积分记录</small></div>
-          <div class="ledger-filter lf-buy">
-            <DateRangePicker :range="walletState.buyRange" @change="walletState.blockPages.buy = 1" />
-          </div>
-          <table class="ledger-table">
-            <thead>
-              <tr>
-                <th style="width:190px">订单号</th>
-                <th>充值套餐</th>
-                <th style="width:150px">支付时间</th>
-                <th style="width:90px">积分数量</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="!buyPage.count">
-                <td colspan="4" style="text-align:center;padding:24px;color:var(--text-dim)">暂无充值记录</td>
-              </tr>
-              <tr v-for="item in buyPage.slice" :key="item.id">
-                <td class="lt-id">{{ item.id }}</td>
-                <td>{{ item.pkg || '—' }}</td>
-                <td>{{ item.time }}</td>
-                <td class="lt-amount" :class="item.amount >= 0 ? 'plus' : 'minus'">{{ item.amount >= 0 ? '+' : '' }}{{ item.amount.toLocaleString() }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="ledger-summary">
-            <div class="ls-total">共 <strong>{{ buyPage.count }}</strong> 条 · 累计 <strong>{{ buyPage.coins }}</strong> 积分</div>
-            <div class="ledger-pager">
-              <button :disabled="buyPage.cur <= 1" @click="setBuyPage(buyPage.cur - 1)">‹</button>
-              <button v-for="i in buyPage.total" :key="i" :class="{ active: i === buyPage.cur }" @click="setBuyPage(i)">{{ i }}</button>
-              <button :disabled="buyPage.cur >= buyPage.total" @click="setBuyPage(buyPage.cur + 1)">›</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="ledger-block" v-show="modals.ledgerBlock === 'consume'">
-          <div class="ledger-block-head"><h3>消耗明细</h3><small>对话任务积分消耗记录</small></div>
-          <div class="ledger-filter lf-consume">
-            <div class="lf-chips">
-              <button v-for="c in CONSUME_CHIPS" :key="c.key" class="chip" :class="{ active: walletState.consumeChip === c.key }" type="button" @click="onChip(c.key)">{{ c.label }}</button>
-            </div>
-            <DateRangePicker :range="walletState.consumeRange" @change="onConsumeRangeChange" />
-          </div>
-          <table class="ledger-table">
-            <thead>
-              <tr>
-                <th>对话记录</th>
-                <th style="width:150px">创建时间</th>
-                <th style="width:160px">来源对话</th>
-                <th style="width:90px">积分消耗</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="!consumePage.count">
-                <td colspan="4" style="text-align:center;padding:24px;color:var(--text-dim)">暂无消耗记录</td>
-              </tr>
-              <tr v-for="(item, i) in consumePage.slice" :key="i">
-                <td class="ct-msg" :title="item.title">{{ item.title }}</td>
-                <td>{{ item.time }}</td>
-                <td><span class="conv-tag" :title="'来源会话：' + item.conv"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg><b>{{ item.conv }}</b></span></td>
-                <td class="lt-amount minus">{{ item.coins.toLocaleString() }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="ledger-summary">
-            <div class="ls-total">共 <strong>{{ consumePage.count }}</strong> 条 · 累计消耗 <strong>{{ consumePage.coins }}</strong> 积分</div>
-            <div class="ledger-pager">
-              <button :disabled="consumePage.cur <= 1" @click="setConsumePage(consumePage.cur - 1)">‹</button>
-              <button v-for="i in consumePage.total" :key="i" :class="{ active: i === consumePage.cur }" @click="setConsumePage(i)">{{ i }}</button>
-              <button :disabled="consumePage.cur >= consumePage.total" @click="setConsumePage(consumePage.cur + 1)">›</button>
-            </div>
-          </div>
-        </section>
-      </div>
-    </div>
-  </div>
-
-  <!-- 购买确认弹窗 -->
+  <!-- 订单支付弹窗（扫码支付） -->
   <div class="confirm-modal" :class="{ open: modals.buyConfirm }" role="dialog" aria-modal="true" @click.self="closeBuyConfirm">
-    <div class="confirm-dialog">
-      <div class="confirm-head">
-        <span class="ci-ic">🪙</span>
-        <div>
-          <div class="ci-title">确认充值</div>
-          <div class="ci-sub">演示环境，余额仅供前端验证使用</div>
+    <div class="pay-dialog">
+      <div class="pay-head">
+        <span class="pay-title">订单支付</span>
+        <button class="pay-close" type="button" aria-label="关闭" @click="closeBuyConfirm">×</button>
+      </div>
+      <div class="pay-amount-line">支付金额：<strong class="pay-amount">¥{{ pendingPkg ? Number(pendingPkg.price || 0).toFixed(2) : '0.00' }}</strong></div>
+      <div class="pay-count-line">剩余支付时间 <b :class="{ 'pay-urgent': paySeconds <= 60 }">{{ payCountdownText }}</b>，否则订单将自动取消！</div>
+      <div class="pay-body">
+        <div class="pay-qr-wrap">
+          <canvas id="payQrCanvas" class="pay-qr" width="220" height="220" title="演示环境：点击二维码模拟支付成功" @click="onQrPaid"></canvas>
+          <div class="pay-qr-tip">▦ 打开手机{{ payType }}扫一扫继续付款</div>
+          <div class="pay-qr-demo">（演示：点击二维码模拟支付成功）</div>
         </div>
-      </div>
-      <div class="confirm-body">
-        <div class="confirm-row"><span>套餐名称</span><strong>{{ confirmPkgText }}</strong></div>
-        <div class="confirm-row"><span>获得积分</span><span class="cr-amount">{{ confirmCoinsText }}</span></div>
-        <div class="confirm-row"><span>支付金额</span><span class="cr-price">{{ confirmPriceText }}</span></div>
-        <div class="confirm-row"><span>支付方式</span><strong>微信支付</strong></div>
-      </div>
-      <div class="confirm-foot">
-        <button @click="closeBuyConfirm">取消</button>
-        <button class="primary" @click="onPay">确认支付</button>
+        <div class="pay-info">
+          <div class="pi-row"><span>订单号码：</span><span>{{ payOrderNo }}</span></div>
+          <div class="pi-row"><span>购买账号：</span><span>{{ buyAccount }}</span></div>
+          <div class="pi-row"><span>订单类型：</span><span>购买加油包</span></div>
+          <div class="pi-row"><span>购买套餐：</span><span>{{ confirmPkgText }}</span></div>
+          <div class="pi-row"><span>获　　得：</span><span>{{ confirmCoinsText.replace('+', '') }} 积分</span></div>
+          <div class="pi-row"><span>生效日期：</span><span>立即生效</span></div>
+          <div class="pi-row"><span>到期时间：</span><span>{{ payExpireText }}</span></div>
+        </div>
       </div>
     </div>
   </div>

@@ -21,27 +21,82 @@ const view = activeView
 const chatHero = computed(() => !view.value || view.value.messages.length === 0)
 const homeTab = ref<'expert' | 'skill'>('expert')
 const homeChip = ref('推荐')
-const expertChips = ['全部', '推荐', '选品上架', '店铺运营', '商品管理', '评论分析']
-const skillChips = ['全部', '推荐', '选品与开发', '产品运营', '数据分析', '选品/热点']
+const homePlatform = ref('全部')
+const homePlatforms = ['全部', '1688', 'OZON', '亚马逊', 'TEMU']
+const platformAliases: Record<string, string[]> = { 'OZON': ['Ozon', 'OZON'], 'TEMU': ['Temu', 'TEMU'] }
+const matchesHomePlatform = (item: ExpertItem | SkillItem) => {
+  if (homePlatform.value === '全部') return true
+  if ('platform' in item) return (platformAliases[homePlatform.value] || [homePlatform.value]).includes(item.platform)
+  return item.tags.some(tag => (platformAliases[homePlatform.value] || [homePlatform.value]).includes(tag))
+}
+const homeScenarios = computed(() => {
+  const list = homeTab.value === 'skill' ? expertState.skills : expertState.experts
+  const values = list.filter(item => matchesHomePlatform(item)).map(item => 'platform' in item ? item.category : item.scenario).filter(Boolean) as string[]
+  return ['推荐', ...Array.from(new Set(values))]
+})
 const homeExperts = computed(() => {
-  const list = expertState.experts.filter(e => e.source === 'official')
-  if (homeChip.value === '全部') return list.slice(0, 9)
+  const list = expertState.experts.filter(e => e.source === 'official' && matchesHomePlatform(e))
   if (homeChip.value === '推荐') return list.slice(0, 6)
   return list.filter(e => e.category === homeChip.value || e.tags.includes(homeChip.value)).slice(0, 9)
 })
 const homeSkills = computed(() => {
-  const list = expertState.skills.filter(s => s.source === 'official')
-  if (homeChip.value === '全部') return list.slice(0, 9)
+  const list = expertState.skills.filter(s => s.source === 'official' && matchesHomePlatform(s))
   if (homeChip.value === '推荐') return list.slice(0, 6)
   return list.filter(s => s.scenario === homeChip.value || s.tags.includes(homeChip.value)).slice(0, 9)
 })
+function selectHomePlatform(value: string) {
+  homePlatform.value = value
+  if (!homeScenarios.value.includes(homeChip.value)) homeChip.value = '推荐'
+}
+/* —— hero 卡片分页：每页 2 行 6 张，超出左右翻页 —— */
+const HOME_PAGE_SIZE = 6
+const homePage = ref(0)
+const homeActiveList = computed(() => homeTab.value === 'expert' ? homeExperts.value : homeSkills.value)
+const homePageCount = computed(() => Math.max(1, Math.ceil(homeActiveList.value.length / HOME_PAGE_SIZE)))
+const pagedExperts = computed(() => homeExperts.value.slice(homePage.value * HOME_PAGE_SIZE, (homePage.value + 1) * HOME_PAGE_SIZE))
+const pagedSkills = computed(() => homeSkills.value.slice(homePage.value * HOME_PAGE_SIZE, (homePage.value + 1) * HOME_PAGE_SIZE))
+watch([homeTab, homeChip, homePlatform], () => { homePage.value = 0 })
+function prevHomePage() { if (homePage.value > 0) homePage.value-- }
+function nextHomePage() { if (homePage.value < homePageCount.value - 1) homePage.value++ }
 const caseItem = ref<ExpertItem | SkillItem | null>(null)
 const isCaseSkill = computed(() => !!caseItem.value && 'version' in caseItem.value)
 function useExpert(e: ExpertItem) { chatState.inputText = e.prompts?.[0] || e.desc }
 function useSkill(s: SkillItem) { chatState.inputText = s.instructions || s.desc }
 const platformColor: Record<string, string> = { '1688': '#ff6a00', 'Ozon': '#005bff', '亚马逊': '#ff9900', 'Temu': '#fb7701' }
 const platformInitial: Record<string, string> = { '1688': '1688', 'Ozon': 'O', '亚马逊': 'A', 'Temu': 'T' }
+const caseExpert = computed(() => (caseItem.value && !isCaseSkill.value) ? caseItem.value as ExpertItem : null)
+const caseSkill = computed(() => (caseItem.value && isCaseSkill.value) ? caseItem.value as SkillItem : null)
 
+/* —— 案例报告导出 —— */
+const reportEl = ref<HTMLElement | null>(null)
+const today = new Date().toLocaleDateString('zh-CN')
+const reportTitle = computed(() => caseExpert.value?.caseTitle || caseItem.value?.name || '案例报告')
+const reportMeta = computed(() => {
+  if (caseExpert.value) return `${caseExpert.value.platform} · 数据样本近 30 天 · 生成于 ${today}`
+  return caseSkill.value ? `v${caseSkill.value.version} · ${caseSkill.value.author} · 生成于 ${today}` : ''
+})
+const pdfName = computed(() => `${safeName(caseExpert.value?.caseTitle || '选品评估报告')}.pdf`)
+function safeName(v: string) { return v.replace(/[\\/:*?"<>|]/g, '-') }
+const REPORT_CSS = `*{box-sizing:border-box}body{margin:0;padding:24px 16px;background:#f2f4f2;color:#222;font-family:'PingFang SC','Microsoft YaHei','Segoe UI',system-ui,sans-serif}.doc{max-width:760px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.12)}.cr-hero{padding:26px 24px 22px;background:linear-gradient(125deg,#00b14a,#00913a 55%,#007d30);color:#fff}.cr-hero-tag{display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.18);font-size:12px}.cr-hero-title{margin-top:12px;font-size:21px;font-weight:700;line-height:1.35}.cr-hero-meta{margin-top:8px;font-size:12px;color:rgba(255,255,255,.82)}.cr-body{padding:18px 22px;display:flex;flex-direction:column;gap:18px}.cr-sec{display:flex;flex-direction:column;gap:10px}.cr-h{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#1c1c1c}.cr-h::before{content:'';width:3px;height:13px;border-radius:2px;background:#00A83E}.cr-para{margin:0;font-size:13px;line-height:1.8;color:#444}.cr-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.crm-item{padding:13px 12px;border:1px solid #edf0ed;border-radius:12px;background:#f7fbf8;text-align:center}.crm-val{font-size:20px;font-weight:700;color:#00A83E}.crm-lab{margin-top:3px;font-size:12px;color:#8a8a92}.cr-table{width:100%;border-collapse:collapse;font-size:12.5px}.cr-table th,.cr-table td{padding:9px 11px;border:1px solid #eee;text-align:left}.cr-table th{background:#f5f7f6;color:#555;font-weight:600}.cr-table tr:nth-child(even) td{background:#fafbfa}.cr-fig{margin:0;border:1px solid #ececec;border-radius:12px;overflow:hidden}.cr-fig img{display:block;width:100%}.cr-fig figcaption{padding:8px 12px;font-size:12px;color:#8a8a92}.cr-pdf{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #ececec;border-radius:12px;background:#fbfbfb}.cr-pdf-icon{flex:none;width:40px;height:46px;border-radius:6px;background:linear-gradient(160deg,#ff6b5e,#e5483a);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}.cr-pdf-name{font-size:13px;font-weight:600;color:#222}.cr-pdf-meta{margin-top:3px;font-size:12px;color:#8a8a92}.cr-steps{margin:0;padding-left:20px;font-size:13px;color:#444;line-height:1.8}.cr-output{margin:0;padding:12px 14px;border-radius:10px;background:#f6f7f8;font-size:12px;line-height:1.6;font-family:Consolas,Monaco,monospace;white-space:pre-wrap;word-break:break-all}@media print{body{background:#fff;padding:0}.doc{box-shadow:none;border-radius:0}}`
+function buildReportHtml(): string {
+  const src = reportEl.value
+  if (!src) return ''
+  const clone = src.cloneNode(true) as HTMLElement
+  clone.querySelector('.case-float')?.remove()
+  const name = caseItem.value?.name || '案例报告'
+  return `<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${safeName(name)} · 案例报告</title>\n<style>${REPORT_CSS}</style>\n</head>\n<body>\n<div class="doc">\n${clone.innerHTML}\n</div>\n</body>\n</html>`
+}
+function exportReport() {
+  const html = buildReportHtml()
+  if (!html) return
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${safeName(caseItem.value?.name || '案例报告')}-案例报告.html`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 /* —— 会话滚动 —— */
 watch(() => chatState.activeConvKey, (nv, ov) => {
   if (ov && nv && ov !== nv) {
@@ -135,10 +190,6 @@ function onSendClick() {
     <!-- ============ hero 首页 ============ -->
     <div v-if="chatHero" class="chat-card hero-card">
       <div class="home-top">
-        <div class="home-search">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <input type="text" placeholder="搜索专家、技能" />
-        </div>
         <button class="home-icon-btn" title="设置" @click="openSettings">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
@@ -161,12 +212,21 @@ function onSendClick() {
             </div>
           </div>
           <div class="home-sec">
-            <div class="home-tabs">
-              <button v-for="c in (homeTab === 'expert' ? expertChips : skillChips)" :key="c" class="home-chip" :class="{ on: homeChip === c }" @click="homeChip = c">{{ c }}</button>
+            <div class="home-seg-row">
+              <div class="seg-track">
+                <button v-for="p in homePlatforms" :key="p" class="seg-btn" :class="{ on: homePlatform === p }" @click="selectHomePlatform(p)">
+                  <span v-if="p !== '全部'" class="seg-logo" :style="{ background: platformColor[p === 'OZON' ? 'Ozon' : p === 'TEMU' ? 'Temu' : p] || '#00A83E' }">{{ platformInitial[p === 'OZON' ? 'Ozon' : p === 'TEMU' ? 'Temu' : p] || 'E' }}</span>{{ p }}
+                </button>
+              </div>
             </div>
-            <div class="home-grid">
+            <div class="home-tabs">
+              <button v-for="c in homeScenarios" :key="c" class="home-chip" :class="{ on: homeChip === c }" @click="homeChip = c">{{ c }}</button>
+            </div>
+            <div class="home-pager">
+              <button v-if="homePageCount > 1" class="hp-arrow prev" :disabled="homePage === 0" aria-label="上一页" @click="prevHomePage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+              <div class="home-grid">
               <template v-if="homeTab === 'expert'">
-                <div v-for="e in homeExperts" :key="e.id" class="home-card">
+                <div v-for="e in pagedExperts" :key="e.id" class="home-card">
                   <div class="hc-head">
                     <span class="hc-ava" :style="{ background: platformColor[e.platform] || '#00A83E' }">{{ platformInitial[e.platform] || 'E' }}</span>
                     <div class="hc-meta">
@@ -182,7 +242,7 @@ function onSendClick() {
                 </div>
               </template>
               <template v-else>
-                <div v-for="s in homeSkills" :key="s.id" class="home-card skill">
+                <div v-for="s in pagedSkills" :key="s.id" class="home-card skill">
                   <div class="hc-head">
                     <span class="hc-icon">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
@@ -198,6 +258,8 @@ function onSendClick() {
                   </div>
                 </div>
               </template>
+              </div>
+              <button v-if="homePageCount > 1" class="hp-arrow next" :disabled="homePage >= homePageCount - 1" aria-label="下一页" @click="nextHomePage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
             </div>
           </div>
         </div>
@@ -217,42 +279,111 @@ function onSendClick() {
         </button>
       </div>
 
-      <!-- 案例弹窗 -->
+      <!-- 案例弹窗：左栏富文档报告 + 右栏介绍 -->
       <div v-if="caseItem" class="case-mask" @click.self="caseItem = null">
         <div class="case-pop">
-          <div class="case-head">
-            <div class="case-title">{{ caseItem.name }}</div>
-            <button class="case-close" @click="caseItem = null">✕</button>
-          </div>
-          <div class="case-body">
-            <template v-if="!isCaseSkill">
-              <div class="case-label">{{ (caseItem as ExpertItem).caseTitle }}</div>
-              <div class="case-metrics">
-                <div v-for="m in (caseItem as ExpertItem).caseMetrics || []" :key="m.label" class="cm-item">
-                  <div class="cm-val">{{ m.value }}</div>
-                  <div class="cm-lab">{{ m.label }}</div>
+          <button class="case-close" @click="caseItem = null">✕</button>
+          <div class="case-grid">
+            <div ref="reportEl" class="case-report">
+              <div class="cr-hero">
+                <span class="cr-hero-tag">{{ caseExpert ? '案例报告' : '技能演示报告' }}</span>
+                <div class="cr-hero-title">{{ reportTitle }}</div>
+                <div class="cr-hero-meta">{{ reportMeta }}</div>
+              </div>
+              <div class="cr-body">
+                <template v-if="caseExpert">
+                  <section class="cr-sec">
+                    <div class="cr-h">核心结论</div>
+                    <p class="cr-para">{{ caseExpert.caseConclusion }}</p>
+                  </section>
+                  <section class="cr-sec">
+                    <div class="cr-h">关键指标</div>
+                    <div class="cr-metrics">
+                      <div v-for="m in caseExpert.caseMetrics || []" :key="m.label" class="crm-item">
+                        <div class="crm-val">{{ m.value }}</div>
+                        <div class="crm-lab">{{ m.label }}</div>
+                      </div>
+                    </div>
+                  </section>
+                  <section class="cr-sec" v-if="(caseExpert.caseRows || []).length">
+                    <div class="cr-h">对比明细表</div>
+                    <table class="cr-table">
+                      <thead>
+                        <tr><th v-for="h in caseExpert.caseHeaders || []" :key="h">{{ h }}</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="(row, ri) in caseExpert.caseRows" :key="ri">
+                          <td v-for="(cell, ci) in row" :key="ci">{{ cell }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </section>
+                  <section class="cr-sec" v-if="caseExpert.caseImage">
+                    <div class="cr-h">选品实拍参考</div>
+                    <figure class="cr-fig">
+                      <img :src="caseExpert.caseImage" alt="选品实拍参考" loading="lazy" />
+                      <figcaption>{{ caseExpert.caseTitle }} · 主图风格参考（图片仅作示例）</figcaption>
+                    </figure>
+                  </section>
+                  <section class="cr-sec">
+                    <div class="cr-h">完整报告附件（PDF）</div>
+                    <div class="cr-pdf">
+                      <span class="cr-pdf-icon">PDF</span>
+                      <div>
+                        <div class="cr-pdf-name">{{ pdfName }}</div>
+                        <div class="cr-pdf-meta">2.4 MB · 12 页 · 更新于 {{ today }}</div>
+                      </div>
+                    </div>
+                  </section>
+                </template>
+                <template v-else-if="caseSkill">
+                  <section class="cr-sec">
+                    <div class="cr-h">执行步骤</div>
+                    <ol class="cr-steps">
+                      <li v-for="(st, si) in caseSkill.steps || []" :key="si">{{ st }}</li>
+                    </ol>
+                  </section>
+                  <section class="cr-sec">
+                    <div class="cr-h">输出示例</div>
+                    <pre class="cr-output">{{ caseSkill.outputExample }}</pre>
+                  </section>
+                </template>
+              </div>
+              <div class="case-float">
+                <button class="cf-btn main" @click="exportReport">导出报告</button>
+              </div>
+            </div>
+            <aside class="case-side">
+              <div class="cs-head">
+                <span v-if="caseExpert" class="cs-ava" :style="{ background: platformColor[caseExpert.platform] || '#00A83E' }">{{ platformInitial[caseExpert.platform] || 'E' }}</span>
+                <span v-else class="cs-ava skill">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+                </span>
+                <div>
+                  <div class="cs-name">{{ caseItem.name }}</div>
+                  <div class="cs-tags"><span v-for="t in caseItem.tags" :key="t" class="cs-tag">{{ t }}</span></div>
                 </div>
               </div>
-              <table class="case-table">
-                <tbody>
-                  <tr v-for="(row, ri) in (caseItem as ExpertItem).caseRows || []" :key="ri">
-                    <td v-for="(cell, ci) in row" :key="ci">{{ cell }}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div class="case-conclusion">{{ (caseItem as ExpertItem).caseConclusion }}</div>
-              <div class="case-label">试试这样问</div>
-              <button v-for="(p, pi) in (caseItem as ExpertItem).prompts || []" :key="pi" class="case-prompt" @click="useExpert(caseItem as ExpertItem); caseItem = null">{{ p }}</button>
-            </template>
-            <template v-else>
-              <div class="case-label">执行步骤</div>
-              <ol class="case-steps">
-                <li v-for="(st, si) in (caseItem as SkillItem).steps || []" :key="si">{{ st }}</li>
-              </ol>
-              <div class="case-label">输出示例</div>
-              <pre class="case-output">{{ (caseItem as SkillItem).outputExample }}</pre>
-              <button class="case-prompt main" @click="useSkill(caseItem as SkillItem); caseItem = null">立即使用该技能</button>
-            </template>
+              <p class="cs-desc">{{ caseItem.desc }}</p>
+              <template v-if="caseExpert">
+                <div class="cs-h">能做什么</div>
+                <ul class="cs-caps">
+                  <li v-for="c in caseExpert.capabilities || []" :key="c">{{ c }}</li>
+                </ul>
+                <div class="cs-h">试试这样问</div>
+                <button v-for="(p, pi) in caseExpert.prompts || []" :key="pi" class="case-prompt" @click="caseExpert && useExpert(caseExpert); caseItem = null">{{ p }}</button>
+              </template>
+              <template v-else-if="caseSkill">
+                <div class="cs-meta">v{{ caseSkill.version }} · {{ caseSkill.downloadCount ?? 0 }} 次安装 · {{ caseSkill.author }}</div>
+                <div class="cs-h">适用场景</div>
+                <div><span class="cs-tag">{{ caseSkill.scenario }}</span></div>
+                <div class="cs-h">内置工具</div>
+                <ul class="cs-caps">
+                  <li v-for="t in caseSkill.tools || []" :key="t">{{ t }}</li>
+                </ul>
+              </template>
+              <button class="case-prompt main" @click="caseExpert ? useExpert(caseExpert) : useSkill(caseItem as SkillItem); caseItem = null">立即使用</button>
+            </aside>
           </div>
         </div>
       </div>
@@ -261,6 +392,9 @@ function onSendClick() {
     <!-- ============ 对话详情 ============ -->
     <div v-else class="chat-card">
       <div class="chat-head">
+        <button class="mb-menu-btn" aria-label="打开会话列表" @click="chatState.mobileSidebar = true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
         <span class="title">{{ chatState.chatTitle }}</span>
         <div class="right">
           <span class="account-chip" ref="accountChipEl" :class="{ open: popoverOpen }" title="切换账号" @click="togglePopover">
