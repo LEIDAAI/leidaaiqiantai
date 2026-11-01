@@ -4037,7 +4037,7 @@
 .home-avatar svg { width: 20px; height: 20px; }
 .home-scroll { flex: 1; min-height: 0; overflow-y: auto; }
 .home-hero { max-width: 800px; margin: 0 auto; padding: 34px 24px 20px; }
-.home-hero-head { display: flex; flex-direction: column; align-items: center; gap: 18px; margin-bottom: 22px; }
+.home-hero-head { display: flex; flex-direction: column; align-items: center; gap: 18px; margin-bottom: 40px; }
 .home-title { margin: 0; font-size: 36px; line-height: 54px; font-weight: 600; color: #090909; letter-spacing: .5px; }
 .home-mode { display: flex; gap: 4px; padding: 3px; border-radius: 999px; background: #e6e6e6; }
 .home-mode button { min-width: 76px; height: 30px; border: 0; border-radius: 999px; background: transparent; color: #555; font-size: 13px; cursor: pointer; }
