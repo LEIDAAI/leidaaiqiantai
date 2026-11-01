@@ -205,7 +205,7 @@ function onSendClick() {
       <div class="home-scroll">
         <div class="home-hero">
           <div class="home-hero-head">
-            <h1 class="home-title">你好，今天想聊点什么？</h1>
+            <h1 class="home-title">跨境电商运营助手</h1>
             <div class="home-mode">
               <button :class="{ on: homeTab === 'expert' }" @click="homeTab = 'expert'; homeChip = '推荐'">专家</button>
               <button :class="{ on: homeTab === 'skill' }" @click="homeTab = 'skill'; homeChip = '推荐'">技能</button>
