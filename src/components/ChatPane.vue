@@ -12,6 +12,7 @@ import { openSettings, openWallet, modals, openFeedback, openPricing, openAccoun
 import { resetRightPreview } from '../stores/panel'
 import { PERSON_SVG } from './svg'
 import { expertState, type ExpertItem, type SkillItem } from '../stores/expert'
+import { startDemoConversation } from '../stores/demo'
 
 const streamEl = ref<HTMLElement | null>(null)
 const showJumpLatest = ref(false)
@@ -276,6 +277,9 @@ function onSendClick() {
         </button>
         <button class="hf-btn" data-tip="用户反馈" @click="openFeedback()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
+        <button class="hf-btn" data-tip="消息交互演示" @click="startDemoConversation()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
         </button>
       </div>
 
