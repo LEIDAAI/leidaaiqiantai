@@ -103,18 +103,25 @@ function onToggleLeft() {
 <template>
   <aside class="col-left" :class="{ collapsed: chatState.leftCollapsed, 'mobile-open': chatState.mobileSidebar }">
     <div class="left-head">
-      <button class="new-btn" :class="{ muted: !!chatState.selectedExpert || !!chatState.selectedSkill }" @click="navigatePage('chat'); newConversation()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        新建对话
-      </button>
-      <div class="side-grid">
-        <button class="side-card" :class="{ selected: modals.page === 'experts' }" @click="navigatePage('experts')">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2z"/></svg>
-          <span>电商专家</span>
+      <div class="lh-agent">
+        <div class="lh-agent-info">
+          <b class="lh-agent-name">Agent</b>
+          <span class="lh-agent-sub">AI执行，解放双手提升效率</span>
+        </div>
+        <svg class="lh-agent-bulb" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.76.76 1.23 1.52 1.41 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+      </div>
+      <div class="side-menu">
+        <button class="sm-item" @click="navigatePage('chat'); newConversation()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+          <span>开启新对话</span>
         </button>
-        <button class="side-card" :class="{ selected: modals.page === 'skills' }" @click="navigatePage('skills')">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
-          <span>技能库</span>
+        <button class="sm-item" :class="{ selected: modals.page === 'experts' }" @click="navigatePage('experts')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+          <span>专家</span>
+        </button>
+        <button class="sm-item" :class="{ selected: modals.page === 'skills' }" @click="navigatePage('skills')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 9-9"/><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M17.8 6.2 19 5"/><path d="m12.2 6.2 1.4-1.4"/></svg>
+          <span>技能</span>
         </button>
       </div>
     </div>
