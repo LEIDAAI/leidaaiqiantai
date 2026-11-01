@@ -83,6 +83,7 @@ export interface ChatMessage {
   reportCardHtml: string     // 历史恢复的报告卡片
   showAnalyzeDone: null | { kw: string }  // 历史恢复静态"搜索分析完成"卡
   ali1688Product: null | Ali1688ProductData  // 1688商品分析数据
+  taskCard: null | { title: string; steps: Array<{ label: string; detail?: string }>; thinking: string[]; resultHtml: string; stepMs?: number[] }  // Trae 式任务卡片（演示）
 }
 
 export interface ConvView {
@@ -145,7 +146,8 @@ export function makeMessage(partial: Partial<ChatMessage> & { role: 'user' | 'as
     query: partial.query || '',
     reportCardHtml: '',
     showAnalyzeDone: null,
-    ali1688Product: null
+    ali1688Product: null,
+    taskCard: partial.taskCard || null
   }) as ChatMessage
 }
 
