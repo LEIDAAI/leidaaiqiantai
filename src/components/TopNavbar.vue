@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /* 全局顶部导航栏 */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { navigatePage, openPricing } from '../stores/modals'
+import { navigatePage, openPricing, openAccount } from '../stores/modals'
 import { currentAccount } from '../stores/account'
 import { appState } from '../stores/state'
 import { walletState } from '../stores/wallet'
