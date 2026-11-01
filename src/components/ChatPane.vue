@@ -50,16 +50,6 @@ function selectHomePlatform(value: string) {
   homePlatform.value = value
   if (!homeScenarios.value.includes(homeChip.value)) homeChip.value = '推荐'
 }
-/* —— hero 卡片分页：每页 4 行 8 张（两列），超出左右翻页 —— */
-const HOME_PAGE_SIZE = 8
-const homePage = ref(0)
-const homeActiveList = computed(() => homeTab.value === 'expert' ? homeExperts.value : homeSkills.value)
-const homePageCount = computed(() => Math.max(1, Math.ceil(homeActiveList.value.length / HOME_PAGE_SIZE)))
-const pagedExperts = computed(() => homeExperts.value.slice(homePage.value * HOME_PAGE_SIZE, (homePage.value + 1) * HOME_PAGE_SIZE))
-const pagedSkills = computed(() => homeSkills.value.slice(homePage.value * HOME_PAGE_SIZE, (homePage.value + 1) * HOME_PAGE_SIZE))
-watch([homeTab, homeChip, homePlatform], () => { homePage.value = 0 })
-function prevHomePage() { if (homePage.value > 0) homePage.value-- }
-function nextHomePage() { if (homePage.value < homePageCount.value - 1) homePage.value++ }
 const caseItem = ref<ExpertItem | SkillItem | null>(null)
 const isCaseSkill = computed(() => !!caseItem.value && 'version' in caseItem.value)
 function useExpert(e: ExpertItem) { chatState.inputText = e.prompts?.[0] || e.desc }
@@ -227,11 +217,9 @@ function onSendClick() {
             <div class="home-tabs">
               <button v-for="c in homeScenarios" :key="c" class="home-chip" :class="{ on: homeChip === c }" @click="homeChip = c">{{ c }}</button>
             </div>
-            <div class="home-pager">
-              <button v-if="homePageCount > 1" class="hp-arrow prev" :disabled="homePage === 0" aria-label="上一页" @click="prevHomePage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-              <div class="home-grid">
+            <div class="home-grid">
               <template v-if="homeTab === 'expert'">
-                <div v-for="e in pagedExperts" :key="e.id" class="home-card expert">
+                <div v-for="e in homeExperts" :key="e.id" class="home-card expert">
                   <span class="hc-accent" :style="{ background: platformGrad(e.platform) }"></span>
                   <div class="hc-head">
                     <span class="hc-ava" :class="{ wide: (platformInitial[e.platform] || 'E').length > 1 }" :style="{ background: platformGrad(e.platform) }">
@@ -255,7 +243,7 @@ function onSendClick() {
                 </div>
               </template>
               <template v-else>
-                <div v-for="s in pagedSkills" :key="s.id" class="home-card skill">
+                <div v-for="s in homeSkills" :key="s.id" class="home-card skill">
                   <span class="hc-accent" :style="{ background: skillVisual(s).grad }"></span>
                   <div class="hc-head">
                     <span class="hc-icon grad" :style="{ background: skillVisual(s).grad }" v-html="skillVisual(s).icon"></span>
@@ -271,8 +259,6 @@ function onSendClick() {
                 </div>
               </template>
               </div>
-              <button v-if="homePageCount > 1" class="hp-arrow next" :disabled="homePage >= homePageCount - 1" aria-label="下一页" @click="nextHomePage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
-            </div>
           </div>
         </div>
       </div>
