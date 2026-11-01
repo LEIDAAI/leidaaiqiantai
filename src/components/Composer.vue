@@ -271,7 +271,13 @@ function pickSkill(s: SkillItem) {
   if (chatState.selectedSkill) flashToast('已选择技能「' + s.name + '」，随消息一起发送')
   closePop()
 }
+/* 助手下拉框：composer 右下角（替换原「积分/千」标签位置） */
+const ASSISTANTS = ['雷达AI官方助手', '1688选品助手', 'OZON选品助手', '亚马逊选品助手', 'TEMU选品助手']
+const assistant = ref(ASSISTANTS[0])
+const assistOpen = ref(false)
+function pickAssistant(a: string) { assistant.value = a; assistOpen.value = false }
 function onDocMouseDown(e: MouseEvent) {
+  if (assistOpen.value && composerEl.value && !composerEl.value.contains(e.target as Node)) assistOpen.value = false
   if (!pop.value) return
   if (composerEl.value && composerEl.value.contains(e.target as Node)) return
   closePop()
@@ -280,6 +286,7 @@ function onDocKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     if (previewIdx.value >= 0) { closePreview(); return }
     if (pop.value) closePop()
+    assistOpen.value = false
   }
   if (previewIdx.value >= 0 && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
     e.preventDefault()
@@ -426,10 +433,23 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <div class="cb-right">
-        <span class="cb-coin-info">
-          <svg class="cc-icon-sm" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="#FFC53D" stroke="#E8A200" stroke-width="1.2"/><path d="M4.3 3.8 6 5.9m1.7-2.1L6 5.9m0 0v2.5M4.7 6.5h2.6M4.7 7.9h2.6" stroke="#A66F00" stroke-width=".9" stroke-linecap="round"/></svg>
-          500 积分/千
-        </span>
+        <div class="cb-pop-wrap assist">
+          <button class="cb-coin-info cb-assist-btn" :class="{ open: assistOpen }" type="button" title="选择助手" @click="assistOpen = !assistOpen">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4m-4 0h8"/><path d="M9 14h.01M15 14h.01"/></svg>
+            {{ assistant }}
+            <svg class="cb-caret" width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3.5 5 6.5 8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <transition name="pop">
+            <div v-if="assistOpen" class="cb-pop assist-pop">
+              <button v-for="a in ASSISTANTS" :key="a" class="assist-item" :class="{ on: assistant === a }" type="button" @click="pickAssistant(a)">
+                <span>{{ a }}</span>
+                <span v-if="assistant === a" class="bp-check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                </span>
+              </button>
+            </div>
+          </transition>
+        </div>
         <button class="cb-go" :class="{ busy: running, 'stop-state': running }" type="button" :title="running ? '停止当前会话生成' : '开始查询（Enter）'" @click="onClickSend">
           <span class="btn-label">{{ running ? '停止生成' : '开始查询' }}</span>
           <span class="go-ic"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 12h13M12.5 5.5L19 12l-6.5 6.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
