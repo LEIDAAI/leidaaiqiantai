@@ -144,20 +144,18 @@
     background: var(--bg);
   }
 
-  .avatar-circle {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
   .avatar-name {
     font-size: 13px;
     color: var(--text);
     font-weight: 500;
+  }
+
+  /* r42：账号按钮内的掩码手机号，淡色弱化不抢主体 */
+  .avatar-phone {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: .2px;
   }
 
   /* 调整 work 容器高度 */
