@@ -3,7 +3,7 @@
  * ===================================================== */
 import { reactive, computed } from 'vue'
 import { DLD } from '../api'
-import { appState, Account, SessionItem, ACCOUNT_KEY, writeConvIdMap } from './state'
+import { appState, Account, SessionItem, ACCOUNT_KEY, writeConvIdMap, readCachedSessions, writeCachedSessions, hasCachedMessages } from './state'
 import { formatRelativeTime, flashToast } from '../utils/common'
 import { parseAgentOpening } from './opening'
 
@@ -56,6 +56,10 @@ export function setAccountEvents(handlers: {
   _onConversationsLoaded = handlers.onConversationsLoaded || _onConversationsLoaded
 }
 export function notifyConversationsLoaded(list: SessionItem[], skipSelect?: boolean) {
+  // 历史会话本地持久化：每次列表变更都落盘（以 sessionsByAccount 为准），
+  // 刷新 / 重开浏览器 / 接口失败时从 localStorage 恢复，历史对话不再丢失。
+  const persistKey = accountState.currentAccountId
+  writeCachedSessions(persistKey, accountState.sessionsByAccount[persistKey] || list || [])
   if (_onConversationsLoaded) _onConversationsLoaded(list, skipSelect)
 }
 
@@ -181,19 +185,37 @@ export async function bootstrapDld() {
       })).filter((c: any) => c.id)
       const key = accountState.currentAccountId
       const localSessions = sessionsFor(key) || []
+      // 合并本地持久化缓存（离线/接口失败期间创建的会话不丢）
+      const cachedSessions = readCachedSessions(key)
+      const localIds = new Set(localSessions.map((s: any) => String(s.id)))
+      const mergedLocal = [...localSessions, ...cachedSessions.filter((c: any) => c && c.id && !localIds.has(String(c.id)))]
       const mappedIds = new Set(mapped.map(s => String(s.id)))
-      // 服务端列表可能有短暂延迟：合并本地刚创建/刚完成的会话
-      const localOnly = localSessions.filter((s: any) => s && s.id && !mappedIds.has(String(s.id)) && (s.draft || s.id === appState.activeConversationId))
+      // 服务端列表可能有短暂延迟：合并本地刚创建/刚完成的会话 + 有本地消息缓存的历史
+      const localOnly = mergedLocal.filter((s: any) => s && s.id && !mappedIds.has(String(s.id)) && (s.draft || s.id === appState.activeConversationId || hasCachedMessages(String(s.id))))
       accountState.sessionsByAccount[key] = [...localOnly, ...mapped]
       // 会话列表落盘时同步写入会话ID持久化映射
       mapped.forEach(s => { if (s.convId) writeConvIdMap(String(s.id), String(s.convId)) })
       notifyConversationsLoaded(mapped, false)
     } else {
-      notifyConversationsLoaded([], false)
+      // 服务端为空：恢复本地持久化会话（离线创建的历史不丢）
+      const cached = readCachedSessions(accountState.currentAccountId)
+      if (cached.length) {
+        accountState.sessionsByAccount[accountState.currentAccountId] = cached
+        notifyConversationsLoaded(cached, false)
+      } else {
+        notifyConversationsLoaded([], false)
+      }
     }
   } catch (e) {
     console.warn('[DLD] conversations 失败：', (e as Error).message)
-    notifyConversationsLoaded([], false)
+    // 接口失败：从本地持久化恢复会话列表兜底，历史对话不再丢失
+    const cached = readCachedSessions(accountState.currentAccountId)
+    if (cached.length) {
+      accountState.sessionsByAccount[accountState.currentAccountId] = cached
+      notifyConversationsLoaded(cached, false)
+    } else {
+      notifyConversationsLoaded([], false)
+    }
   }
 
   // 6. 不在初始化时加载首页榜单，避免覆盖当前会话的真实商品结果。

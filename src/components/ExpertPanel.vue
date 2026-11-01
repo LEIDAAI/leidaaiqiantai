@@ -8,22 +8,91 @@ import { expertState, expertDemo, skillDemo, type ExpertItem, type SkillItem } f
 const isSkills = computed(() => modals.page === 'skills')
 const tab = ref<'plaza' | 'mine' | 'create'>('plaza')
 const chip = ref('推荐')
+const platform = ref('全部')
 const expertChips = ['推荐', '选品上架', '店铺运营', '商品管理', '评论分析']
 const skillChips = ['推荐', '选品与开发', '产品运营', '数据分析', '选品/热点']
+const platforms = ['全部', '1688', 'OZON', '亚马逊', 'TEMU']
+const platformAliases: Record<string, string[]> = {
+  'OZON': ['Ozon', 'OZON'],
+  'TEMU': ['Temu', 'TEMU'],
+}
+const matchesPlatform = (item: ExpertItem | SkillItem) => {
+  if (platform.value === '全部') return true
+  if ('platform' in item) return (platformAliases[platform.value] || [platform.value]).includes(item.platform)
+  return item.tags.some(tag => (platformAliases[platform.value] || [platform.value]).includes(tag))
+}
+const availableScenarios = computed(() => {
+  const list = isSkills.value ? expertState.skills : expertState.experts
+  const values = list.filter(item => matchesPlatform(item)).map(item => 'platform' in item ? item.category : item.scenario).filter(Boolean) as string[]
+  return ['推荐', '全部', ...Array.from(new Set(values))]
+})
 const caseItem = ref<ExpertItem | SkillItem | null>(null)
 const isCaseSkill = computed(() => !!caseItem.value && 'version' in caseItem.value)
+const caseExpert = computed(() => (caseItem.value && !isCaseSkill.value) ? caseItem.value as ExpertItem : null)
+const caseSkill = computed(() => (caseItem.value && isCaseSkill.value) ? caseItem.value as SkillItem : null)
+
+/* —— 案例报告导出 —— */
+const reportEl = ref<HTMLElement | null>(null)
+const today = new Date().toLocaleDateString('zh-CN')
+const reportTitle = computed(() => caseExpert.value?.caseTitle || caseItem.value?.name || '案例报告')
+const reportMeta = computed(() => {
+  if (caseExpert.value) return `${caseExpert.value.platform} · 数据样本近 30 天 · 生成于 ${today}`
+  return caseSkill.value ? `v${caseSkill.value.version} · ${caseSkill.value.author} · 生成于 ${today}` : ''
+})
+const pdfName = computed(() => `${safeName(caseExpert.value?.caseTitle || '选品评估报告')}.pdf`)
+function safeName(v: string) { return v.replace(/[\\/:*?"<>|]/g, '-') }
+const REPORT_CSS = `*{box-sizing:border-box}body{margin:0;padding:24px 16px;background:#f2f4f2;color:#222;font-family:'PingFang SC','Microsoft YaHei','Segoe UI',system-ui,sans-serif}.doc{max-width:760px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.12)}.cr-hero{padding:26px 24px 22px;background:linear-gradient(125deg,#00b14a,#00913a 55%,#007d30);color:#fff}.cr-hero-tag{display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.18);font-size:12px}.cr-hero-title{margin-top:12px;font-size:21px;font-weight:700;line-height:1.35}.cr-hero-meta{margin-top:8px;font-size:12px;color:rgba(255,255,255,.82)}.cr-body{padding:18px 22px;display:flex;flex-direction:column;gap:18px}.cr-sec{display:flex;flex-direction:column;gap:10px}.cr-h{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#1c1c1c}.cr-h::before{content:'';width:3px;height:13px;border-radius:2px;background:#00A83E}.cr-para{margin:0;font-size:13px;line-height:1.8;color:#444}.cr-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.crm-item{padding:13px 12px;border:1px solid #edf0ed;border-radius:12px;background:#f7fbf8;text-align:center}.crm-val{font-size:20px;font-weight:700;color:#00A83E}.crm-lab{margin-top:3px;font-size:12px;color:#8a8a92}.cr-table{width:100%;border-collapse:collapse;font-size:12.5px}.cr-table th,.cr-table td{padding:9px 11px;border:1px solid #eee;text-align:left}.cr-table th{background:#f5f7f6;color:#555;font-weight:600}.cr-table tr:nth-child(even) td{background:#fafbfa}.cr-fig{margin:0;border:1px solid #ececec;border-radius:12px;overflow:hidden}.cr-fig img{display:block;width:100%}.cr-fig figcaption{padding:8px 12px;font-size:12px;color:#8a8a92}.cr-pdf{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #ececec;border-radius:12px;background:#fbfbfb}.cr-pdf-icon{flex:none;width:40px;height:46px;border-radius:6px;background:linear-gradient(160deg,#ff6b5e,#e5483a);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}.cr-pdf-name{font-size:13px;font-weight:600;color:#222}.cr-pdf-meta{margin-top:3px;font-size:12px;color:#8a8a92}.cr-steps{margin:0;padding-left:20px;font-size:13px;color:#444;line-height:1.8}.cr-output{margin:0;padding:12px 14px;border-radius:10px;background:#f6f7f8;font-size:12px;line-height:1.6;font-family:Consolas,Monaco,monospace;white-space:pre-wrap;word-break:break-all}@media print{body{background:#fff;padding:0}.doc{box-shadow:none;border-radius:0}}`
+function buildReportHtml(): string {
+  const src = reportEl.value
+  if (!src) return ''
+  const clone = src.cloneNode(true) as HTMLElement
+  clone.querySelector('.case-float')?.remove()
+  const name = caseItem.value?.name || '案例报告'
+  return `<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${safeName(name)} · 案例报告</title>\n<style>${REPORT_CSS}</style>\n</head>\n<body>\n<div class="doc">\n${clone.innerHTML}\n</div>\n</body>\n</html>`
+}
+/* 导出前把远程图片内嵌为 base64，保证导出的单文件离线可看（表格/PDF 卡片随报告结构导出） */
+async function inlineReportImages(html: string): Promise<string> {
+  const imgs = Array.from(reportEl.value?.querySelectorAll('.cr-fig img') || []) as HTMLImageElement[]
+  for (const img of imgs) {
+    const src = img.getAttribute('src') || ''
+    if (!src || src.startsWith('data:')) continue
+    try {
+      const resp = await fetch(src, { mode: 'cors' })
+      if (!resp.ok) continue
+      const blob = await resp.blob()
+      const data = await new Promise<string | null>(res => {
+        const r = new FileReader()
+        r.onload = () => res(r.result as string)
+        r.onerror = () => res(null)
+        r.readAsDataURL(blob)
+      })
+      if (data) html = html.split(src).join(data)
+    } catch { /* 跨域失败则保留原 URL */ }
+  }
+  return html
+}
+async function exportReport() {
+  let html = buildReportHtml()
+  if (!html) return
+  html = await inlineReportImages(html)
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${safeName(caseItem.value?.name || '案例报告')}-案例报告.html`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 const plazaExperts = computed(() => {
-  const list = expertState.experts.filter(e => e.source === 'official')
-  if (chip.value === '推荐') return list.slice(0, 6)
-  if (chip.value === '全部') return list
-  return list.filter(e => e.category === chip.value || e.tags.includes(chip.value))
+  let list = expertState.experts.filter(e => e.source === 'official' && matchesPlatform(e))
+  if (chip.value !== '推荐' && chip.value !== '全部') list = list.filter(e => e.category === chip.value || e.tags.includes(chip.value))
+  return chip.value === '推荐' ? list.slice(0, 6) : list
 })
 const plazaSkills = computed(() => {
-  const list = expertState.skills.filter(s => s.source === 'official')
-  if (chip.value === '推荐') return list.slice(0, 6)
-  if (chip.value === '全部') return list
-  return list.filter(s => s.scenario === chip.value || s.tags.includes(chip.value))
+  let list = expertState.skills.filter(s => s.source === 'official' && matchesPlatform(s))
+  if (chip.value !== '推荐' && chip.value !== '全部') list = list.filter(s => s.scenario === chip.value || s.tags.includes(chip.value))
+  return chip.value === '推荐' ? list.slice(0, 6) : list
 })
 const mineExperts = computed(() => expertState.experts.filter(e => e.source === 'user'))
 const mineSkills = computed(() => expertState.skills.filter(s => s.source === 'user'))
@@ -40,7 +109,11 @@ function useSkill(s: SkillItem) {
 }
 function switchTab(t: 'plaza' | 'mine' | 'create') {
   tab.value = t
-  if (t === 'plaza') chip.value = '推荐'
+  if (t === 'plaza') { platform.value = '全部'; chip.value = '推荐' }
+}
+function selectPlatform(value: string) {
+  platform.value = value
+  if (!availableScenarios.value.includes(chip.value)) chip.value = '推荐'
 }
 
 /* —— 创建表单 —— */
@@ -84,14 +157,20 @@ function saveCreate() {
 
       <!-- 灵感广场 -->
       <div v-if="tab === 'plaza'">
+        <div class="dir-filter-label">平台</div>
+        <div class="seg-track">
+          <button v-for="p in platforms" :key="p" class="seg-btn" :class="{ on: platform === p }" @click="selectPlatform(p)">
+            <span v-if="p !== '全部'" class="seg-logo" :style="{ background: platformColor[p === 'OZON' ? 'Ozon' : p === 'TEMU' ? 'Temu' : p] || '#00A83E' }">{{ platformInitial[p === 'OZON' ? 'Ozon' : p === 'TEMU' ? 'Temu' : p] || 'E' }}</span>{{ p }}
+          </button>
+        </div>
+        <div class="dir-filter-label">场景</div>
         <div class="dir-chips">
-          <button v-for="c in (isSkills ? skillChips : expertChips)" :key="c" class="dir-chip" :class="{ on: chip === c }" @click="chip = c">{{ c }}</button>
+          <button v-for="c in availableScenarios" :key="c" class="dir-chip" :class="{ on: chip === c }" @click="chip = c">{{ c }}</button>
         </div>
         <div class="dir-grid">
           <template v-if="!isSkills">
             <div v-for="(e, ei) in plazaExperts" :key="e.id" class="dir-card">
               <span v-if="ei < 2" class="dir-new">NEW</span>
-              <button class="dir-cover" title="立即使用" @click="useExpert(e)"></button>
               <div class="dir-body">
                 <span class="dc-ava" :style="{ background: platformColor[e.platform] || '#00A83E' }">{{ platformInitial[e.platform] || 'E' }}</span>
                 <div>
@@ -112,7 +191,6 @@ function saveCreate() {
           <template v-else>
             <div v-for="(s, si) in plazaSkills" :key="s.id" class="dir-card">
               <span v-if="si < 2" class="dir-new">NEW</span>
-              <button class="dir-cover" title="前往使用" @click="useSkill(s)"></button>
               <div class="dir-body">
                 <span class="dc-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
@@ -140,7 +218,6 @@ function saveCreate() {
         <div class="dir-grid" v-if="(isSkills ? mineSkills : mineExperts).length">
           <template v-if="!isSkills">
             <div v-for="e in mineExperts" :key="e.id" class="dir-card">
-              <button class="dir-cover" title="立即使用" @click="useExpert(e)"></button>
               <div class="dir-body">
                 <span class="dc-ava" :style="{ background: platformColor[e.platform] || '#00A83E' }">{{ platformInitial[e.platform] || 'E' }}</span>
                 <div>
@@ -160,7 +237,6 @@ function saveCreate() {
           </template>
           <template v-else>
             <div v-for="s in mineSkills" :key="s.id" class="dir-card">
-              <button class="dir-cover" title="前往使用" @click="useSkill(s)"></button>
               <div class="dir-body">
                 <span class="dc-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
@@ -222,42 +298,111 @@ function saveCreate() {
         </div>
       </div>
 
-      <!-- 案例弹窗 -->
+      <!-- 案例弹窗：左栏富文档报告 + 右栏介绍 -->
       <div v-if="caseItem" class="case-mask" @click.self="caseItem = null">
         <div class="case-pop">
-          <div class="case-head">
-            <div class="case-title">{{ caseItem.name }}</div>
-            <button class="case-close" @click="caseItem = null">✕</button>
-          </div>
-          <div class="case-body">
-            <template v-if="!isCaseSkill">
-              <div class="case-label">{{ (caseItem as ExpertItem).caseTitle }}</div>
-              <div class="case-metrics">
-                <div v-for="m in (caseItem as ExpertItem).caseMetrics || []" :key="m.label" class="cm-item">
-                  <div class="cm-val">{{ m.value }}</div>
-                  <div class="cm-lab">{{ m.label }}</div>
+          <button class="case-close" @click="caseItem = null">✕</button>
+          <div class="case-grid">
+            <div ref="reportEl" class="case-report">
+              <div class="cr-hero">
+                <span class="cr-hero-tag">{{ caseExpert ? '案例报告' : '技能演示报告' }}</span>
+                <div class="cr-hero-title">{{ reportTitle }}</div>
+                <div class="cr-hero-meta">{{ reportMeta }}</div>
+              </div>
+              <div class="cr-body">
+                <template v-if="caseExpert">
+                  <section class="cr-sec">
+                    <div class="cr-h">核心结论</div>
+                    <p class="cr-para">{{ caseExpert.caseConclusion }}</p>
+                  </section>
+                  <section class="cr-sec">
+                    <div class="cr-h">关键指标</div>
+                    <div class="cr-metrics">
+                      <div v-for="m in caseExpert.caseMetrics || []" :key="m.label" class="crm-item">
+                        <div class="crm-val">{{ m.value }}</div>
+                        <div class="crm-lab">{{ m.label }}</div>
+                      </div>
+                    </div>
+                  </section>
+                  <section class="cr-sec" v-if="(caseExpert.caseRows || []).length">
+                    <div class="cr-h">对比明细表</div>
+                    <table class="cr-table">
+                      <thead>
+                        <tr><th v-for="h in caseExpert.caseHeaders || []" :key="h">{{ h }}</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="(row, ri) in caseExpert.caseRows" :key="ri">
+                          <td v-for="(cell, ci) in row" :key="ci">{{ cell }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </section>
+                  <section class="cr-sec" v-if="caseExpert.caseImage">
+                    <div class="cr-h">选品实拍参考</div>
+                    <figure class="cr-fig">
+                      <img :src="caseExpert.caseImage" alt="选品实拍参考" loading="lazy" />
+                      <figcaption>{{ caseExpert.caseTitle }} · 主图风格参考（图片仅作示例）</figcaption>
+                    </figure>
+                  </section>
+                  <section class="cr-sec">
+                    <div class="cr-h">完整报告附件（PDF）</div>
+                    <div class="cr-pdf">
+                      <span class="cr-pdf-icon">PDF</span>
+                      <div>
+                        <div class="cr-pdf-name">{{ pdfName }}</div>
+                        <div class="cr-pdf-meta">2.4 MB · 12 页 · 更新于 {{ today }}</div>
+                      </div>
+                    </div>
+                  </section>
+                </template>
+                <template v-else-if="caseSkill">
+                  <section class="cr-sec">
+                    <div class="cr-h">执行步骤</div>
+                    <ol class="cr-steps">
+                      <li v-for="(st, si) in caseSkill.steps || []" :key="si">{{ st }}</li>
+                    </ol>
+                  </section>
+                  <section class="cr-sec">
+                    <div class="cr-h">输出示例</div>
+                    <pre class="cr-output">{{ caseSkill.outputExample }}</pre>
+                  </section>
+                </template>
+              </div>
+              <div class="case-float">
+                <button class="cf-btn main" @click="exportReport">导出报告</button>
+              </div>
+            </div>
+            <aside class="case-side">
+              <div class="cs-head">
+                <span v-if="caseExpert" class="cs-ava" :style="{ background: platformColor[caseExpert.platform] || '#00A83E' }">{{ platformInitial[caseExpert.platform] || 'E' }}</span>
+                <span v-else class="cs-ava skill">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+                </span>
+                <div>
+                  <div class="cs-name">{{ caseItem.name }}</div>
+                  <div class="cs-tags"><span v-for="t in caseItem.tags" :key="t" class="cs-tag">{{ t }}</span></div>
                 </div>
               </div>
-              <table class="case-table">
-                <tbody>
-                  <tr v-for="(row, ri) in (caseItem as ExpertItem).caseRows || []" :key="ri">
-                    <td v-for="(cell, ci) in row" :key="ci">{{ cell }}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div class="case-conclusion">{{ (caseItem as ExpertItem).caseConclusion }}</div>
-              <div class="case-label">试试这样问</div>
-              <button v-for="(p, pi) in (caseItem as ExpertItem).prompts || []" :key="pi" class="case-prompt" @click="useExpert(caseItem as ExpertItem)">{{ p }}</button>
-            </template>
-            <template v-else>
-              <div class="case-label">执行步骤</div>
-              <ol class="case-steps">
-                <li v-for="(st, si) in (caseItem as SkillItem).steps || []" :key="si">{{ st }}</li>
-              </ol>
-              <div class="case-label">输出示例</div>
-              <pre class="case-output">{{ (caseItem as SkillItem).outputExample }}</pre>
-              <button class="case-prompt main" @click="useSkill(caseItem as SkillItem)">立即使用该技能</button>
-            </template>
+              <p class="cs-desc">{{ caseItem.desc }}</p>
+              <template v-if="caseExpert">
+                <div class="cs-h">能做什么</div>
+                <ul class="cs-caps">
+                  <li v-for="c in caseExpert.capabilities || []" :key="c">{{ c }}</li>
+                </ul>
+                <div class="cs-h">试试这样问</div>
+                <button v-for="(p, pi) in caseExpert.prompts || []" :key="pi" class="case-prompt" @click="caseExpert && useExpert(caseExpert)">{{ p }}</button>
+              </template>
+              <template v-else-if="caseSkill">
+                <div class="cs-meta">v{{ caseSkill.version }} · {{ caseSkill.downloadCount ?? 0 }} 次安装 · {{ caseSkill.author }}</div>
+                <div class="cs-h">适用场景</div>
+                <div><span class="cs-tag">{{ caseSkill.scenario }}</span></div>
+                <div class="cs-h">内置工具</div>
+                <ul class="cs-caps">
+                  <li v-for="t in caseSkill.tools || []" :key="t">{{ t }}</li>
+                </ul>
+              </template>
+              <button class="case-prompt main" @click="caseExpert ? useExpert(caseExpert) : useSkill(caseItem as SkillItem)">立即使用</button>
+            </aside>
           </div>
         </div>
       </div>

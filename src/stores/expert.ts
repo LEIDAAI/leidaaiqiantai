@@ -3,7 +3,7 @@
  * ===================================================== */
 import { reactive, watch } from 'vue'
 
-export type ExpertTab = 'expert' | 'connector' | 'skill' | 'mcp'
+export type ExpertTab = 'expert' | 'skill' | 'mcp'
 
 export interface ExpertItem {
   id: string
@@ -20,19 +20,13 @@ export interface ExpertItem {
   capabilities?: string[]
   prompts?: string[]
   caseTitle?: string
+  caseHeaders?: string[]
   caseRows?: string[][]
   caseMetrics?: { label: string; value: string }[]
   caseConclusion?: string
+  caseImage?: string
   wordLibraryIds?: string[]
   productLibraryIds?: string[]
-}
-
-export interface ConnectorItem {
-  id: string
-  name: string
-  desc: string
-  platform: string
-  tools: string[]
 }
 
 export interface SkillItem {
@@ -83,9 +77,6 @@ export const expertState = reactive({
   expertSourceFilter: 'all' as 'all' | 'official' | 'user',
   expertCategoryFilter: 'all' as 'all' | '选品上架' | '店铺运营' | '商品管理' | '评论分析',
   expertPlatformFilter: 'all' as 'all' | '1688' | 'Ozon' | '亚马逊' | 'Temu',
-  // 连接器
-  connectorSearch: '',
-  connectorPlatformFilter: 'all' as 'all' | '1688' | 'Ozon' | '亚马逊' | 'Temu',
   // 技能
   skillSearch: '',
   skillSourceFilter: 'all' as 'all' | 'official' | 'user',
@@ -112,12 +103,6 @@ export const expertState = reactive({
     { id: 'e13', name: 'Temu-动销比飙升榜', desc: '监控 Temu 动销比飙升商品，发现潜力爆款。', tags: ['监控', 'Temu'], platform: 'Temu', category: '店铺运营', source: 'official' as const },
     { id: 'e14', name: 'Temu-1688比价', desc: '将 Temu 商品与1688同款进行比价，计算利润空间。', tags: ['比价', 'Temu', '1688'], platform: 'Temu', category: '选品上架', source: 'official' as const },
   ] as ExpertItem[],
-  connectors: [
-    { id: 'c1', name: '@1688分销选品', desc: '从1688分销选品，从海量货源中筛选类目/款式/分销商', platform: '1688', tools: ['分销选品', '货源监测'] },
-    { id: 'c2', name: '@Ozon类目查询', desc: '查询Ozon类目基础信息、商品数、动销率与均价', platform: 'Ozon', tools: ['类目查询', '关键词趋势'] },
-    { id: 'c3', name: '@亚马逊ASIN解析', desc: '解析亚马逊ASIN的BSR排名、价格历史、Review趋势', platform: '亚马逊', tools: ['ASIN解析', '关键词挖掘'] },
-    { id: 'c4', name: '@Temu热销榜', desc: '抓取Temu各品类热销榜单数据', platform: 'Temu', tools: ['热销榜', '动销比'] },
-  ] as ConnectorItem[],
   skills: [
     { id: 's1', name: '一键选品报告', desc: '输入关键词，自动生成包含市场分析、竞品对比、利润测算的完整选品报告', tags: ['选品', '一键复用'], source: 'official' as const, scenario: '选品与开发' },
     { id: 's2', name: '差评深度分析', desc: '抓取目标商品差评，按问题类型归纳并生成改进建议报告', tags: ['评论分析', '一键复用'], source: 'official' as const, scenario: '数据分析' },
@@ -150,11 +135,21 @@ export function skillDemo(item: SkillItem): SkillItem {
   const output = scene === '评论分析' ? '主题 | 反馈占比 | 改进建议\n稳定性 | 42% | 加宽底座并做承重测试\n包装 | 28% | 双层缓冲包装\n交付：问题优先级清单、打样验收表' : scene === 'Listing' ? '标题：Adjustable Non-Slip Phone Stand for Desk\n关键词组：phone holder / foldable / adjustable\n主图建议：突出角度调节、底座防滑和折叠尺寸\n交付：标题 3 版、五点描述、关键词分组' : scene === '监控' || scene === '比价' ? '商品：折叠收纳箱加强款\n采购成本 ¥18.50 + 包装 ¥1.20 + 损耗 ¥0.60\n参考供货价 ¥29.90；单位毛利 ¥9.60；毛利率 32.1%\n预警条件：采购成本上涨超过 5%，或毛利率低于 25%' : scene === '趋势' ? '机会词：桌面收纳 / 可折叠 / 小户型\n近 30 天需求增速：+28.6%；动销率：67%\n推荐方向：小体积、可叠放、免安装\n交付：机会词 Top 10、类目分布、7 天验证计划' : `优先对象：${platform === 'Ozon' ? '桌面手机支架' : platform === '亚马逊' ? '防滑瑜伽垫' : '折叠收纳箱'}\n对比样本：24 款；建议试销：3 款\n优先行动：小单打样，验证材质、包装与使用稳定性\n验收指标：7 天点击率 ≥ 3.5%，售后率 ≤ 2%`
   return { version: `1.${index % 4 + 1}.0`, downloadCount: 1280 + index * 327, author: item.source === 'user' ? '我的工作室' : '雷达电商研究组', tools: [tool, index % 2 ? '评论归因' : '关键词趋势'], steps: ['输入目标商品、关键词及近 30 天时间范围。', `使用${tool}整理价格、销量与竞争样本，统一规格口径。`, `围绕「${item.tags[0]}」识别前三个机会或问题，并按优先级排序。`, '输出对比表、核心结论和下一步操作清单。'], outputExample: `${item.name} · 输出摘要\n${output}`, ...item }
 }
+/* 案例配图：内联 SVG（自包含，导出报告时可保留） */
+function caseImageSvg(subject: string): string {
+  const draw = subject === '桌面手机支架'
+    ? `<rect x="330" y="240" width="150" height="240" rx="18" transform="rotate(-14 405 360)" fill="#2b3440"/><rect x="344" y="254" width="122" height="198" rx="10" transform="rotate(-14 405 360)" fill="#3d4856"/><rect x="272" y="452" width="256" height="24" rx="12" fill="#c9d2da"/><rect x="292" y="434" width="216" height="20" rx="8" fill="#dde4ea"/>`
+    : subject === '防滑瑜伽垫'
+      ? `<rect x="252" y="330" width="296" height="128" rx="64" fill="#3f9d6e"/><circle cx="302" cy="394" r="56" fill="#35875e"/><circle cx="302" cy="394" r="32" fill="#2f7a54"/><ellipse cx="472" cy="394" rx="76" ry="64" fill="#4cae7c"/><ellipse cx="472" cy="394" rx="48" ry="40" fill="#3f9d6e"/>`
+      : `<rect x="282" y="222" width="236" height="136" rx="14" fill="#7fb3e8"/><rect x="282" y="222" width="236" height="34" rx="14" fill="#5e97cf"/><rect x="360" y="272" width="80" height="14" rx="7" fill="#eef4fb"/><rect x="266" y="350" width="268" height="146" rx="14" fill="#9cc6f0"/><rect x="266" y="350" width="268" height="36" rx="14" fill="#7fb3e8"/><rect x="352" y="396" width="96" height="13" rx="6" fill="#f2f7fd"/>`
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7f9fb"/><stop offset="1" stop-color="#e3e9ef"/></linearGradient><radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffffff" stop-opacity=".9"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient></defs><rect width="800" height="600" fill="url(#bg)"/><circle cx="670" cy="100" r="170" fill="url(#glow)"/><circle cx="110" cy="520" r="150" fill="url(#glow)"/><ellipse cx="400" cy="514" rx="250" ry="32" fill="#cfd8e0" opacity=".5"/>${draw}<g font-family="'PingFang SC','Microsoft YaHei',sans-serif"><rect x="40" y="40" width="128" height="40" rx="20" fill="#00A83E" opacity=".92"/><text x="104" y="66" font-size="20" fill="#ffffff" text-anchor="middle">示例图片</text></g></svg>`
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
+}
 export function expertDemo(item: ExpertItem): ExpertItem {
   const index = Math.max(0, Number(item.id.replace(/\D/g, '')) - 1) % 14
   const subject = item.platform === 'Ozon' ? '桌面手机支架' : item.platform === '亚马逊' ? '防滑瑜伽垫' : '折叠收纳箱'
   const review = item.category === '评论分析'
-  return { usageCount: 1830 + index * 483, capabilities: [`${item.platform}市场与竞争分析`, review ? '评论主题聚类与问题定位' : '价格带与利润空间测算', '供应链筛选与行动清单'], prompts: [`请分析${item.platform}的${subject}，对比近 30 天需求、价格与竞争格局，推荐 3 个切入方向。`, `围绕${subject}完成「${item.name.split('-').slice(1).join('-') || item.name}」任务，给出指标对比表和 7 天执行计划。`], caseTitle: `${item.platform} · ${subject}${review ? '用户痛点洞察' : '选品机会评估'}`, caseMetrics: [{ label: review ? '评论样本' : '对比商品', value: review ? '300 条' : '48 款' }, { label: '需求环比', value: `+${18 + index}.6%` }, { label: '优先机会', value: '3 个' }], caseRows: review ? [['稳定性不足', '126 条', '42%', '加宽底座 · P0'], ['包装破损', '84 条', '28%', '双层防护 · P0'], ['材质质感', '54 条', '18%', '升级表面工艺 · P1']] : [[`${subject} · 基础款`, item.platform === '1688' ? '¥12.80' : item.platform === 'Ozon' ? '₽690' : '$12.99', '1,280', '24.6%', '小单测试'], [`${subject} · 加强款`, item.platform === '1688' ? '¥18.50' : item.platform === 'Ozon' ? '₽990' : '$18.99', '960', '31.2%', '优先推荐'], [`${subject} · 便携款`, item.platform === '1688' ? '¥9.60' : item.platform === 'Ozon' ? '₽490' : '$9.99', '2,160', '18.4%', '控制成本']], caseConclusion: review ? '先解决稳定性与运输包装，两类问题合计占反馈的 70%。建议先打样验证底座承重，再更新主图和安装说明。' : `建议优先验证${subject}加强款：需求增长明显，利润空间较好。首批选 3 家供应商各取样 10 件，完成质检与页面测试后再补货。`, ...item }
+  return { usageCount: 1830 + index * 483, capabilities: [`${item.platform}市场与竞争分析`, review ? '评论主题聚类与问题定位' : '价格带与利润空间测算', '供应链筛选与行动清单'], prompts: [`请分析${item.platform}的${subject}，对比近 30 天需求、价格与竞争格局，推荐 3 个切入方向。`, `围绕${subject}完成「${item.name.split('-').slice(1).join('-') || item.name}」任务，给出指标对比表和 7 天执行计划。`], caseTitle: `${item.platform} · ${subject}${review ? '用户痛点洞察' : '选品机会评估'}`, caseHeaders: review ? ['问题类型', '反馈量', '占比', '改进建议'] : ['商品', item.platform === '1688' ? '拿货价' : '售价', '月销量', '毛利率', '建议'], caseMetrics: [{ label: review ? '评论样本' : '对比商品', value: review ? '300 条' : '48 款' }, { label: '需求环比', value: `+${18 + index}.6%` }, { label: '优先机会', value: '3 个' }], caseRows: review ? [['稳定性不足', '126 条', '42%', '加宽底座 · P0'], ['包装破损', '84 条', '28%', '双层防护 · P0'], ['材质质感', '54 条', '18%', '升级表面工艺 · P1']] : [[`${subject} · 基础款`, item.platform === '1688' ? '¥12.80' : item.platform === 'Ozon' ? '₽690' : '$12.99', '1,280', '24.6%', '小单测试'], [`${subject} · 加强款`, item.platform === '1688' ? '¥18.50' : item.platform === 'Ozon' ? '₽990' : '$18.99', '960', '31.2%', '优先推荐'], [`${subject} · 便携款`, item.platform === '1688' ? '¥9.60' : item.platform === 'Ozon' ? '₽490' : '$9.99', '2,160', '18.4%', '控制成本']], caseConclusion: review ? '先解决稳定性与运输包装，两类问题合计占反馈的 70%。建议先打样验证底座承重，再更新主图和安装说明。' : `建议优先验证${subject}加强款：需求增长明显，利润空间较好。首批选 3 家供应商各取样 10 件，完成质检与页面测试后再补货。`, caseImage: caseImageSvg(subject), ...item }
 }
 expertState.experts = expertState.experts.map(expertDemo)
 expertState.skills = expertState.skills.map(skillDemo)
@@ -173,6 +168,7 @@ function validItem(v: unknown): v is Record<string, unknown> {
     && (v.usageCount === undefined || typeof v.usageCount === 'number') && (v.downloadCount === undefined || typeof v.downloadCount === 'number')
     && (v.version === undefined || text(v.version)) && (v.author === undefined || text(v.author)) && (v.outputExample === undefined || text(v.outputExample))
     && (v.caseTitle === undefined || text(v.caseTitle)) && (v.caseConclusion === undefined || text(v.caseConclusion))
+    && (v.caseHeaders === undefined || strings(v.caseHeaders)) && (v.caseImage === undefined || text(v.caseImage))
     && (v.caseRows === undefined || (Array.isArray(v.caseRows) && v.caseRows.every(strings)))
     && (v.caseMetrics === undefined || (Array.isArray(v.caseMetrics) && v.caseMetrics.every(m => record(m) && text(m.label) && text(m.value))))
 }

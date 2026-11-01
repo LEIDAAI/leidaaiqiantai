@@ -1,15 +1,14 @@
 /* =====================================================
- * 弹窗状态：设置 / 积分中心 / 积分明细 / 反馈 / 充值确认
+ * 弹窗状态：设置 / 积分中心 / 反馈 / 充值确认
  * 删除确认 / 重命名 / 会话右键菜单 / 输入框右键菜单
+ * 页面切换：chat / experts / skills / account / pricing / orders / consume
  * ===================================================== */
 import { reactive } from 'vue'
 
 export const modals = reactive({
   settings: false,
-  page: 'chat' as 'chat' | 'experts' | 'skills' | 'account' | 'pricing',
+  page: 'chat' as 'chat' | 'experts' | 'skills' | 'account' | 'pricing' | 'orders' | 'consume',
   wallet: false,
-  ledger: false,
-  ledgerBlock: 'buy' as 'buy' | 'consume',
   feedback: false,
   feedbackSubmitted: false,
   buyConfirm: false,
@@ -34,11 +33,9 @@ export function openSettings() { modals.settings = true }
 export function closeSettings() { modals.settings = false }
 export function openWallet() { modals.wallet = true; modals.walletRunsTip = '' }
 export function closeWallet() { modals.wallet = false }
-export function navigatePage(page: typeof modals.page) { modals.page = page; modals.wallet = false; modals.ledger = false }
+export function navigatePage(page: typeof modals.page) { modals.page = page; modals.wallet = false }
 export function openPricing() { navigatePage('pricing') }
 export function openAccount() { navigatePage('account') }
-export function openLedgerBlock(block: 'buy' | 'consume') { modals.ledgerBlock = block; modals.ledger = true }
-export function closeLedger() { modals.ledger = false }
 export function openFeedback() { modals.feedback = true; modals.feedbackSubmitted = false }
 export function closeFeedback(submitted: boolean) {
   modals.feedback = false
