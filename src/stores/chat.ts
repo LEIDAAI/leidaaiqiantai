@@ -166,6 +166,8 @@ export function newConversation() {
   })
   const key = 'draft-' + Date.now() + '-' + (++chatState.draftSeq)
   chatState.activeConvKey = key
+  // 新建对话（草稿态）同样记录为"上次打开"：刷新后仍停留在新建对话首页，而不是回落旧会话
+  try { localStorage.setItem(LAST_OPEN_CONV_KEY + ':' + currentAccount.value.id, String(key)) } catch (e) {}
   chatState.mobileSidebar = false
   chatState.selectedExpert = null
   chatState.selectedSkill = null
