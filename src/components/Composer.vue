@@ -4,6 +4,7 @@ import { ref, watch, nextTick, computed, onMounted, onBeforeUnmount } from 'vue'
 import { chatState } from '../stores/chat'
 import { modals, openInputMenu, closeInputMenu } from '../stores/modals'
 import { expertState, type ExpertItem, type SkillItem } from '../stores/expert'
+import { skillVisual } from '../stores/skillVisual'
 import { flashToast, writeClipboard } from '../utils/common'
 import { send } from '../stores/send'
 
@@ -415,9 +416,7 @@ onBeforeUnmount(() => {
               </div>
               <div class="cb-pop-list">
                 <button v-for="s in popSkills" :key="s.id" class="cb-pop-item" :class="{ on: chatState.selectedSkill?.id === s.id }" type="button" @click="pickSkill(s)">
-                  <span class="bp-ava skill">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
-                  </span>
+                  <span class="bp-ava skill" :style="{ background: skillVisual(s).grad }" v-html="skillVisual(s).icon"></span>
                   <span class="bp-meta">
                     <b>{{ s.name }}</b>
                     <i>{{ s.scenario || '通用' }} · {{ s.desc }}</i>
