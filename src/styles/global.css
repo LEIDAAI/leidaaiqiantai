@@ -4178,16 +4178,17 @@
 .dir-chip:hover { background: #e0e5e2; color: #171b19; }
 .dir-chip.on { background: #00A83E; color: #fff; font-weight: 600; }
 .dir-chip.on:hover { background: #008F35; }
-.dir-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-.dir-card { position: relative; display: flex; flex-direction: row; align-items: center; gap: 16px; padding: 12px 18px; border-radius: 12px; background: #fff; }
+.dir-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.dir-card { position: relative; display: flex; flex-direction: column; align-items: stretch; padding: 14px 16px; border-radius: 12px; background: #fff; }
 .dir-card:hover { box-shadow: 0 8px 22px rgba(0,0,0,.06); }
-.dir-body { display: flex; align-items: center; flex: 1; min-width: 0; gap: 12px; }
+.dir-body { display: flex; align-items: flex-start; flex: 1; min-width: 0; gap: 12px; }
+.dir-card:has(.dir-new) .dir-body { padding-right: 54px; }
 .dc-ava { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; color: #fff; font-size: 15px; font-weight: 700; }
 .dc-icon { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 40px; height: 40px; border-radius: 10px; background: var(--brand-soft); color: var(--brand); }
 .dir-name { font-size: 14px; font-weight: 600; color: #1c1c1c; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.dir-desc { margin-top: 3px; font-size: 12.5px; line-height: 1.5; color: #4d4d4d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dir-divider { display: none; }
-.dir-foot { display: flex; align-items: center; flex: none; gap: 12px; }
+.dir-desc { margin-top: 4px; font-size: 12.5px; line-height: 1.55; color: #4d4d4d; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dir-divider { height: 1px; background: #f0f1f0; margin: 11px 0 10px; }
+.dir-foot { display: flex; align-items: center; justify-content: space-between; flex: none; gap: 12px; }
 .dir-stat { font-size: 12px; color: #b0b0b7; }
 .dir-actions { display: flex; gap: 8px; z-index: 2; }
 .da { height: 28px; padding: 0 12px; border: 1px solid transparent; border-radius: 7px; font-size: 12px; cursor: pointer; }
@@ -4356,8 +4357,7 @@
   .dir-page { padding: 0 14px 40px; gap: 18px; }
   .dir-head { overflow-x: auto; }
   .dir-tabs { gap: 16px; }
-  .dir-card { flex-direction: column; align-items: stretch; gap: 10px; }
-  .dir-desc { white-space: normal; overflow: hidden; }
+  .dir-grid { grid-template-columns: 1fr; }
   .dir-foot { flex-wrap: wrap; }
   .ep-head, .ep-tabs { padding-left: 14px; padding-right: 14px; }
   .ep-body { padding: 16px 14px; }
