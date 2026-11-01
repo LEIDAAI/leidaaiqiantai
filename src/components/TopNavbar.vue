@@ -5,6 +5,8 @@ import { currentAccount } from '../stores/account'
 import { computed } from 'vue'
 
 const accountName = computed(() => currentAccount.value?.name || '雷达6861')
+// r42：右上角账号按钮显示掩码手机号（与侧栏底部胶囊同源 currentAccount.phone）
+const accountPhone = computed(() => currentAccount.value?.phone || '')
 </script>
 
 <template>
@@ -27,13 +29,8 @@ const accountName = computed(() => currentAccount.value?.name || '雷达6861')
     <div class="navbar-right">
       <button class="nav-link nav-button" @click="openPricing">套餐购买</button>
       <button class="nav-avatar" @click="openAccount">
-        <div class="avatar-circle">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="8" r="4" fill="#fff"/>
-            <path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="#fff"/>
-          </svg>
-        </div>
         <span class="avatar-name">{{ accountName }}</span>
+        <span v-if="accountPhone" class="avatar-phone">{{ accountPhone }}</span>
       </button>
     </div>
   </header>
