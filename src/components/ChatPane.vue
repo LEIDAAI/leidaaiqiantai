@@ -12,6 +12,7 @@ import { openSettings, openWallet, modals, openFeedback, openPricing, openAccoun
 import { resetRightPreview } from '../stores/panel'
 import { PERSON_SVG } from './svg'
 import { expertState, type ExpertItem, type SkillItem } from '../stores/expert'
+import { skillVisual, platformGrad, categoryIcon } from '../stores/skillVisual'
 import { startDemoConversation } from '../stores/demo'
 
 const streamEl = ref<HTMLElement | null>(null)
@@ -207,9 +208,16 @@ function onSendClick() {
         <div class="home-hero">
           <div class="home-hero-head">
             <h1 class="home-title">跨境电商运营助手</h1>
+            <p class="home-sub">选品、运营、评论分析，交给平台专家与开箱即用的技能</p>
             <div class="home-mode">
-              <button :class="{ on: homeTab === 'expert' }" @click="homeTab = 'expert'; homeChip = '推荐'">专家</button>
-              <button :class="{ on: homeTab === 'skill' }" @click="homeTab = 'skill'; homeChip = '推荐'">技能</button>
+              <button :class="{ on: homeTab === 'expert' }" @click="homeTab = 'expert'; homeChip = '推荐'">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                专家
+              </button>
+              <button :class="{ on: homeTab === 'skill' }" @click="homeTab = 'skill'; homeChip = '推荐'">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+                技能
+              </button>
             </div>
           </div>
           <div class="home-sec">
@@ -227,15 +235,23 @@ function onSendClick() {
               <button v-if="homePageCount > 1" class="hp-arrow prev" :disabled="homePage === 0" aria-label="上一页" @click="prevHomePage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
               <div class="home-grid">
               <template v-if="homeTab === 'expert'">
-                <div v-for="e in pagedExperts" :key="e.id" class="home-card">
+                <div v-for="e in pagedExperts" :key="e.id" class="home-card expert">
+                  <span class="hc-accent" :style="{ background: platformGrad(e.platform) }"></span>
                   <div class="hc-head">
-                    <span class="hc-ava" :style="{ background: platformColor[e.platform] || '#00A83E' }">{{ platformInitial[e.platform] || 'E' }}</span>
+                    <span class="hc-ava" :class="{ wide: (platformInitial[e.platform] || 'E').length > 1 }" :style="{ background: platformGrad(e.platform) }">
+                      {{ platformInitial[e.platform] || 'E' }}
+                      <i class="hc-badge" v-html="categoryIcon(e.category)"></i>
+                    </span>
                     <div class="hc-meta">
                       <div class="hc-name">{{ e.name }}</div>
                       <div class="hc-tags">{{ e.platform }} · {{ e.category }}</div>
                     </div>
                   </div>
                   <div class="hc-desc">{{ e.desc }}</div>
+                  <div class="hc-usage">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+                    {{ (e.usageCount ? e.usageCount.toLocaleString() + ' 次使用' : '新上架') + ' · ' + (e.source === 'official' ? '官方' : '我的') }}
+                  </div>
                   <div class="hc-foot">
                     <button class="hc-btn ghost" @click="caseItem = e">看案例</button>
                     <button class="hc-btn main" @click="useExpert(e)">立即使用</button>
@@ -244,10 +260,9 @@ function onSendClick() {
               </template>
               <template v-else>
                 <div v-for="s in pagedSkills" :key="s.id" class="home-card skill">
+                  <span class="hc-accent" :style="{ background: skillVisual(s).grad }"></span>
                   <div class="hc-head">
-                    <span class="hc-icon">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
-                    </span>
+                    <span class="hc-icon grad" :style="{ background: skillVisual(s).grad }" v-html="skillVisual(s).icon"></span>
                     <div class="hc-meta">
                       <div class="hc-name">{{ s.name }}</div>
                       <div class="hc-tags">{{ s.scenario || '通用' }} · v{{ s.version }}</div>
