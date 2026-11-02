@@ -12,6 +12,7 @@ import { walletState, confirmPay } from '../stores/wallet'
 import { chatState, togglePin, commitRename, deleteConversation } from '../stores/chat'
 import { appState } from '../stores/state'
 import { flashToast } from '../utils/common'
+import { authState, openLogin } from '../stores/auth'
 
 /* ==================== 会话右键菜单 ==================== */
 const pinLabel = computed(() => modals.convMenuTarget && modals.convMenuTarget.pinned ? '取消置顶' : '置顶任务')
@@ -155,6 +156,7 @@ function drawPayQr() {
 }
 /* 演示：点击二维码模拟支付成功（真实链路走 confirmPay 记账 + toast） */
 function onQrPaid() {
+  if (!authState.logged) { closeBuyConfirm(); openLogin('完成支付'); return }
   if (!modals.buyPendingPkg) return
   stopPayTimer()
   confirmPay(modals.buyPendingPkg)
@@ -406,7 +408,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onEsc))
         <div class="pay-info">
           <div class="pi-row"><span>订单号码：</span><span>{{ payOrderNo }}</span></div>
           <div class="pi-row"><span>购买账号：</span><span>{{ buyAccount }}</span></div>
-          <div class="pi-row"><span>订单类型：</span><span>购买加油包</span></div>
+          <div class="pi-row"><span>订单类型：</span><span>积分加油包</span></div>
           <div class="pi-row"><span>购买套餐：</span><span>{{ confirmPkgText }}</span></div>
           <div class="pi-row"><span>获　　得：</span><span>{{ confirmCoinsText.replace('+', '') }} 积分</span></div>
           <div class="pi-row"><span>生效日期：</span><span>立即生效</span></div>
