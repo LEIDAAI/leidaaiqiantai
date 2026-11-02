@@ -62,7 +62,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
     </div>
 
     <div class="navbar-right">
-      <div ref="npRoot" class="np-wrap" @mouseenter="openNp" @mouseleave="scheduleNpClose">
+      <div v-if="authState.logged" ref="npRoot" class="np-wrap" @mouseenter="openNp" @mouseleave="scheduleNpClose">
         <!-- r54：剩余积分改为浅绿 soft 胶囊（闪电图标 + 标签 + 加粗数值） -->
         <button class="np-pill" :class="{ 'np-on': npOpen }" @click="openNp">
           <svg class="np-coin" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 2.2c.5-.7 1.6-.2 1.4.6l-1.8 7.4h5.4c.6 0 1 .7.6 1.2l-8 10.4c-.5.7-1.6.2-1.4-.6l1.8-7.4H5.8c-.6 0-1-.7-.6-1.2l8-10.4z"/></svg>
@@ -95,6 +95,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
           </div>
         </div>
       </div>
+      <button v-if="!authState.logged" class="np-pill" @click="openPricing">查看套餐</button>
 
       <!-- r59：未登录（含游客）→ 绿色「登录 / 注册」；已登录 → 主账号胶囊 + 下拉（账号与积分 / 退出登录） -->
       <button v-if="!authState.logged" class="nav-login" @click="openLogin('')">登录 / 注册</button>
