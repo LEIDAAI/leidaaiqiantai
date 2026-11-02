@@ -4305,12 +4305,12 @@
 .home-mode { display: flex; gap: 4px; padding: 3px; border-radius: 999px; background: #e6e6e6; }
 .home-mode button { min-width: 76px; height: 30px; border: 0; border-radius: 999px; background: transparent; color: #555; font-size: 13px; cursor: pointer; }
 .home-mode button.on { background: #fff; color: #0a0a0a; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-.home-tabs { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 14px; }
+.home-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding-bottom: 14px; }
 .home-chip { height: 30px; padding: 0 15px; border: 0; border-radius: 999px; background: #edf0ee; color: #5a625c; font-size: 12.5px; cursor: pointer; transition: background .15s ease, color .15s ease; }
 .home-chip:hover { background: #e0e5e2; color: #171b19; }
 .home-chip.on { background: #00A83E; color: #fff; font-weight: 600; }
 .home-chip.on:hover { background: #008F35; }
-.home-seg-row { margin-bottom: 12px; }
+.home-seg-row { margin-bottom: 12px; display: flex; justify-content: center; }
 .home-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .home-pager { position: relative; padding: 0 46px; }
 .hp-arrow { position: absolute; z-index: 6; top: 25%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid #e3e3e3; border-radius: 50%; background: #fff; color: #8a8a90; box-shadow: 0 2px 8px rgba(0,0,0,.06); cursor: pointer; transition: color .15s ease, border-color .15s ease, opacity .15s ease, transform .15s ease; }
@@ -4321,7 +4321,8 @@
 .hp-arrow:disabled { opacity: .3; pointer-events: none; }
 /* r41：窄窗口下内容区贴近视口右缘，next 箭头内移避开右下浮动按钮组（.home-floats），同时不压卡片 */
 @media (max-width: 1108px) {
-  .home-pager { padding: 0 80px 0 46px; }
+  /* r44：仅当存在翻页箭头（v-if 渲染）时才使用不对称内边距，单页时保持完全居中 */
+  .home-pager:has(.hp-arrow) { padding: 0 80px 0 46px; }
   .hp-arrow.next { right: 36px; }
 }
 .home-card { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; border: 1px solid #ececec; border-radius: 12px; background: #fff; overflow: hidden; }
@@ -4630,7 +4631,8 @@
   .home-sub { font-size: 12.5px; }
   .home-grid { grid-template-columns: 1fr; }
   .hp-arrow { width: 28px; height: 28px; }
-  .home-pager { padding: 0 74px 0 36px; }
+  /* r44：仅当存在翻页箭头时才使用不对称内边距，单页时保持完全居中 */
+  .home-pager:has(.hp-arrow) { padding: 0 74px 0 36px; }
   .hp-arrow.prev { left: 0; }
   .hp-arrow.next { right: 40px; }
   .home-card { flex-direction: column; align-items: stretch; gap: 10px; }
