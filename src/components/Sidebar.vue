@@ -111,7 +111,7 @@ function onToggleLeft() {
         <svg class="lh-agent-bulb" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.76.76 1.23 1.52 1.41 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
       </div>
       <div class="side-menu">
-        <button class="sm-item" @click="navigatePage('chat'); newConversation()">
+        <button class="sm-item" :class="{ selected: modals.page === 'chat' && chatState.activeConvKey.startsWith('draft') }" @click="navigatePage('chat'); newConversation()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
           <span>开启新对话</span>
         </button>
