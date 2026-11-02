@@ -9,7 +9,7 @@ import { openConvMenu, openDeleteConfirm, openRename, closeConvMenu, navigatePag
 import { accountState, currentAccount } from '../stores/account'
 import { appState, saveGroupState, loadGroupState } from '../stores/state'
 import { walletState } from '../stores/wallet'
-import { authState, openLogin } from '../stores/auth'
+import { authState } from '../stores/auth'
 import { DLD } from '../api'
 import { send } from '../stores/send'
 import { agentOpening } from '../stores/opening'
@@ -17,14 +17,14 @@ import { agentOpening } from '../stores/opening'
 /* 底部账号卡：hover 弹出个人面板（积分 / 套餐 / 入口），离开延迟关闭 */
 const userPop = ref(false)
 let popTimer: ReturnType<typeof setTimeout> | undefined
-function openUserPop() { if (!authState.logged) return; if (popTimer) clearTimeout(popTimer); userPop.value = true }
+function openUserPop() { if (popTimer) clearTimeout(popTimer); userPop.value = true }
 function closeUserPop() { if (popTimer) clearTimeout(popTimer); popTimer = setTimeout(() => { userPop.value = false }, 180) }
 function popGo(page: 'account' | 'pricing') { userPop.value = false; navigatePage(page) }
 function popOrders() { userPop.value = false; navigatePage('orders') }
 function popConsume() { userPop.value = false; navigatePage('consume') }
 const ACCOUNT_PAGES = ['account', 'pricing', 'orders', 'consume']
 const inAccountSection = computed(() => ACCOUNT_PAGES.includes(modals.page))
-function goAccount() { userPop.value = false; if (!authState.logged) { openLogin('查看账户信息'); return }; navigatePage('account') }
+function goAccount() { userPop.value = false; navigatePage('account') }
 const cycleText = computed(() => walletState.billingCycle === 'monthly' ? '月付' : '年付')
 
 const GROUP_ORDER = ['pinned', 'today', 'yesterday', 'thisWeek', 'earlier'] as const
@@ -168,19 +168,19 @@ function onToggleLeft() {
       </template>
       <div v-else class="conv-empty">该账号暂无历史对话</div>
     </div>
-    <!-- 底部：账号卡，hover 弹出个人面板 -->
-    <div class="user-zone" :class="{ open: userPop }" @mouseenter="openUserPop" @mouseleave="closeUserPop">
+    <!-- 底部账号卡仅在登录后显示 -->
+    <div v-if="authState.logged" class="user-zone" :class="{ open: userPop }" @mouseenter="openUserPop" @mouseleave="closeUserPop">
       <button class="uc-trigger" :class="{ on: inAccountSection }" @click="goAccount()">
-        <span class="uc-ava">{{ authState.logged ? (currentAccount?.name || '雷达用户').slice(0, 1) : '登' }}</span>
+        <span class="uc-ava">{{ (currentAccount?.name || '雷达用户').slice(0, 1) }}</span>
         <span class="uc-info">
-          <b class="uc-name">{{ authState.logged ? (currentAccount?.name || '雷达用户') : '登录 / 注册' }}</b>
-          <i class="uc-sub">{{ authState.logged ? (currentAccount?.phone || '个人中心') : '登录后查看账户与积分' }}</i>
+          <b class="uc-name">{{ currentAccount?.name || '雷达用户' }}</b>
+          <i class="uc-sub">{{ currentAccount?.phone || '个人中心' }}</i>
         </span>
         <svg class="uc-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
       </button>
 
       <transition name="ucfade">
-        <div v-if="userPop && authState.logged" class="uc-pop" role="menu">
+        <div v-if="userPop" class="uc-pop" role="menu">
           <div class="ucp-head">
             <span class="uc-ava big">{{ (currentAccount?.name || '雷达用户').slice(0, 1) }}</span>
             <div class="ucp-id">
