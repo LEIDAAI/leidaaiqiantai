@@ -11,14 +11,26 @@ const accountName = computed(() => currentAccount.value?.name || '雷达6861')
 const accountPhone = computed(() => currentAccount.value?.phone || '')
 
 // r43：「套餐购买」改为下拉算力卡片（参照竞品算力浮层）
+// r53：按钮改为「剩余积分」+ 数值；面板改为悬停展开（mouseleave 延迟 150ms 跨越按钮与面板间的 12px 间隙），点击保留作触屏降级
 const npOpen = ref(false)
 const npRoot = ref<HTMLElement | null>(null)
-function toggleNp() { npOpen.value = !npOpen.value }
+let npCloseTimer: ReturnType<typeof setTimeout> | undefined
+function openNp() {
+  if (npCloseTimer) { clearTimeout(npCloseTimer); npCloseTimer = undefined }
+  npOpen.value = true
+}
+function scheduleNpClose() {
+  if (npCloseTimer) clearTimeout(npCloseTimer)
+  npCloseTimer = setTimeout(() => { npOpen.value = false; npCloseTimer = undefined }, 150)
+}
 function npGoPricing() { npOpen.value = false; openPricing() }
 function npGoConsume() { npOpen.value = false; navigatePage('consume') }
 function onDocClick(e: MouseEvent) {
   if (!npOpen.value || !npRoot.value) return
-  if (!npRoot.value.contains(e.target as Node)) npOpen.value = false
+  if (!npRoot.value.contains(e.target as Node)) {
+    npOpen.value = false
+    if (npCloseTimer) { clearTimeout(npCloseTimer); npCloseTimer = undefined }
+  }
 }
 onMounted(() => document.addEventListener('click', onDocClick))
 onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
@@ -42,8 +54,8 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
     </div>
 
     <div class="navbar-right">
-      <div ref="npRoot" class="np-wrap">
-        <button class="nav-link nav-button" :class="{ 'np-on': npOpen }" @click="toggleNp">套餐购买</button>
+      <div ref="npRoot" class="np-wrap" @mouseenter="openNp" @mouseleave="scheduleNpClose">
+        <button class="nav-link nav-button" :class="{ 'np-on': npOpen }" @click="openNp">剩余积分 {{ appState.totalCoins.toLocaleString() }}</button>
 
         <!-- 下拉算力卡片 -->
         <div v-if="npOpen" class="np-card">
