@@ -3,13 +3,13 @@
  * 登录弹窗（模拟走通）：验证码 / 密码 / 微信扫码 + 游客模式
  * 布局：遮罩 + 品牌区/表单双栏弹窗；扫码首次为新用户 → 关联注册绑定手机号
  * ===================================================== */
-import { ref, computed, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { authState, DEMO, closeLogin, enterAsGuest, sendSmsCode, loginBySms, loginByPwd, bindWxPhone, tryWxLogin, resetWxBind } from '../stores/auth'
 import { flashToast } from '../utils/common'
 import { platformLogo } from '../stores/skillVisual'
 
 type View = 'form' | 'qr' | 'bind'
-const view = ref<View>('form')
+const view = ref<View>('qr')
 const tab = ref<'sms' | 'pwd'>('sms')
 
 const phone = ref(''), code = ref(''), pwd = ref('')
@@ -73,7 +73,7 @@ function switchView(v: View) {
   view.value = v
   err.value = ''
   if (v === 'qr') startScan()
-  else if (v === 'bind') stopScan()
+  else stopScan()
 }
 async function onBind() {
   if (busy.value) return
@@ -101,6 +101,7 @@ const qrCells = computed<boolean[]>(() => {
   return arr
 })
 
+onMounted(startScan)
 onBeforeUnmount(() => { if (cdTimer) clearInterval(cdTimer); stopScan() })
 </script>
 
