@@ -16,6 +16,8 @@ import { flashToast } from './utils/common'
 import { chatState, activeView } from './stores/chat'
 import { panel, setCollapsed } from './stores/panel'
 import { accountState } from './stores/account'
+import LoginView from './components/LoginView.vue'
+import { authState } from './stores/auth'
 const benefitsOpen = ref(false)
 
 const workEl = ref<HTMLElement | null>(null)
@@ -189,6 +191,9 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
 
 <template>
   <div class="app-container">
+    <!-- 登录门（r59：未登录且非游客 → 全屏登录页；登录/游客后进入工作台） -->
+    <LoginView v-if="authState.loginView" />
+    <template v-else>
     <!-- 全局固定顶部导航栏（所有页面常显吸顶） -->
     <TopNavbar />
     <div class="work" ref="workEl">
@@ -396,5 +401,6 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
     <div class="account-loading" :class="{ show: accountState.accountSwitching }"></div>
 
     <Modals />
+    </template>
   </div>
 </template>
