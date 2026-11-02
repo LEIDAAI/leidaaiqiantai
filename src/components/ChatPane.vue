@@ -6,9 +6,8 @@ import Composer from './Composer.vue'
 import {
   chatState, activeView, isRunning, stopTask, newConversation
 } from '../stores/chat'
-import { openSettings, modals, openFeedback, openAccount } from '../stores/modals'
+import { modals, openFeedback } from '../stores/modals'
 import { resetRightPreview } from '../stores/panel'
-import { PERSON_SVG } from './svg'
 import { expertState, type ExpertItem, type SkillItem } from '../stores/expert'
 import { skillVisual, platformGrad, categoryIcon } from '../stores/skillVisual'
 import { startDemoConversation } from '../stores/demo'
@@ -153,15 +152,6 @@ function onSendClick() {
   <section class="col-mid" :class="{ 'is-hero': chatHero }">
     <!-- ============ hero 首页 ============ -->
     <div v-if="chatHero" class="chat-card hero-card">
-      <div class="home-top">
-        <button class="home-icon-btn" title="设置" @click="openSettings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
-        <button class="home-avatar" title="个人中心" @click="openAccount">
-          <span v-html="PERSON_SVG"></span>
-        </button>
-      </div>
-
       <div class="home-scroll">
         <div class="home-hero">
           <div class="home-hero-head">
