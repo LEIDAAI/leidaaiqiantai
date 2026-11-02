@@ -115,7 +115,7 @@ onBeforeUnmount(() => { if (cdTimer) clearInterval(cdTimer); stopScan() })
           <div class="lg-logo"><span class="lg-logo-icon">◈</span><span>雷达AI<small>让电商更简单</small></span></div>
           <div class="lg-hero">
             <h1>全平台电商<br>AI 选品运营工作台</h1>
-            <p>数据安全 · 准确性高 · 一个工作台搞定<br>1688 / OZON / 亚马逊 / TEMU</p>
+            <p>从选品分析到运营决策，一个工作台就够了<br>1688 / OZON / 亚马逊 / TEMU</p>
             <div class="lg-platforms">
               <span v-for="p in ['1688', 'OZON', '亚马逊', 'TEMU']" :key="p"><img :src="platformLogo(p)" :alt="p">{{ p }}</span>
             </div>
