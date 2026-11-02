@@ -4087,8 +4087,9 @@
 .home-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding-bottom: 16px; }
 .home-chip { height: 30px; padding: 0 15px; border: 0; border-radius: 999px; background: #edf0ee; color: #5a625c; font-size: 12.5px; cursor: pointer; transition: background .15s ease, color .15s ease; }
 .home-chip:hover { background: #e0e5e2; color: #171b19; }
-.home-chip.on { background: #00A83E; color: #fff; font-weight: 600; }
-.home-chip.on:hover { background: #008F35; }
+/* r51 温和降噪：选中 chip 由绿实心改浅绿 soft，绿色收敛为「开始查词」唯一强 CTA */
+.home-chip.on { background: #e7f6ed; color: #008a37; font-weight: 600; }
+.home-chip.on:hover { background: #d9f0e2; color: #007730; }
 .home-seg-row { margin-bottom: 12px; display: flex; justify-content: center; }
 .home-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 16px; }
 .home-pager { position: relative; padding: 0 46px; }
@@ -4118,20 +4119,22 @@
 .hc-btn { height: 30px; padding: 0 14px; border: 1px solid transparent; border-radius: 8px; font-size: 12px; cursor: pointer; }
 .hc-btn.ghost { border-color: #e2e2e2; background: #fff; color: #333; }
 .hc-btn.ghost:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
-.hc-btn.main { border: 0; background: linear-gradient(100deg, #00b84a, #00913a); color: #fff; }
-.hc-btn.main:hover { filter: brightness(1.06); }
+/* r51 温和降噪：卡片 CTA 由绿渐变实心改浅绿 soft（全页仅保留「开始查词」实心绿） */
+.hc-btn.main { border: 0; background: #e7f6ed; color: #008a37; font-weight: 600; }
+.hc-btn.main:hover { background: #d9f0e2; color: #007730; }
 .hc-btn.full { flex: 1; }
 /* r33 视觉升级：首页副标题/模式图标、专家差异角标、技能独立配色图标 */
 .home-sub { margin: -12px 0 0; font-size: 14px; color: #8a8a92; letter-spacing: .2px; }
 .home-mode button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
 .home-mode button svg { width: 13px; height: 13px; }
-.hc-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+/* r51 温和降噪：隐藏卡片顶部平台彩色条，减少每卡一处的强色块 */
+.hc-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; display: none; }
 .hc-ava { position: relative; }
 .hc-ava.wide { font-size: 11.5px; letter-spacing: -.5px; }
 .hc-badge { position: absolute; right: -3px; bottom: -3px; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: #fff; color: #00A83E; box-shadow: 0 1px 4px rgba(0,0,0,.16); }
 .hc-badge svg { width: 9px; height: 9px; }
 .hc-usage { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #9a9aa2; }
-.hc-usage svg { width: 11px; height: 11px; color: #f5a623; }
+.hc-usage svg { width: 11px; height: 11px; color: #9a9aa2; }
 .hc-foot .hc-usage { flex: 1 1 auto; min-width: 0; }
 .hc-usage-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hc-icon.grad, .dc-icon.grad { color: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.14); }
@@ -4142,8 +4145,9 @@
 .home-bottom .composer { margin: 0 auto; max-width: 800px; }
 .home-disclaimer { margin-top: 8px; text-align: center; font-size: 12px; color: #b0b0b7; }
 .home-floats { position: absolute; right: 18px; bottom: 130px; display: flex; flex-direction: column; gap: 10px; z-index: 5; }
-.hf-btn { position: relative; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 0; border-radius: 50%; background: var(--brand); color: #fff; cursor: pointer; box-shadow: 0 4px 12px rgba(0,168,62,.3); }
-.hf-btn:hover { background: var(--brand-dark); }
+/* r51 温和降噪：浮动按钮组由绿实心改白底描边 + 绿色图标，弱化边缘突出感 */
+.hf-btn { position: relative; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid #e3e3e3; border-radius: 50%; background: #fff; color: var(--brand); cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+.hf-btn:hover { background: #f2faf5; border-color: var(--brand); }
 .hf-btn::after { content: attr(data-tip); position: absolute; right: calc(100% + 10px); top: 50%; transform: translateY(-50%); padding: 6px 12px; border-radius: 6px; background: #1f1f1f; color: #fff; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; }
 .hf-btn:hover::after { opacity: 1; }
 
