@@ -4226,8 +4226,8 @@
 .seg-btn:hover { color: #171b19; }
 .seg-btn.on { background: #fff; color: #0a0a0a; font-weight: 600; box-shadow: 0 1px 3px rgba(16,24,20,.12); }
 .seg-logo { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 4px; color: #fff; font-size: 9px; font-weight: 700; line-height: 1; letter-spacing: .2px; }
-.dir-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.dir-chip { height: 30px; padding: 0 15px; border: 0; border-radius: 999px; background: #edf0ee; color: #5a625c; font-size: 12.5px; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.dir-chips { display: flex; flex-wrap: wrap; gap: 12px; }
+.dir-chip { height: 34px; padding: 0 18px; border: 0; border-radius: 999px; background: #edf0ee; color: #5a625c; font-size: 13px; cursor: pointer; transition: background .15s ease, color .15s ease; }
 .dir-chip:hover { background: #e0e5e2; color: #171b19; }
 .dir-chip.on { background: #00A83E; color: #fff; font-weight: 600; }
 .dir-chip.on:hover { background: #008F35; }
