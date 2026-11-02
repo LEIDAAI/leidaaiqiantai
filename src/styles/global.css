@@ -8,6 +8,24 @@
     .work .col-right { width: 40vw; }
   }
 
+  /* 轻提示：与工作台一致的浅色浮层 */
+  #flashToast {
+    position: fixed; top: 8px; left: 50%; z-index: 5000;
+    display: flex; align-items: center; gap: 10px;
+    max-width: min(460px, calc(100vw - 32px)); min-height: 40px;
+    padding: 9px 16px 9px 12px; border: 1px solid #dcece2; border-radius: 10px;
+    background: #fff; color: #2a4032; font: 13px/1.45 var(--font);
+    box-shadow: 0 8px 28px rgba(12, 49, 29, .10), 0 2px 6px rgba(12, 49, 29, .04);
+    opacity: 0; transform: translate(-50%, -8px); pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  #flashToast::before {
+    content: 'i'; display: grid; place-items: center; flex: none;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #e8f7ed; color: #17834b; font: 700 12px/1 var(--font);
+  }
+  #flashToast.visible { opacity: 1; transform: translate(-50%, 0); }
+
   /* ============ 雷达 AI 设计变量 ============ */
   :root {
     --brand:        #00A83E;
