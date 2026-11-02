@@ -55,7 +55,12 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 
     <div class="navbar-right">
       <div ref="npRoot" class="np-wrap" @mouseenter="openNp" @mouseleave="scheduleNpClose">
-        <button class="nav-link nav-button" :class="{ 'np-on': npOpen }" @click="openNp">剩余积分 {{ appState.totalCoins.toLocaleString() }}</button>
+        <!-- r54：剩余积分改为浅绿 soft 胶囊（闪电图标 + 标签 + 加粗数值） -->
+        <button class="np-pill" :class="{ 'np-on': npOpen }" @click="openNp">
+          <svg class="np-coin" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 2.2c.5-.7 1.6-.2 1.4.6l-1.8 7.4h5.4c.6 0 1 .7.6 1.2l-8 10.4c-.5.7-1.6.2-1.4-.6l1.8-7.4H5.8c-.6 0-1-.7-.6-1.2l8-10.4z"/></svg>
+          <span class="np-label">剩余积分</span>
+          <span class="np-val">{{ appState.totalCoins.toLocaleString() }}</span>
+        </button>
 
         <!-- 下拉算力卡片 -->
         <div v-if="npOpen" class="np-card">
@@ -83,7 +88,9 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
         </div>
       </div>
 
+      <!-- r54：主账号改为白底描边胶囊（绿色圆头像 + 名称 + 掩码手机号） -->
       <button class="nav-avatar" @click="openAccount">
+        <span class="avatar-dot">主</span>
         <span class="avatar-name">{{ accountName }}</span>
         <span v-if="accountPhone" class="avatar-phone">{{ accountPhone }}</span>
       </button>
