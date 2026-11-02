@@ -4481,7 +4481,7 @@
   .plan-price { font-size: 30px; }
 }
 
-/* ==================== 登录弹窗（r60：modal 遮罩 + 居中小卡，替代 r59 全屏 gate） ==================== */
+/* ==================== 登录弹窗：第一版双栏内容置于居中弹窗 ==================== */
 .login-page, .login-page *, .login-page *::before, .login-page *::after { box-sizing: border-box; }
 .login-page {
   position: fixed; inset: 0; z-index: 4000;
@@ -4493,16 +4493,35 @@
 }
 @keyframes lgMaskIn { from { opacity: 0 } to { opacity: 1 } }
 .lg-dialog {
-  width: min(420px, 100%); margin: auto;
+  display: grid; grid-template-columns: 46% 54%;
+  width: min(860px, 100%); min-height: 540px; max-height: calc(100vh - 48px);
+  margin: auto; overflow: hidden; border-radius: 18px; background: #fff;
+  box-shadow: 0 24px 60px rgba(9, 50, 32, .22), 0 2px 8px rgba(9, 50, 32, .08);
   animation: lgCardIn .24s cubic-bezier(.3, 1.25, .6, 1);
 }
 @keyframes lgCardIn { from { opacity: 0; transform: translateY(16px) scale(.97) } to { opacity: 1; transform: none } }
-.lg-card {
-  position: relative;
-  padding: 14px 26px 18px; border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 24px 60px rgba(9, 50, 32, .22), 0 2px 8px rgba(9, 50, 32, .08);
+.lg-brand {
+  position: relative; overflow: hidden; min-height: 540px; color: #fff;
+  background: linear-gradient(155deg, #05301f 0%, #075937 55%, #0a9d58 100%);
 }
+.lg-glow { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(2px); }
+.lg-glow.g1 { width: 340px; height: 340px; top: -165px; right: -165px; background: rgba(68, 207, 131, .16); }
+.lg-glow.g2 { width: 300px; height: 300px; left: -190px; bottom: 40px; background: rgba(19, 190, 102, .19); }
+.lg-glow.g3 { width: 230px; height: 230px; right: -100px; bottom: -110px; background: rgba(157, 242, 183, .12); }
+.lg-brand-content { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; min-height: 540px; padding: 38px 32px 26px; }
+.lg-logo { display: flex; align-items: center; gap: 10px; font-size: 23px; font-weight: 750; line-height: 1.1; }
+.lg-logo-icon { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid rgba(255,255,255,.4); border-radius: 12px; font-size: 27px; }
+.lg-logo small { display: block; margin-top: 5px; font-size: 11px; font-weight: 400; letter-spacing: .1em; opacity: .75; }
+.lg-hero { margin: auto 0; }
+.lg-hero h1 { margin: 0 0 20px; font-size: 31px; line-height: 1.36; letter-spacing: -.03em; }
+.lg-hero p { margin: 0; font-size: 13px; line-height: 1.9; color: rgba(255,255,255,.77); }
+.lg-platforms { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+.lg-platforms span { display: flex; align-items: center; gap: 5px; padding: 6px 8px; border: 1px solid rgba(255,255,255,.18); border-radius: 8px; background: rgba(255,255,255,.09); font-size: 11px; }
+.lg-platforms img { width: 17px; height: 17px; object-fit: contain; border-radius: 3px; }
+.lg-brand-foot { font-size: 11px; color: rgba(255,255,255,.55); }
+.lg-panel { min-width: 0; overflow-y: auto; }
+.lg-card { padding: 24px 36px 20px; background: #fff; }
+
 /* —— 卡内顶行：视图切换（左） + 关闭（右） —— */
 .lg-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
 .lg-corner {
@@ -4625,8 +4644,14 @@
 }
 .lg-guest:hover { color: var(--brand); }
 
+@media (max-width: 700px) {
+  .lg-dialog { display: block; width: min(420px, 100%); min-height: 0; }
+  .lg-brand { display: none; }
+  .lg-card { padding: 14px 26px 18px; }
+}
 @media (max-width: 480px) {
   .login-page { padding: 14px; }
+  .lg-dialog { max-height: calc(100vh - 28px); }
   .lg-card { padding: 12px 18px 16px; }
 }
 
