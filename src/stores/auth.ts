@@ -9,6 +9,7 @@ import { flashToast } from '../utils/common'
 const AUTH_KEY = 'dld_auth_v1'      // 登录态持久化
 const WX_BIND_KEY = 'dld_wx_bind_v1' // 微信号绑定的手机号（模拟服务端记忆）
 const REG_KEY = 'dld_reg_v1'         // 已注册手机号列表（模拟用户表）
+const PASSWORD_KEY = 'dld_passwords_v1' // 新注册账号的演示密码
 
 /* 演示规则（登录卡下方有提示） */
 export const DEMO = {
@@ -139,11 +140,18 @@ export async function sendSmsCode(phone: string): Promise<boolean> {
   return true
 }
 
-/* ---------- mock：验证码登录（未注册 = 注册并登录） ---------- */
-export async function loginBySms(phone: string, code: string): Promise<string | null> {
+/* ---------- mock：已注册验证码登录；首次注册需验证码和设置密码 ---------- */
+export async function loginBySms(phone: string, code: string, password = ''): Promise<string | null> {
   if (!/^1\d{10}$/.test(phone)) return '请输入正确的手机号'
+  const newAccount = !registeredPhones().includes(phone)
   if (code !== DEMO.smsCode) return '验证码错误（模拟验证码 ' + DEMO.smsCode + '）'
+  if (newAccount && password.length < 6) return '请设置至少 6 位密码'
   await new Promise(r => setTimeout(r, 400))
+  if (newAccount) {
+    const passwords = readJSON<Record<string, string>>(PASSWORD_KEY, {})
+    passwords[phone] = password
+    writeJSON(PASSWORD_KEY, passwords)
+  }
   finishLogin(phone, 'sms')
   return null
 }
@@ -151,8 +159,9 @@ export async function loginBySms(phone: string, code: string): Promise<string | 
 /* ---------- mock：密码登录（需已注册） ---------- */
 export async function loginByPwd(phone: string, pwd: string): Promise<string | null> {
   if (!/^1\d{10}$/.test(phone)) return '请输入正确的手机号'
-  if (!registeredPhones().includes(phone)) return '该手机号未注册，请使用验证码登录'
-  if (pwd !== DEMO.password) return '密码错误（演示密码 ' + DEMO.password + '）'
+  if (!registeredPhones().includes(phone)) return '该手机号未注册，请使用验证码注册'
+  const passwords = readJSON<Record<string, string>>(PASSWORD_KEY, {})
+  if (pwd !== (passwords[phone] ?? DEMO.password)) return '密码错误'
   await new Promise(r => setTimeout(r, 400))
   finishLogin(phone, 'pwd')
   return null
