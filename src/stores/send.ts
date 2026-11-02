@@ -103,13 +103,13 @@ function visibleAnswer(s: string): string {
 const inThink = (s: string) => s.includes('<think>') && s.lastIndexOf('<think>') > s.lastIndexOf('</think>')
 
 /* ==================== 发送 ==================== */
-export async function send(regenerate = false, silent = false, silentUi: any = null) {
+export async function send(regenerate = false, silent = false, silentUi: any = null, promptText?: string) {
   const isSilent = Boolean(silent)
   /* r59：游客/未登录时拦截发送（silent 后台任务不拦），弹出登录页 */
   if (!isSilent && requireLogin('发送消息')) return
   if (!isSilent) appState.autoReport = null
   appState.initialPreviewGuard = false
-  const text = chatState.inputText.trim()
+  const text = (promptText ?? chatState.inputText).trim()
   if (!text && chatState.attaches.length === 0) return
 
   // 1688商品链接/ID自动识别
