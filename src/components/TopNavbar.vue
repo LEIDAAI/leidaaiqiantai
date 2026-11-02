@@ -3,6 +3,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { navigatePage, openPricing, openAccount } from '../stores/modals'
 import { currentAccount } from '../stores/account'
+import { authState, logout, openLogin } from '../stores/auth'
 import { appState } from '../stores/state'
 import { walletState } from '../stores/wallet'
 
@@ -25,12 +26,19 @@ function scheduleNpClose() {
 }
 function npGoPricing() { npOpen.value = false; openPricing() }
 function npGoConsume() { npOpen.value = false; navigatePage('consume') }
+/* r59：主账号胶囊下拉（账号与积分 / 退出登录）；未登录（含游客）显示「登录 / 注册」 */
+const avOpen = ref(false)
+const avRoot = ref<HTMLElement | null>(null)
+function toggleAv() { avOpen.value = !avOpen.value }
+function avAccount() { avOpen.value = false; openAccount() }
+function avLogout() { avOpen.value = false; logout() }
 function onDocClick(e: MouseEvent) {
-  if (!npOpen.value || !npRoot.value) return
-  if (!npRoot.value.contains(e.target as Node)) {
+  const t = e.target as Node
+  if (npOpen.value && npRoot.value && !npRoot.value.contains(t)) {
     npOpen.value = false
     if (npCloseTimer) { clearTimeout(npCloseTimer); npCloseTimer = undefined }
   }
+  if (avOpen.value && avRoot.value && !avRoot.value.contains(t)) avOpen.value = false
 }
 onMounted(() => document.addEventListener('click', onDocClick))
 onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
@@ -88,12 +96,25 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
         </div>
       </div>
 
-      <!-- r54：主账号改为白底描边胶囊（绿色圆头像 + 名称 + 掩码手机号） -->
-      <button class="nav-avatar" @click="openAccount">
-        <span class="avatar-dot">主</span>
-        <span class="avatar-name">{{ accountName }}</span>
-        <span v-if="accountPhone" class="avatar-phone">{{ accountPhone }}</span>
-      </button>
+      <!-- r59：未登录（含游客）→ 绿色「登录 / 注册」；已登录 → 主账号胶囊 + 下拉（账号与积分 / 退出登录） -->
+      <button v-if="!authState.logged" class="nav-login" @click="openLogin('')">登录 / 注册</button>
+      <div v-else ref="avRoot" class="av-wrap">
+        <button class="nav-avatar" @click="toggleAv">
+          <span class="avatar-dot">主</span>
+          <span class="avatar-name">{{ accountName }}</span>
+          <span v-if="accountPhone" class="avatar-phone">{{ accountPhone }}</span>
+        </button>
+        <div v-if="avOpen" class="av-menu">
+          <button class="av-item" @click="avAccount">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="2.6" stroke="currentColor" stroke-width="1.4"/><path d="M2.8 13.4c.9-2.2 2.9-3.4 5.2-3.4s4.3 1.2 5.2 3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            <span>账号与积分</span>
+          </button>
+          <button class="av-item danger" @click="avLogout">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6.5 3H4a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 4 13h2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M10 5l3 3-3 3M13 8H6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>退出登录</span>
+          </button>
+        </div>
+      </div>
     </div>
   </header>
 </template>
