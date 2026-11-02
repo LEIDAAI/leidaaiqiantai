@@ -4126,7 +4126,8 @@
 .home-card { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; border: 1px solid #ececec; border-radius: 12px; background: #fff; overflow: hidden; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .home-card:hover { transform: translateY(-3px); border-color: #d9d9d9; box-shadow: 0 10px 24px rgba(0,0,0,.08); }
 .hc-head { flex: none; display: flex; align-items: center; gap: 10px; min-width: 0; }
-.hc-ava { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%; color: #fff; font-size: 15px; font-weight: 700; }
+.hc-ava { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%; overflow: hidden; }
+.hc-ava img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .hc-icon { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; background: var(--brand-soft); color: var(--brand); }
 .hc-meta { min-width: 0; }
 .hc-name { font-size: 14px; font-weight: 600; color: #1c1c1c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -4148,8 +4149,7 @@
 /* r51 温和降噪：隐藏卡片顶部平台彩色条，减少每卡一处的强色块 */
 .hc-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; display: none; }
 .hc-ava { position: relative; }
-.hc-ava.wide { font-size: 11.5px; letter-spacing: -.5px; }
-.hc-badge { position: absolute; right: -3px; bottom: -3px; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: #fff; color: #00A83E; box-shadow: 0 1px 4px rgba(0,0,0,.16); }
+.hc-badge { position: absolute; right: -3px; bottom: -3px; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: #fff; color: #00A83E; box-shadow: 0 1px 4px rgba(0,0,0,.16); z-index: 1; }
 .hc-badge svg { width: 9px; height: 9px; }
 .hc-usage { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #9a9aa2; }
 .hc-usage svg { width: 11px; height: 11px; color: #9a9aa2; }
@@ -4219,7 +4219,8 @@
 .case-float .cf-btn.main:hover { filter: brightness(1.06); color: #fff; }
 /* 右栏介绍 */
 .cs-head { display: flex; gap: 12px; align-items: center; }
-.cs-ava { flex: none; width: 44px; height: 44px; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.cs-ava { flex: none; width: 44px; height: 44px; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.cs-ava img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .cs-ava.skill { background: linear-gradient(135deg, #00b84a, #007d30); }
 .cs-name { font-size: 15.5px; font-weight: 700; color: #111; }
 .cs-tags { margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap; }
@@ -4259,7 +4260,8 @@
 .seg-btn { display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: #5a625c; font-size: 13px; cursor: pointer; transition: color .15s ease, background .15s ease, box-shadow .15s ease; }
 .seg-btn:hover { color: #171b19; }
 .seg-btn.on { background: #fff; color: #0a0a0a; font-weight: 600; box-shadow: 0 1px 3px rgba(16,24,20,.12); }
-.seg-logo { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 4px; color: #fff; font-size: 9px; font-weight: 700; line-height: 1; letter-spacing: .2px; }
+.seg-logo { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 4px; overflow: hidden; }
+.seg-logo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .dir-chips { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
 .dir-chip { height: 34px; padding: 0 18px; border: 0; border-radius: 999px; background: #edf0ee; color: #5a625c; font-size: 13px; cursor: pointer; transition: background .15s ease, color .15s ease; }
 .dir-chip:hover { background: #e0e5e2; color: #171b19; }
@@ -4270,7 +4272,8 @@
 .dir-card:hover { box-shadow: 0 8px 22px rgba(0,0,0,.06); }
 .dir-body { display: flex; align-items: flex-start; flex: 1; min-width: 0; gap: 12px; }
 .dir-card:has(.dir-new) .dir-body { padding-right: 54px; }
-.dc-ava { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; color: #fff; font-size: 15px; font-weight: 700; }
+.dc-ava { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; }
+.dc-ava img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .dc-icon { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 40px; height: 40px; border-radius: 10px; background: var(--brand-soft); color: var(--brand); }
 .dir-name { font-size: 14px; font-weight: 600; color: #1c1c1c; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .dir-desc { margin-top: 4px; font-size: 12.5px; line-height: 1.55; color: #4d4d4d; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
