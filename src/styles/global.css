@@ -4559,6 +4559,7 @@
   height: 3px; border-radius: 2px; background: var(--brand);
 }
 .lg-fields { display: grid; gap: 10px; }
+.lg-register-tip { margin: 0 2px; font-size: 12px; color: #0a7a44; }
 .lg-field {
   display: flex; align-items: center; gap: 8px;
   height: 48px; padding: 0 12px; border-radius: 10px;
