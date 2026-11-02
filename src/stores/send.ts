@@ -22,6 +22,7 @@ import {
   isReportAnswer, buildLastReport
 } from './panel'
 import { modals, openWallet } from './modals'
+import { requireLogin } from './auth'
 import { flashToast } from '../utils/common'
 import {
   parseNestedJson, getWorkflowOutputs, getAnswerEnvelope, loadObsProducts,
@@ -104,6 +105,8 @@ const inThink = (s: string) => s.includes('<think>') && s.lastIndexOf('<think>')
 /* ==================== 发送 ==================== */
 export async function send(regenerate = false, silent = false, silentUi: any = null) {
   const isSilent = Boolean(silent)
+  /* r59：游客/未登录时拦截发送（silent 后台任务不拦），弹出登录页 */
+  if (!isSilent && requireLogin('发送消息')) return
   if (!isSilent) appState.autoReport = null
   appState.initialPreviewGuard = false
   const text = chatState.inputText.trim()
