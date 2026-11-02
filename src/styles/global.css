@@ -4126,8 +4126,8 @@
 .home-card { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; border: 1px solid #ececec; border-radius: 12px; background: #fff; overflow: hidden; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .home-card:hover { transform: translateY(-3px); border-color: #d9d9d9; box-shadow: 0 10px 24px rgba(0,0,0,.08); }
 .hc-head { flex: none; display: flex; align-items: center; gap: 10px; min-width: 0; }
-.hc-ava { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%; overflow: hidden; }
-.hc-ava img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+
 .hc-icon { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; background: var(--brand-soft); color: var(--brand); }
 .hc-meta { min-width: 0; }
 .hc-name { font-size: 14px; font-weight: 600; color: #1c1c1c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -4148,9 +4148,9 @@
 .home-mode button svg { width: 13px; height: 13px; }
 /* r51 温和降噪：隐藏卡片顶部平台彩色条，减少每卡一处的强色块 */
 .hc-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; display: none; }
-.hc-ava { position: relative; }
-.hc-badge { position: absolute; right: -3px; bottom: -3px; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: #fff; color: #00A83E; box-shadow: 0 1px 4px rgba(0,0,0,.16); z-index: 1; }
-.hc-badge svg { width: 9px; height: 9px; }
+
+
+
 .hc-usage { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #9a9aa2; }
 .hc-usage svg { width: 11px; height: 11px; color: #9a9aa2; }
 .hc-foot .hc-usage { flex: 1 1 auto; min-width: 0; }
