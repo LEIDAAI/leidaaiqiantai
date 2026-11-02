@@ -9,7 +9,7 @@ import {
 import { modals, openFeedback } from '../stores/modals'
 import { resetRightPreview } from '../stores/panel'
 import { expertState, type ExpertItem, type SkillItem } from '../stores/expert'
-import { skillVisual, platformGrad, platformLogo, categoryIcon } from '../stores/skillVisual'
+import { skillVisual, platformLogo } from '../stores/skillVisual'
 import { startDemoConversation } from '../stores/demo'
 
 const streamEl = ref<HTMLElement | null>(null)
@@ -182,14 +182,9 @@ function onSendClick() {
               <div class="home-grid">
               <template v-if="homeTab === 'expert'">
                 <div v-for="e in pagedExperts" :key="e.id" class="home-card expert">
-                  <span class="hc-accent" :style="{ background: platformGrad(e.platform) }"></span>
                   <div class="hc-head">
-                    <span class="hc-ava" :style="{ background: platformGrad(e.platform) }">
-                      <img :src="platformLogo(e.platform)" alt="">
-                      <i class="hc-badge" v-html="categoryIcon(e.category)"></i>
-                    </span>
                     <div class="hc-meta">
-                      <div class="hc-name">{{ e.name }}</div>
+                      <div class="hc-name">{{ e.name.startsWith(e.platform + '-') ? e.name.slice(e.platform.length + 1) : e.name }}</div>
                       <div class="hc-tags">{{ e.platform }} · {{ e.category }}</div>
                     </div>
                   </div>
