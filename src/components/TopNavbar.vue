@@ -65,12 +65,12 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
         <!-- 下拉算力卡片 -->
         <div v-if="npOpen" class="np-card">
           <div class="np-head">
-            <span class="np-title">我的算力点</span>
+            <span class="np-title">我的积分</span>
             <button class="np-buy" @click="npGoPricing">购买</button>
           </div>
           <div class="np-num">
             <span class="np-num-val">{{ appState.totalCoins.toLocaleString() }}</span>
-            <span class="np-num-unit">算力点</span>
+            <span class="np-num-unit">积分</span>
           </div>
           <button class="np-upgrade" @click="npGoPricing">升级套餐</button>
           <div class="np-rows">
@@ -79,7 +79,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
               <span class="np-row-val">{{ walletState.currentPackage }} · {{ walletState.expiresAt }} 到期</span>
             </div>
             <button class="np-row np-row-link" @click="npGoConsume">
-              <span class="np-row-label">算力消耗明细</span>
+              <span class="np-row-label">积分消耗明细</span>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
