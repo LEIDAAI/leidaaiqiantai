@@ -4070,12 +4070,6 @@
     linear-gradient(180deg, #fafcfb 0%, #f2f5f3 100%);
   background-size: auto, auto, auto, 26px 26px, auto;
 }
-.home-top { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-height: 52px; padding: 10px 20px; }
-.home-icon-btn { margin-left: auto; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: #555; cursor: pointer; }
-.home-icon-btn:hover { background: #efefef; color: #111; }
-.home-avatar { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--brand); color: #fff; cursor: pointer; overflow: hidden; }
-.home-avatar:hover { background: var(--brand-dark); }
-.home-avatar svg { width: 20px; height: 20px; }
 /* r50：flex 纵向布局 + hero margin:auto —— 内容放得下时整块垂直居中，放不下时正常顶部滚动；both-edges 消除滚动条导致的 3px 水平偏移 */
 .home-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; scrollbar-gutter: stable both-edges; }
 .home-hero { max-width: 880px; margin: auto; padding: 24px 24px 16px; }
@@ -4410,7 +4404,6 @@
   .chat-head .title { font-size: 13.5px; }
 
   /* —— Hero 首页 —— */
-  .home-top { padding: 10px 12px; gap: 8px; }
   .home-hero { padding: 20px 14px 10px; }
   .home-title { font-size: 24px; line-height: 36px; letter-spacing: 0; }
   .home-sub { font-size: 12.5px; }
