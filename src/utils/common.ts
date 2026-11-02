@@ -27,13 +27,13 @@ export function flashToast(text: string): void {
   if (!el) {
     el = document.createElement('div')
     el.id = 'flashToast'
-    el.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#1f2329;color:#fff;padding:8px 16px;border-radius:6px;font-size:12px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transition:opacity .2s;'
+    el.setAttribute('role', 'status')
     document.body.appendChild(el)
   }
   el.textContent = text
-  el.style.opacity = '1'
+  el.classList.add('visible')
   clearTimeout((el as any)._t)
-  ;(el as any)._t = setTimeout(() => { el!.style.opacity = '0' }, 1800)
+  ;(el as any)._t = setTimeout(() => { el!.classList.remove('visible') }, 1800)
 }
 
 export const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
