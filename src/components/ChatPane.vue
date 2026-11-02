@@ -9,7 +9,7 @@ import {
 import { modals, openFeedback } from '../stores/modals'
 import { resetRightPreview } from '../stores/panel'
 import { expertState, type ExpertItem, type SkillItem } from '../stores/expert'
-import { skillVisual, platformGrad, categoryIcon } from '../stores/skillVisual'
+import { skillVisual, platformGrad, platformLogo, categoryIcon } from '../stores/skillVisual'
 import { startDemoConversation } from '../stores/demo'
 
 const streamEl = ref<HTMLElement | null>(null)
@@ -67,8 +67,6 @@ function useExpert(e: ExpertItem) {
   send()
 }
 function useSkill(s: SkillItem) { chatState.inputText = s.instructions || s.desc }
-const platformColor: Record<string, string> = { '1688': '#ff6a00', 'Ozon': '#005bff', '亚马逊': '#ff9900', 'Temu': '#fb7701' }
-const platformInitial: Record<string, string> = { '1688': '1688', 'Ozon': 'O', '亚马逊': 'A', 'Temu': 'T' }
 const caseExpert = computed(() => (caseItem.value && !isCaseSkill.value) ? caseItem.value as ExpertItem : null)
 const caseSkill = computed(() => (caseItem.value && isCaseSkill.value) ? caseItem.value as SkillItem : null)
 
@@ -172,7 +170,7 @@ function onSendClick() {
             <div class="home-seg-row">
               <div class="seg-track">
                 <button v-for="p in homePlatforms" :key="p" class="seg-btn" :class="{ on: homePlatform === p }" @click="selectHomePlatform(p)">
-                  <span v-if="p !== '全部'" class="seg-logo" :style="{ background: platformColor[p === 'OZON' ? 'Ozon' : p === 'TEMU' ? 'Temu' : p] || '#00A83E' }">{{ platformInitial[p === 'OZON' ? 'Ozon' : p === 'TEMU' ? 'Temu' : p] || 'E' }}</span>{{ p }}
+                  <span v-if="p !== '全部'" class="seg-logo"><img :src="platformLogo(p)" alt=""></span>{{ p }}
                 </button>
               </div>
             </div>
@@ -186,8 +184,8 @@ function onSendClick() {
                 <div v-for="e in pagedExperts" :key="e.id" class="home-card expert">
                   <span class="hc-accent" :style="{ background: platformGrad(e.platform) }"></span>
                   <div class="hc-head">
-                    <span class="hc-ava" :class="{ wide: (platformInitial[e.platform] || 'E').length > 1 }" :style="{ background: platformGrad(e.platform) }">
-                      {{ platformInitial[e.platform] || 'E' }}
+                    <span class="hc-ava" :style="{ background: platformGrad(e.platform) }">
+                      <img :src="platformLogo(e.platform)" alt="">
                       <i class="hc-badge" v-html="categoryIcon(e.category)"></i>
                     </span>
                     <div class="hc-meta">
@@ -322,7 +320,7 @@ function onSendClick() {
             </div>
             <aside class="case-side">
               <div class="cs-head">
-                <span v-if="caseExpert" class="cs-ava" :style="{ background: platformColor[caseExpert.platform] || '#00A83E' }">{{ platformInitial[caseExpert.platform] || 'E' }}</span>
+                <span v-if="caseExpert" class="cs-ava"><img :src="platformLogo(caseExpert.platform)" alt=""></span>
                 <span v-else class="cs-ava skill">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
                 </span>
