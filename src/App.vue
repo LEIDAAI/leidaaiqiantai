@@ -191,9 +191,6 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
 
 <template>
   <div class="app-container">
-    <!-- 登录门（r59：未登录且非游客 → 全屏登录页；登录/游客后进入工作台） -->
-    <LoginView v-if="authState.loginView" />
-    <template v-else>
     <!-- 全局固定顶部导航栏（所有页面常显吸顶） -->
     <TopNavbar />
     <div class="work" ref="workEl">
@@ -401,6 +398,8 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
     <div class="account-loading" :class="{ show: accountState.accountSwitching }"></div>
 
     <Modals />
-    </template>
+
+    <!-- 登录弹窗（r60：modal 叠加在工作台上；未登录首访自动弹，游客操作拦截时带原因再弹） -->
+    <LoginView v-if="authState.loginView" />
   </div>
 </template>
