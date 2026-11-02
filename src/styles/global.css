@@ -4480,3 +4480,210 @@
   .billing-row { justify-content: flex-start; }
   .plan-price { font-size: 30px; }
 }
+
+/* ==================== 登录页（r59：左品牌区 + 右登录卡，全屏 gate / 拦截遮罩两用） ==================== */
+.login-page, .login-page *, .login-page *::before, .login-page *::after { box-sizing: border-box; }
+.login-page {
+  position: fixed; inset: 0; z-index: 4000;
+  display: flex; overflow: auto;
+  background: #f6faf7;
+}
+
+/* —— 左：品牌区 —— */
+.lg-brand {
+  position: relative; overflow: hidden;
+  flex: 1.05 1 0; min-width: 0;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 52px 60px 36px;
+  color: #fff;
+  background: linear-gradient(135deg, #05301f 0%, #075937 48%, #0a9d58 100%);
+}
+.lg-glow { position: absolute; border-radius: 50%; filter: blur(70px); pointer-events: none; }
+.lg-glow.g1 { width: 430px; height: 430px; top: -140px; left: -130px; background: rgba(255, 255, 255, .16); }
+.lg-glow.g2 { width: 380px; height: 380px; bottom: -110px; right: -70px; background: rgba(0, 200, 75, .35); }
+.lg-glow.g3 { width: 260px; height: 260px; top: 42%; right: 6%; background: rgba(124, 255, 171, .18); }
+.lg-logo { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; }
+.lg-logo-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 46px; height: 46px; border-radius: 13px;
+  background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .25);
+}
+.lg-logo-title { font-size: 20px; font-weight: 700; letter-spacing: .3px; }
+.lg-logo-sub { margin-top: 2px; font-size: 12px; color: rgba(255, 255, 255, .72); }
+.lg-hero { position: relative; z-index: 1; }
+.lg-hero h1 { margin: 0; font-size: 30px; line-height: 1.4; font-weight: 700; letter-spacing: .5px; }
+.lg-hero p { margin: 14px 0 0; font-size: 13.5px; line-height: 1.8; color: rgba(255, 255, 255, .78); }
+.lg-platforms { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 10px; }
+.lg-plat {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 34px; padding: 0 12px; border-radius: 999px;
+  background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .22);
+}
+.lg-plat img { width: 18px; height: 18px; border-radius: 4px; object-fit: cover; background: #fff; }
+.lg-plat em { font-style: normal; font-size: 12.5px; color: rgba(255, 255, 255, .92); }
+.lg-foot { position: relative; z-index: 1; font-size: 12px; color: rgba(255, 255, 255, .55); }
+
+/* —— 右：面板 + 登录卡 —— */
+.lg-panel {
+  position: relative;
+  flex: 1 1 0; min-width: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 30px 20px;
+}
+.lg-close {
+  position: absolute; top: 16px; right: 16px;
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid #dfe5e1; background: #fff; color: #5f6660;
+  cursor: pointer; transition: all .15s;
+}
+.lg-close:hover { color: #17211b; border-color: #c4ccc7; }
+.lg-card {
+  position: relative;
+  width: min(400px, 100%);
+  padding: 30px 28px 20px; border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(9, 50, 32, .12), 0 2px 8px rgba(9, 50, 32, .05);
+}
+.lg-intercept {
+  margin: 0 0 14px; padding: 8px 12px; border-radius: 8px;
+  background: #e8f7ee; color: #0a7a44; font-size: 12.5px;
+}
+.lg-corner {
+  position: absolute; top: 18px; right: 18px;
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 10px;
+  border: 1px solid #e5e9e6; background: #fff; color: #6b7a70;
+  cursor: pointer; transition: all .15s;
+}
+.lg-corner:hover { color: var(--brand); border-color: #bfe4cd; }
+.lg-title { margin: 0 0 14px; font-size: 21px; font-weight: 700; color: #17211b; }
+.lg-title.sm { font-size: 19px; margin-bottom: 2px; }
+
+/* —— 表单：tab + 输入行 —— */
+.lg-tabs { display: flex; gap: 24px; margin-bottom: 16px; }
+.lg-tabs button {
+  position: relative; padding: 0 2px 8px;
+  border: 0; background: none; cursor: pointer;
+  font-size: 15px; color: #6b756e; font-family: inherit;
+}
+.lg-tabs button.on { color: #17211b; font-weight: 600; }
+.lg-tabs button.on::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0;
+  height: 3px; border-radius: 2px; background: var(--brand);
+}
+.lg-fields { display: grid; gap: 10px; }
+.lg-field {
+  display: flex; align-items: center; gap: 8px;
+  height: 48px; padding: 0 12px; border-radius: 10px;
+  border: 1px solid #dfe5e1; background: #fff;
+  transition: border-color .15s, box-shadow .15s;
+}
+.lg-field:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(0, 156, 76, .12); }
+.lg-field input { flex: 1; min-width: 0; border: 0; outline: none; font-size: 14px; color: #20261f; background: none; }
+.lg-field input::placeholder { color: #b3bab5; }
+.lg-cc { flex: none; padding-right: 10px; border-right: 1px solid #eef1ee; font-size: 12.5px; color: #3d453f; white-space: nowrap; }
+.lg-code-btn {
+  flex: none; border: 0; background: none; padding: 0;
+  font-size: 13px; color: var(--brand); cursor: pointer; white-space: nowrap; font-family: inherit;
+}
+.lg-code-btn:disabled { color: #b7bdb9; cursor: default; }
+.lg-eye { flex: none; display: flex; align-items: center; border: 0; background: none; padding: 0; color: #9aa1a5; cursor: pointer; }
+.lg-eye:hover { color: #5f6660; }
+.lg-row-between { display: flex; align-items: center; justify-content: space-between; margin: 10px 2px 0; }
+.lg-link { font-size: 12.5px; color: var(--brand); cursor: pointer; }
+.lg-link:hover { text-decoration: underline; }
+.lg-err { margin: 4px 2px 0; font-size: 12.5px; color: #e0392f; }
+.lg-submit {
+  width: 100%; height: 46px; margin-top: 14px;
+  border: 0; border-radius: 10px; cursor: pointer;
+  background: linear-gradient(135deg, #00b84a, #00913a);
+  color: #fff; font-size: 15px; font-weight: 600; font-family: inherit;
+  transition: filter .15s, opacity .15s;
+}
+.lg-submit:hover { filter: brightness(1.05); }
+.lg-submit:disabled { opacity: .6; cursor: default; }
+.lg-agree { margin: 12px 0 0; text-align: center; font-size: 11.5px; color: #9aa1a5; }
+.lg-agree a { color: var(--brand); cursor: pointer; }
+
+/* —— 微信扫码（模拟二维码） —— */
+.lg-qr-wrap { display: flex; justify-content: center; margin: 16px 0 10px; }
+.lg-qr { position: relative; width: 192px; height: 192px; padding: 10px; border: 1px solid #e5e9e6; border-radius: 10px; background: #fff; }
+.lg-qr-grid { position: relative; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(21, 1fr); grid-template-rows: repeat(21, 1fr); }
+.lg-qr-grid i { border-radius: 1px; }
+.lg-qr-grid i.on { background: #161d18; }
+.lg-qr.scanned .lg-qr-grid { opacity: .3; filter: blur(1px); }
+.lg-qr-finder { position: absolute; width: 33.4%; height: 33.4%; border: 3px solid #161d18; border-radius: 7px; background: #fff; }
+.lg-qr-finder::after { content: ""; position: absolute; inset: 28%; border-radius: 2px; background: #161d18; }
+.lg-qr-finder.f1 { top: 0; left: 0; }
+.lg-qr-finder.f2 { top: 0; right: 0; }
+.lg-qr-finder.f3 { bottom: 0; left: 0; }
+.lg-qr-center {
+  position: absolute; inset: 0; margin: auto;
+  display: flex; align-items: center; justify-content: center;
+  width: 46px; height: 46px; border-radius: 9px; background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .05);
+}
+.lg-qr-mask {
+  position: absolute; inset: -1px; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 10px; background: rgba(255, 255, 255, .93);
+  font-size: 12.5px; color: #17211b;
+}
+.lg-qr-tip { margin: 4px 0 0; text-align: center; font-size: 12px; color: #8a918c; }
+.lg-refresh { display: block; width: fit-content; margin: 10px auto 0; font-size: 13px; }
+
+/* —— 微信注册 · 绑定手机号 —— */
+.lg-bind-head { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 16px; }
+.lg-bind-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px;
+  background: #e8f7ee; color: #0a7a44; font-size: 12px; font-weight: 500;
+}
+.lg-bind-sub { margin: 0; text-align: center; font-size: 12px; color: #8a918c; }
+.lg-back { display: block; width: fit-content; margin: 12px auto 0; }
+
+/* —— 演示提示 + 游客入口 —— */
+.lg-demo {
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 12px;
+  margin-top: 16px; padding: 8px 10px; border-radius: 8px;
+  background: #f4f6f4; font-size: 11px; color: #8a918c;
+}
+.lg-demo b { color: #3d453f; font-weight: 600; }
+.lg-demo a { color: var(--brand); cursor: pointer; white-space: nowrap; }
+.lg-guest {
+  display: block; margin: 14px auto 0;
+  border: 0; background: none; cursor: pointer;
+  font-size: 12.5px; color: #7a847d; font-family: inherit;
+}
+.lg-guest:hover { color: var(--brand); }
+
+@media (max-width: 900px) {
+  .lg-brand { display: none; }
+  .lg-panel { padding: 20px 14px; }
+}
+
+/* —— 顶栏登录态（r59）：游客/未登录「登录 / 注册」钮 + 已登录账号下拉 —— */
+.nav-login {
+  height: 34px; padding: 0 16px; border: 0; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(135deg, #00b84a, #00913a);
+  color: #fff; font-size: 13px; font-weight: 600; font-family: inherit;
+  transition: filter .15s; white-space: nowrap;
+}
+.nav-login:hover { filter: brightness(1.06); }
+.av-wrap { position: relative; }
+.av-menu {
+  position: absolute; top: calc(100% + 10px); right: 0; z-index: 300;
+  min-width: 168px; padding: 6px; border-radius: 12px;
+  background: #fff; border: 1px solid #e8ecea;
+  box-shadow: 0 12px 32px rgba(15, 25, 20, .14);
+}
+.av-item {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; height: 36px; padding: 0 12px;
+  border: 0; border-radius: 8px; background: none; cursor: pointer; text-align: left;
+  font-size: 13px; color: #262b27; font-family: inherit; white-space: nowrap;
+}
+.av-item:hover { background: #f4f6f4; }
+.av-item.danger { color: #d5443a; }
+.av-item.danger:hover { background: #fdeeec; }
