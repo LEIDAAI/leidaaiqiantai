@@ -4091,7 +4091,7 @@
 .home-seg-row { margin-bottom: 12px; display: flex; justify-content: center; }
 .home-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .home-pager { position: relative; padding: 0 46px; }
-.hp-arrow { position: absolute; z-index: 6; top: 25%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid #e3e3e3; border-radius: 50%; background: #fff; color: #8a8a90; box-shadow: 0 2px 8px rgba(0,0,0,.06); cursor: pointer; transition: color .15s ease, border-color .15s ease, opacity .15s ease, transform .15s ease; }
+.hp-arrow { position: absolute; z-index: 6; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid #e3e3e3; border-radius: 50%; background: #fff; color: #8a8a90; box-shadow: 0 2px 8px rgba(0,0,0,.06); cursor: pointer; transition: color .15s ease, border-color .15s ease, opacity .15s ease, transform .15s ease; }
 .hp-arrow.prev { left: 2px; }
 .hp-arrow.next { right: 2px; }
 .hp-arrow:hover { color: var(--brand); border-color: var(--brand); transform: translateY(-50%) scale(1.06); }
