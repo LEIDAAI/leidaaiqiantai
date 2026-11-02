@@ -2,8 +2,10 @@
 /* 专家/技能发现页（dir-page）：灵感广场 / 我的 / 创建 */
 import { ref, computed } from 'vue'
 import { modals, navigatePage } from '../stores/modals'
-import { chatState } from '../stores/chat'
+import { chatState, newConversation } from '../stores/chat'
+import { send } from '../stores/send'
 import { expertState, expertDemo, skillDemo, type ExpertItem, type SkillItem } from '../stores/expert'
+import { skillVisual, platformLogo } from '../stores/skillVisual'
 
 const isSkills = computed(() => modals.page === 'skills')
 const tab = ref<'plaza' | 'mine' | 'create'>('plaza')
@@ -96,12 +98,15 @@ const plazaSkills = computed(() => {
 })
 const mineExperts = computed(() => expertState.experts.filter(e => e.source === 'user'))
 const mineSkills = computed(() => expertState.skills.filter(s => s.source === 'user'))
-const platformColor: Record<string, string> = { '1688': '#ff6a00', 'Ozon': '#005bff', '亚马逊': '#ff9900', 'Temu': '#fb7701' }
-const platformInitial: Record<string, string> = { '1688': '1688', 'Ozon': 'O', '亚马逊': 'A', 'Temu': 'T' }
-
 function useExpert(e: ExpertItem) {
   chatState.inputText = e.prompts?.[0] || e.desc
   navigatePage('chat')
+}
+function askExpertPrompt(prompt: string) {
+  caseItem.value = null
+  navigatePage('chat')
+  newConversation()
+  void send(false, false, null, prompt)
 }
 function useSkill(s: SkillItem) {
   chatState.inputText = s.instructions || s.desc
@@ -160,7 +165,7 @@ function saveCreate() {
         <div class="dir-filter-label">平台</div>
         <div class="seg-track">
           <button v-for="p in platforms" :key="p" class="seg-btn" :class="{ on: platform === p }" @click="selectPlatform(p)">
-            <span v-if="p !== '全部'" class="seg-logo" :style="{ background: platformColor[p === 'OZON' ? 'Ozon' : p === 'TEMU' ? 'Temu' : p] || '#00A83E' }">{{ platformInitial[p === 'OZON' ? 'Ozon' : p === 'TEMU' ? 'Temu' : p] || 'E' }}</span>{{ p }}
+            <span v-if="p !== '全部'" class="seg-logo"><img :src="platformLogo(p)" alt=""></span>{{ p }}
           </button>
         </div>
         <div class="dir-filter-label">场景</div>
@@ -172,7 +177,7 @@ function saveCreate() {
             <div v-for="(e, ei) in plazaExperts" :key="e.id" class="dir-card">
               <span v-if="ei < 2" class="dir-new">NEW</span>
               <div class="dir-body">
-                <span class="dc-ava" :style="{ background: platformColor[e.platform] || '#00A83E' }">{{ platformInitial[e.platform] || 'E' }}</span>
+                <span class="dc-ava"><img :src="platformLogo(e.platform)" alt=""></span>
                 <div>
                   <div class="dir-name">{{ e.name }}</div>
                   <div class="dir-desc">{{ e.desc }}</div>
@@ -192,9 +197,7 @@ function saveCreate() {
             <div v-for="(s, si) in plazaSkills" :key="s.id" class="dir-card">
               <span v-if="si < 2" class="dir-new">NEW</span>
               <div class="dir-body">
-                <span class="dc-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
-                </span>
+                <span class="dc-icon grad" :style="{ background: skillVisual(s).grad }" v-html="skillVisual(s).icon"></span>
                 <div>
                   <div class="dir-name">{{ s.name }}</div>
                   <div class="dir-desc">{{ s.desc }}</div>
@@ -219,7 +222,7 @@ function saveCreate() {
           <template v-if="!isSkills">
             <div v-for="e in mineExperts" :key="e.id" class="dir-card">
               <div class="dir-body">
-                <span class="dc-ava" :style="{ background: platformColor[e.platform] || '#00A83E' }">{{ platformInitial[e.platform] || 'E' }}</span>
+                <span class="dc-ava"><img :src="platformLogo(e.platform)" alt=""></span>
                 <div>
                   <div class="dir-name">{{ e.name }}</div>
                   <div class="dir-desc">{{ e.desc }}</div>
@@ -238,9 +241,7 @@ function saveCreate() {
           <template v-else>
             <div v-for="s in mineSkills" :key="s.id" class="dir-card">
               <div class="dir-body">
-                <span class="dc-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
-                </span>
+                <span class="dc-icon grad" :style="{ background: skillVisual(s).grad }" v-html="skillVisual(s).icon"></span>
                 <div>
                   <div class="dir-name">{{ s.name }}</div>
                   <div class="dir-desc">{{ s.desc }}</div>
@@ -374,7 +375,7 @@ function saveCreate() {
             </div>
             <aside class="case-side">
               <div class="cs-head">
-                <span v-if="caseExpert" class="cs-ava" :style="{ background: platformColor[caseExpert.platform] || '#00A83E' }">{{ platformInitial[caseExpert.platform] || 'E' }}</span>
+                <span v-if="caseExpert" class="cs-ava"><img :src="platformLogo(caseExpert.platform)" alt=""></span>
                 <span v-else class="cs-ava skill">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
                 </span>
@@ -390,7 +391,7 @@ function saveCreate() {
                   <li v-for="c in caseExpert.capabilities || []" :key="c">{{ c }}</li>
                 </ul>
                 <div class="cs-h">试试这样问</div>
-                <button v-for="(p, pi) in caseExpert.prompts || []" :key="pi" class="case-prompt" @click="caseExpert && useExpert(caseExpert)">{{ p }}</button>
+                <button v-for="(p, pi) in caseExpert.prompts || []" :key="pi" class="case-prompt" @click="askExpertPrompt(p)">{{ p }}</button>
               </template>
               <template v-else-if="caseSkill">
                 <div class="cs-meta">v{{ caseSkill.version }} · {{ caseSkill.downloadCount ?? 0 }} 次安装 · {{ caseSkill.author }}</div>
