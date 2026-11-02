@@ -4059,7 +4059,17 @@
 
 /* ==================== 首页 Hero（chat 空态即首页） ==================== */
 .col-mid.is-hero { position: relative; padding: 0; }
-.chat-card.hero-card { display: flex; flex-direction: column; margin: 0; border: 0; border-radius: 0; background: #fbfbfb; box-shadow: none; }
+/* r48：hero 整体背景氛围化——顶部品牌光晕 + 两角柔光 + 细点纹理 + 微渐变底色，替代纯平灰底 */
+.chat-card.hero-card {
+  display: flex; flex-direction: column; margin: 0; border: 0; border-radius: 0; box-shadow: none;
+  background:
+    radial-gradient(620px 320px at 50% -80px, rgba(0, 168, 62, .09), transparent 70%),
+    radial-gradient(560px 380px at -4% 104%, rgba(0, 168, 62, .05), transparent 72%),
+    radial-gradient(560px 380px at 104% 104%, rgba(0, 168, 62, .04), transparent 72%),
+    radial-gradient(rgba(6, 78, 40, .05) 1px, transparent 1.4px),
+    linear-gradient(180deg, #fafcfb 0%, #f2f5f3 100%);
+  background-size: auto, auto, auto, 26px 26px, auto;
+}
 .home-top { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-height: 52px; padding: 10px 20px; }
 .home-icon-btn { margin-left: auto; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: #555; cursor: pointer; }
 .home-icon-btn:hover { background: #efefef; color: #111; }
@@ -4126,7 +4136,8 @@
 .hc-icon.grad, .dc-icon.grad { color: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.14); }
 .hc-icon.grad svg { width: 19px; height: 19px; }
 .dc-icon.grad svg { width: 20px; height: 20px; }
-.home-bottom { padding: 6px 24px 14px; background: #f7f7f7; border-top: 1px solid #efefef; }
+/* r48：输入区去掉独立灰底和分割线，融入氛围背景 */
+.home-bottom { padding: 6px 24px 14px; background: transparent; border-top: 0; }
 .home-bottom .composer { margin: 0 auto; max-width: 800px; }
 .home-disclaimer { margin-top: 8px; text-align: center; font-size: 12px; color: #b0b0b7; }
 .home-floats { position: absolute; right: 18px; bottom: 130px; display: flex; flex-direction: column; gap: 10px; z-index: 5; }
