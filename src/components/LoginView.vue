@@ -4,7 +4,7 @@
  * 布局：遮罩 + 品牌区/表单双栏弹窗；扫码首次为新用户 → 关联注册绑定手机号
  * ===================================================== */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { authState, DEMO, closeLogin, enterAsGuest, sendSmsCode, loginBySms, loginByPwd, bindWxPhone, tryWxLogin, resetWxBind } from '../stores/auth'
+import { authState, DEMO, closeLogin, enterAsGuest, registeredPhones, sendSmsCode, loginBySms, loginByPwd, bindWxPhone, tryWxLogin, resetWxBind } from '../stores/auth'
 import { flashToast } from '../utils/common'
 import { platformLogo } from '../stores/skillVisual'
 
@@ -12,7 +12,8 @@ type View = 'form' | 'qr' | 'bind'
 const view = ref<View>('qr')
 const tab = ref<'sms' | 'pwd'>('sms')
 
-const phone = ref(''), code = ref(''), pwd = ref('')
+const phone = ref(''), code = ref(''), pwd = ref(''), registerPwd = ref('')
+const isNewPhone = computed(() => /^1\d{10}$/.test(phone.value) && !registeredPhones().includes(phone.value))
 const bindPhone = ref(''), bindCode = ref('')
 const showPwd = ref(false)
 const busy = ref(false)
@@ -43,7 +44,7 @@ async function submit() {
   err.value = ''
   busy.value = true
   const msg = tab.value === 'sms'
-    ? await loginBySms(phone.value, code.value)
+    ? await loginBySms(phone.value, code.value, registerPwd.value)
     : await loginByPwd(phone.value, pwd.value)
   busy.value = false
   if (msg) err.value = msg
@@ -162,6 +163,7 @@ onBeforeUnmount(() => { if (cdTimer) clearInterval(cdTimer); stopScan() })
               <span class="lg-cc">中国大陆 +86</span>
               <input v-model.trim="phone" maxlength="11" type="tel" inputmode="numeric" placeholder="请输入手机号" @keyup.enter="submit">
             </label>
+            <p v-if="tab === 'sms' && isNewPhone" class="lg-register-tip">首次使用该手机号，请输入验证码并设置密码</p>
             <label v-if="tab === 'sms'" class="lg-field">
               <input v-model.trim="code" maxlength="6" type="text" inputmode="numeric" placeholder="短信验证码" @keyup.enter="submit">
               <button class="lg-code-btn" :disabled="cd > 0 || busy" @click="onSendCode('form')">{{ cd > 0 ? cd + 's后可重发' : '获取验证码' }}</button>
@@ -172,12 +174,18 @@ onBeforeUnmount(() => { if (cdTimer) clearInterval(cdTimer); stopScan() })
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
               </button>
             </label>
+            <label v-if="tab === 'sms' && isNewPhone" class="lg-field">
+              <input v-model="registerPwd" :type="showPwd ? 'text' : 'password'" autocomplete="new-password" placeholder="设置密码（至少 6 位）" @keyup.enter="submit">
+              <button class="lg-eye" :title="showPwd ? '隐藏密码' : '显示密码'" @click.prevent="showPwd = !showPwd">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+              </button>
+            </label>
           </div>
 
           <div v-if="tab === 'pwd'" class="lg-row-between"><span></span><a class="lg-link" @click="err = '演示环境暂不支持找回密码，请使用验证码登录'">找回密码</a></div>
 
           <p class="lg-err" v-if="err">{{ err }}</p>
-          <button class="lg-submit" :disabled="busy" @click="submit">{{ busy ? '登录中…' : (tab === 'sms' ? '登录 / 注册' : '登录') }}</button>
+          <button class="lg-submit" :disabled="busy" @click="submit">{{ busy ? '处理中…' : (tab === 'sms' && isNewPhone ? '注册并登录' : '登录') }}</button>
           <p class="lg-agree">注册/登录即同意 <a>《用户协议》</a> 与 <a>《隐私政策》</a></p>
         </template>
 
