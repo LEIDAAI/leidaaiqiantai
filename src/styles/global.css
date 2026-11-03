@@ -4208,8 +4208,9 @@
   background-size: auto, auto, auto, 26px 26px, auto;
 }
 /* r50：flex 纵向布局 + hero margin:auto —— 内容放得下时整块垂直居中，放不下时正常顶部滚动；both-edges 消除滚动条导致的 3px 水平偏移 */
-.home-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; scrollbar-gutter: stable both-edges; }
-.home-hero { max-width: 880px; margin: auto; padding: 24px 24px 16px; }
+.home-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; scrollbar-gutter: stable; }
+/* r70：内容区放宽，卡片一行更多列 */
+.home-hero { max-width: 1280px; margin: auto; padding: 24px 24px 16px; }
 .home-hero-head { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-bottom: 26px; }
 .home-title { margin: 0; font-size: 32px; line-height: 44px; font-weight: 600; color: #090909; letter-spacing: .5px; }
 .home-mode { display: flex; gap: 4px; padding: 3px; border-radius: 999px; background: #e6e6e6; }
@@ -4220,14 +4221,14 @@
 /* r51 温和降噪：选中 chip 由绿实心改浅绿 soft，绿色收敛为「开始查词」唯一强 CTA */
 .home-chip.on { background: #e7f6ed; color: #008a37; font-weight: 600; }
 .home-chip.on:hover { background: #d9f0e2; color: #007730; }
-/* r69：模式第一行、平台第二行居中；场景改为左侧竖列，右侧为卡片分页区 */
+/* r70：模式第一行、平台第二行居中；场景列隐藏（模板已移除），卡片自适应多列 */
 .home-sec { display: flex; align-items: flex-start; gap: 16px; }
-.home-side { display: flex; flex-direction: column; gap: 8px; flex: 0 0 auto; }
+.home-side { display: none; }
 .home-side .home-chip { min-width: 96px; text-align: center; white-space: nowrap; }
 .home-main { flex: 1; min-width: 0; }
-.home-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 16px; }
-/* r65：技能 tab 一行三列（专家 tab 维持两列） */
-.home-grid.cols-3 { grid-template-columns: repeat(3, 1fr); gap: 12px 12px; }
+.home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px 16px; }
+/* r70：卡片自适应列数——专家 ≥320px/列，技能 ≥256px/列（宽屏自动多列） */
+.home-grid.cols-3 { grid-template-columns: repeat(auto-fill, minmax(256px, 1fr)); gap: 12px 12px; }
 .home-pager { position: relative; padding: 0 46px; }
 .hp-arrow { position: absolute; z-index: 6; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid #e3e3e3; border-radius: 50%; background: #fff; color: #8a8a90; box-shadow: 0 2px 8px rgba(0,0,0,.06); cursor: pointer; transition: color .15s ease, border-color .15s ease, opacity .15s ease, transform .15s ease; }
 .hp-arrow.prev { left: 2px; }
@@ -4561,8 +4562,6 @@
   .home-title { font-size: 24px; line-height: 36px; letter-spacing: 0; }
   .home-sub { font-size: 12.5px; }
   .home-grid, .home-grid.cols-3 { grid-template-columns: 1fr; }
-  .home-sec { flex-direction: column; }
-  .home-side { flex-direction: row; flex-wrap: wrap; }
   .hp-arrow { width: 28px; height: 28px; }
   /* r44：仅当存在翻页箭头时才使用不对称内边距，单页时保持完全居中 */
   .home-pager:has(.hp-arrow) { padding: 0 74px 0 36px; }
