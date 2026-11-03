@@ -7,10 +7,11 @@ import {
   closeFeedback, openDeleteConfirm, closeDeleteConfirm, openRename, closeRename,
   closeBuyConfirm, openBuyConfirm, closeConvMenu, openAccount
 } from '../stores/modals'
-import { accountState, saveSubSettings } from '../stores/account'
+import { accountState, saveSubSettings, sessionsFor } from '../stores/account'
 import { walletState, confirmPay } from '../stores/wallet'
 import { chatState, togglePin, commitRename, deleteConversation } from '../stores/chat'
 import { appState } from '../stores/state'
+import type { SessionItem } from '../stores/state'
 import { flashToast } from '../utils/common'
 import { authState, openLogin } from '../stores/auth'
 
@@ -166,20 +167,81 @@ function onQrPaid() {
 /* ==================== 反馈 ==================== */
 const fbContent = ref('')
 const fbTextEl = ref<HTMLTextAreaElement | null>(null)
+// 引用对话（可选）：数据源为左侧会话列表，帮助定位问题会话
+const fbConv = ref<SessionItem | null>(null)
+const fbConvOpen = ref(false)
+const fbConvSearch = ref('')
+const fbConvEl = ref<HTMLElement | null>(null)
+// 问题截图（可选，最多 4 张，本地预览）
+const fbImgs = ref<Array<{ name: string; size: number; url: string }>>([])
+const fbFileInput = ref<HTMLInputElement | null>(null)
+const FB_IMG_MAX = 4
+
+const fbSessions = computed(() => sessionsFor().filter(s => s.id))
+const fbConvFiltered = computed(() => {
+  const q = fbConvSearch.value.trim().toLowerCase()
+  return q ? fbSessions.value.filter(s => (s.title || '').toLowerCase().includes(q)) : fbSessions.value
+})
+function pickFbConv(s: SessionItem) { fbConv.value = s; fbConvOpen.value = false }
+function removeFbConv() { fbConv.value = null }
+
+function onFbFilePick() { fbFileInput.value?.click() }
+function onFbFileChange(e: Event) {
+  Array.from((e.target as HTMLInputElement).files || []).forEach(f => {
+    if (!f.type.startsWith('image/') || fbImgs.value.length >= FB_IMG_MAX) return
+    fbImgs.value.push({ name: f.name, size: f.size, url: URL.createObjectURL(f) })
+  })
+  ;(e.target as HTMLInputElement).value = ''
+}
+function removeFbImg(i: number) {
+  const img = fbImgs.value[i]
+  if (img) URL.revokeObjectURL(img.url)
+  fbImgs.value.splice(i, 1)
+}
+function formatFbSize(b: number) {
+  if (b < 1024) return b + ' B'
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB'
+  return (b / 1024 / 1024).toFixed(2) + ' MB'
+}
+// 点击弹窗其他区域时收起会话选择浮层
+function onFbDocDown(e: MouseEvent) {
+  if (!fbConvOpen.value) return
+  if (fbConvEl.value && fbConvEl.value.contains(e.target as Node)) return
+  fbConvOpen.value = false
+}
 watch(() => modals.feedback, (v) => {
   if (v) {
     fbContent.value = ''
+    fbImgs.value.forEach(i => URL.revokeObjectURL(i.url))
+    fbImgs.value = []
+    fbConv.value = null
+    fbConvOpen.value = false
+    fbConvSearch.value = ''
     setTimeout(() => fbTextEl.value && fbTextEl.value.focus(), 60)
   }
 })
+// 演示：提交有效反馈赠送积分（正式版由后端审核发放）
+const FB_REWARD = 50
 function onFbSubmit() {
   const content = fbContent.value.trim()
   try {
-    localStorage.setItem('dld_ai_feedback_' + Date.now(), JSON.stringify({ type: 'dislike', content, time: new Date().toISOString() }))
+    localStorage.setItem('dld_ai_feedback_' + Date.now(), JSON.stringify({
+      type: 'dislike',
+      content,
+      convId: fbConv.value ? fbConv.value.id : null,
+      convTitle: fbConv.value ? fbConv.value.title : null,
+      images: fbImgs.value.map(i => i.name),
+      time: new Date().toISOString()
+    }))
   } catch (e) { /* 忽略存储异常 */ }
-  console.info('[AI反馈] 本地记录：', content || '（未填写内容）')
+  console.info('[AI反馈] 本地记录：', content || '（未填写内容）', '| 引用对话：', fbConv.value?.title || '无', '| 截图：' + fbImgs.value.length + '张')
   closeFeedback(true)
-  flashToast('感谢反馈')
+  if (authState.logged && (content || fbImgs.value.length || fbConv.value)) {
+    appState.totalCoins += FB_REWARD
+    flashToast(`感谢反馈，${FB_REWARD} 积分已到账`)
+  } else {
+    flashToast('感谢反馈')
+  }
 }
 
 /* ==================== 重命名 ==================== */
@@ -222,8 +284,12 @@ function onEsc(e: KeyboardEvent) {
 }
 onMounted(() => {
   document.addEventListener('keydown', onEsc)
+  document.addEventListener('mousedown', onFbDocDown)
 })
-onBeforeUnmount(() => document.removeEventListener('keydown', onEsc))
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onEsc)
+  document.removeEventListener('mousedown', onFbDocDown)
+})
 </script>
 
 <template>
@@ -381,8 +447,46 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onEsc))
         <button class="fb-close" aria-label="关闭" @click="closeFeedback(false)">×</button>
       </div>
       <div class="fb-sub">请告诉我们这次对话结果不符合您需求的原因</div>
+      <div class="fb-care">💬 您的每一条反馈我们都会认真倾听，有效反馈有机会获得积分奖励</div>
       <label class="fb-label" for="fbText">反馈内容</label>
       <textarea id="fbText" ref="fbTextEl" v-model="fbContent" placeholder="描述下结果不满意的原因或者希望我们如何可以改进..."></textarea>
+
+      <!-- 引用对话（可选） -->
+      <label class="fb-label">引用对话 <span class="fb-label-opt">可选，帮助定位问题会话</span></label>
+      <div ref="fbConvEl" class="fb-conv">
+        <span v-if="fbConv" class="fb-conv-chip" :title="fbConv.title">
+          <span class="fcc-ic">💬</span>
+          <span class="fcc-name">{{ fbConv.title || '(无标题)' }}</span>
+          <button class="fcc-rm" type="button" title="移除引用" @click="removeFbConv">✕</button>
+        </span>
+        <button v-else class="fb-conv-btn" :class="{ open: fbConvOpen }" type="button" @click="fbConvOpen = !fbConvOpen">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          选择左侧对话列表中的会话
+          <svg class="fb-caret" width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3.5 5 6.5 8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div v-if="fbConvOpen" class="fb-conv-pop">
+          <input v-model="fbConvSearch" class="fb-conv-search" type="text" placeholder="搜索会话标题">
+          <div class="fb-conv-list">
+            <button v-for="s in fbConvFiltered" :key="s.id" class="fb-conv-item" type="button" :class="{ on: fbConv?.id === s.id }" @click="pickFbConv(s)">
+              <span class="fci-name">{{ s.title || '(无标题)' }}</span>
+              <span class="fci-time">{{ s.time }}</span>
+            </button>
+            <div v-if="!fbConvFiltered.length" class="fb-conv-empty">暂无可引用的对话</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 问题截图（可选） -->
+      <label class="fb-label">问题截图 <span class="fb-label-opt">可选，最多 {{ FB_IMG_MAX }} 张</span></label>
+      <div class="fb-imgs">
+        <span v-for="(img, i) in fbImgs" :key="img.url" class="fb-thumb" :title="img.name + ' · ' + formatFbSize(img.size)">
+          <img :src="img.url" :alt="img.name" draggable="false">
+          <button class="fb-thumb-rm" type="button" title="移除" @click="removeFbImg(i)">✕</button>
+        </span>
+        <button v-if="fbImgs.length < FB_IMG_MAX" class="fb-thumb-add" type="button" title="添加图片" @click="onFbFilePick">＋</button>
+      </div>
+      <input type="file" ref="fbFileInput" accept="image/*" multiple hidden @change="onFbFileChange">
+
       <div class="fb-foot">
         <button class="fb-btn" @click="closeFeedback(false)">取消</button>
         <button class="fb-btn primary" @click="onFbSubmit">提交</button>
