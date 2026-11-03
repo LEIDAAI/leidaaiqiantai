@@ -67,6 +67,11 @@ function useExpert(e: ExpertItem) {
   send()
 }
 function useSkill(s: SkillItem) { chatState.inputText = s.instructions || s.desc }
+/* r72b：点击样例改为填入对话框，不自动发送 */
+function askExpertPrompt(prompt: string) {
+  chatState.inputText = prompt
+  caseItem.value = null
+}
 const caseExpert = computed(() => (caseItem.value && !isCaseSkill.value) ? caseItem.value as ExpertItem : null)
 const caseSkill = computed(() => (caseItem.value && isCaseSkill.value) ? caseItem.value as SkillItem : null)
 
@@ -324,7 +329,7 @@ function onSendClick() {
                   <li v-for="c in caseExpert.capabilities || []" :key="c">{{ c }}</li>
                 </ul>
                 <div class="cs-h">试试这样问</div>
-                <button v-for="(p, pi) in caseExpert.prompts || []" :key="pi" class="case-prompt" @click="caseExpert && useExpert(caseExpert); caseItem = null">{{ p }}</button>
+                <button v-for="(p, pi) in caseExpert.prompts || []" :key="pi" class="case-prompt" @click="caseExpert && askExpertPrompt(p)">{{ p }}</button>
               </template>
               <template v-else-if="caseSkill">
                 <div class="cs-meta">v{{ caseSkill.version }} · {{ caseSkill.downloadCount ?? 0 }} 次安装 · {{ caseSkill.author }}</div>
