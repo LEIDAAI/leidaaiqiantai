@@ -201,9 +201,8 @@ function onSendClick() {
               </template>
               <template v-else>
                 <div v-for="s in pagedSkills" :key="s.id" class="home-card skill">
-                  <span class="hc-accent" :style="{ background: skillVisual(s).grad }"></span>
                   <div class="hc-head">
-                    <span class="hc-icon grad" :style="{ background: skillVisual(s).grad }" v-html="skillVisual(s).icon"></span>
+                    <span class="hc-icon grad" v-html="skillVisual(s).icon"></span>
                     <div class="hc-meta">
                       <div class="hc-name">{{ s.name }}</div>
                       <div class="hc-tags">{{ s.scenario || '通用' }} · v{{ s.version }}</div>
