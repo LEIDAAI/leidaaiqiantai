@@ -153,6 +153,68 @@
   .np-pill .np-val { font-size: 13px; font-weight: 700; color: #0d7a3a; font-variant-numeric: tabular-nums; }
   .np-pill:hover, .np-pill.np-on { background: #e2f3ea; border-color: #c8e8d6; }
 
+  /* r64：导航栏「客服 · 交流群」hover 弹层（双栏二维码卡片） */
+  .cs-wrap { position: relative; }
+  .cs-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid #dcefe4;
+    border-radius: 999px;
+    background: #fff;
+    color: #3d4d44;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .18s, border-color .18s, color .18s;
+  }
+  .cs-pill:hover, .cs-pill.cs-on { background: #e2f3ea; border-color: #c8e8d6; color: #0d7a3a; }
+  .cs-card {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 420px;
+    display: flex;
+    gap: 14px;
+    padding: 16px 14px;
+    border-radius: 14px;
+    background: linear-gradient(160deg, #f2faf6 0%, #eef6fb 100%);
+    box-shadow: 0 12px 40px rgba(0,0,0,.14), 0 2px 10px rgba(0,0,0,.06);
+    z-index: 1300;
+    text-align: left;
+    animation: np-in .18s ease;
+  }
+  .cs-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+  .cs-col-head { display: flex; align-items: center; gap: 6px; }
+  .cs-col-head b { font-size: 14px; font-weight: 700; color: var(--text); }
+  .cs-ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    color: #0d7a3a;
+    background: #d9f2e4;
+  }
+  .cs-ico-group { color: #0b6aa8; background: #d9ecfa; }
+  .cs-tip { margin: 6px 0 10px; font-size: 12px; line-height: 1.5; color: #6f8779; text-align: center; }
+  .cs-qr-box {
+    width: 152px;
+    padding: 8px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(16,42,28,.08), 0 0 0 1px rgba(16,42,28,.05);
+  }
+  .cs-qr { display: block; width: 100%; height: auto; border-radius: 6px; }
+  .cs-div { flex: 0 0 1px; background: rgba(16,42,28,.1); border-radius: 1px; }
+  @media (max-width: 560px) {
+    .cs-card { width: calc(100vw - 24px); padding: 12px 10px; }
+    .cs-pill { padding: 0 10px; }
+  }
+
   /* r43：套餐购买下拉算力卡片 */
   .np-wrap { position: relative; }
   .np-card {
