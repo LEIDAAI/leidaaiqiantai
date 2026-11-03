@@ -153,7 +153,7 @@ function saveCreate() {
     <div class="dir-page">
       <div class="dir-head">
         <div class="dir-tabs">
-          <button class="dir-tab" :class="{ on: tab === 'plaza' }" @click="switchTab('plaza')">{{ isSkills ? '灵感广场' : '电商专家' }}</button>
+          <button class="dir-tab" :class="{ on: tab === 'plaza' }" @click="switchTab('plaza')">{{ isSkills ? '电商技能' : '电商专家' }}</button>
           <!-- r72：我的专家暂时隐藏，保留代码便于恢复
           <button class="dir-tab" :class="{ on: tab === 'mine' }" @click="switchTab('mine')">{{ isSkills ? '我的技能' : '我的专家' }}</button>
           -->
