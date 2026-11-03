@@ -179,7 +179,7 @@ function onSendClick() {
             </div>
             <div class="home-pager">
               <button v-if="homePageCount > 1" class="hp-arrow prev" :disabled="homePage === 0" aria-label="上一页" @click="prevHomePage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-              <div class="home-grid">
+              <div class="home-grid" :class="{ 'cols-3': homeTab === 'skill' }">
               <template v-if="homeTab === 'expert'">
                 <div v-for="e in pagedExperts" :key="e.id" class="home-card expert">
                   <div class="hc-head">
@@ -201,12 +201,12 @@ function onSendClick() {
               </template>
               <template v-else>
                 <div v-for="s in pagedSkills" :key="s.id" class="home-card skill">
-                  <div class="hc-head">
-                    <span class="hc-icon grad" v-html="skillVisual(s).icon"></span>
-                    <div class="hc-meta">
-                      <div class="hc-name">{{ s.name }}</div>
-                      <div class="hc-tags">{{ s.scenario || '通用' }} · v{{ s.version }}</div>
+                  <div class="hc-head inline">
+                    <div class="hc-title">
+                      <span class="hc-icon grad" v-html="skillVisual(s).icon"></span>
+                      <span class="hc-name">{{ s.name }}</span>
                     </div>
+                    <div class="hc-tags">{{ s.scenario || '通用' }} · v{{ s.version }}</div>
                   </div>
                   <div class="hc-desc">{{ s.desc }}</div>
                   <div class="hc-foot">
