@@ -4227,6 +4227,8 @@
 .home-chip.on:hover { background: #d9f0e2; color: #007730; }
 .home-seg-row { margin-bottom: 12px; display: flex; justify-content: center; }
 .home-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 16px; }
+/* r65：技能 tab 一行三列（专家 tab 维持两列） */
+.home-grid.cols-3 { grid-template-columns: repeat(3, 1fr); gap: 12px 12px; }
 .home-pager { position: relative; padding: 0 46px; }
 .hp-arrow { position: absolute; z-index: 6; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid #e3e3e3; border-radius: 50%; background: #fff; color: #8a8a90; box-shadow: 0 2px 8px rgba(0,0,0,.06); cursor: pointer; transition: color .15s ease, border-color .15s ease, opacity .15s ease, transform .15s ease; }
 .hp-arrow.prev { left: 2px; }
@@ -4277,6 +4279,13 @@
 .hc-icon.grad, .dc-icon.grad { color: var(--brand); box-shadow: none; }
 .hc-icon.grad svg { width: 19px; height: 19px; }
 .dc-icon.grad svg { width: 20px; height: 20px; }
+/* r65：技能卡片图标改为标题行内联小图标（去底色方块，15px 绿线条） */
+.hc-head.inline { display: block; }
+.hc-title { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.hc-title .hc-name { flex: 1 1 auto; min-width: 0; }
+.home-card.skill .hc-icon { width: 15px; height: 15px; border-radius: 0; background: transparent; }
+.home-card.skill .hc-icon svg { width: 15px; height: 15px; }
+.hc-head.inline .hc-tags { margin-top: 4px; }
 /* r48：输入区去掉独立灰底和分割线，融入氛围背景 */
 .home-bottom { padding: 6px 24px 14px; background: transparent; border-top: 0; }
 .home-bottom .composer { margin: 0 auto; max-width: 800px; }
@@ -4552,7 +4561,7 @@
   .home-hero { padding: 20px 14px 10px; }
   .home-title { font-size: 24px; line-height: 36px; letter-spacing: 0; }
   .home-sub { font-size: 12.5px; }
-  .home-grid { grid-template-columns: 1fr; }
+  .home-grid, .home-grid.cols-3 { grid-template-columns: 1fr; }
   .hp-arrow { width: 28px; height: 28px; }
   /* r44：仅当存在翻页箭头时才使用不对称内边距，单页时保持完全居中 */
   .home-pager:has(.hp-arrow) { padding: 0 74px 0 36px; }
