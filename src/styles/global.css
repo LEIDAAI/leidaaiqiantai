@@ -4273,7 +4273,8 @@
 .hc-usage svg { width: 11px; height: 11px; color: #9a9aa2; }
 .hc-foot .hc-usage { flex: 1 1 auto; min-width: 0; }
 .hc-usage-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hc-icon.grad, .dc-icon.grad { color: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.14); }
+/* r64：卡片图标统一品牌绿单色（原彩色渐变底降噪为浅绿底+绿色线条图标） */
+.hc-icon.grad, .dc-icon.grad { color: var(--brand); box-shadow: none; }
 .hc-icon.grad svg { width: 19px; height: 19px; }
 .dc-icon.grad svg { width: 20px; height: 20px; }
 /* r48：输入区去掉独立灰底和分割线，融入氛围背景 */
@@ -4461,7 +4462,7 @@
   flex: 0 0 auto; width: 36px; height: 36px; border-radius: 10px;
   color: #fff; font-size: 12px; font-weight: 700; letter-spacing: -.2px;
 }
-.bp-ava.skill { background: linear-gradient(135deg, #00b84a, #00913a); }
+.bp-ava.skill { background: linear-gradient(135deg, #00b84a, #00913a); color: #fff; }
 .bp-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .bp-meta b { font-size: 13px; font-weight: 600; color: #20261f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bp-meta i { font-style: normal; font-size: 11.5px; color: #9aa1a5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
