@@ -43,8 +43,18 @@ function scheduleCsClose() {
   csCloseTimer = setTimeout(() => { csOpen.value = false; csCloseTimer = undefined }, 150)
 }
 /* r59：主账号胶囊下拉（账号与积分 / 退出登录）；未登录（含游客）显示「登录 / 注册」 */
+/* r67：改为鼠标移入显示（复用 np/cs 同款 mouseenter/延迟关闭模式），点击保留作触屏降级 */
 const avOpen = ref(false)
 const avRoot = ref<HTMLElement | null>(null)
+let avCloseTimer: ReturnType<typeof setTimeout> | undefined
+function openAv() {
+  if (avCloseTimer) { clearTimeout(avCloseTimer); avCloseTimer = undefined }
+  avOpen.value = true
+}
+function scheduleAvClose() {
+  if (avCloseTimer) clearTimeout(avCloseTimer)
+  avCloseTimer = setTimeout(() => { avOpen.value = false; avCloseTimer = undefined }, 150)
+}
 function toggleAv() { avOpen.value = !avOpen.value }
 function avAccount() { avOpen.value = false; openAccount() }
 function avLogout() { avOpen.value = false; logout() }
@@ -58,7 +68,10 @@ function onDocClick(e: MouseEvent) {
     csOpen.value = false
     if (csCloseTimer) { clearTimeout(csCloseTimer); csCloseTimer = undefined }
   }
-  if (avOpen.value && avRoot.value && !avRoot.value.contains(t)) avOpen.value = false
+  if (avOpen.value && avRoot.value && !avRoot.value.contains(t)) {
+    avOpen.value = false
+    if (avCloseTimer) { clearTimeout(avCloseTimer); avCloseTimer = undefined }
+  }
 }
 onMounted(() => document.addEventListener('click', onDocClick))
 onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
@@ -165,7 +178,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 
       <!-- r59：未登录（含游客）→ 绿色「登录 / 注册」；已登录 → 主账号胶囊 + 下拉（账号与积分 / 退出登录） -->
       <button v-if="!authState.logged" class="nav-login" @click="openLogin('')">登录 / 注册</button>
-      <div v-else ref="avRoot" class="av-wrap">
+      <div v-else ref="avRoot" class="av-wrap" @mouseenter="openAv" @mouseleave="scheduleAvClose">
         <button class="nav-avatar" @click="toggleAv">
           <span class="avatar-dot">主</span>
           <span class="avatar-name">{{ accountName }}</span>
