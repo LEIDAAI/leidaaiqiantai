@@ -1070,7 +1070,7 @@
   /* ===== 点踩反馈弹窗（提供反馈） ===== */
   .fb-modal { position:fixed; inset:0; background:rgba(16,24,40,.45); z-index:450; display:none; align-items:center; justify-content:center; }
   .fb-modal.show { display:flex; }
-  .fb-dialog { width:min(440px, calc(100vw - 32px)); background:#fff; border-radius:16px; padding:20px 22px; box-shadow:0 20px 50px rgba(16,24,40,.18); animation: fadeInUp .2s ease; }
+  .fb-dialog { width:min(440px, calc(100vw - 32px)); max-height:calc(100vh - 48px); overflow-y:auto; background:#fff; border-radius:16px; padding:20px 22px; box-shadow:0 20px 50px rgba(16,24,40,.18); animation: fadeInUp .2s ease; }
   .fb-head { display:flex; align-items:center; justify-content:space-between; }
   .fb-title { font-size:16px; font-weight:700; color:#1c2530; }
   .fb-close { border:none; background:none; font-size:18px; color:#98a2ad; cursor:pointer; line-height:1; padding:2px 4px; }
@@ -1085,6 +1085,39 @@
   .fb-btn:hover { border-color:var(--brand); color:var(--brand-dark); }
   .fb-btn.primary { background:var(--brand); border-color:var(--brand); color:#fff; font-weight:600; }
   .fb-btn.primary:hover { background:var(--brand-dark); border-color:var(--brand-dark); color:#fff; }
+  /* 认真倾听说明条 */
+  .fb-care { margin-top:10px; display:flex; align-items:flex-start; gap:6px; font-size:11.5px; color:#0a7a3d; background:rgba(0,200,75,.08); border:1px solid rgba(0,200,75,.18); border-radius:9px; padding:7px 10px; line-height:1.55; }
+  .fb-label-opt { font-weight:400; color:#98a2ad; font-size:11px; }
+  /* 引用对话 */
+  .fb-conv { position:relative; }
+  .fb-conv-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border:1px dashed #cfd6de; border-radius:9px; background:#fafbfc; color:#7b8590; font-size:12px; cursor:pointer; }
+  .fb-conv-btn:hover { border-color:var(--brand); color:var(--brand-dark); background:#f2fbf5; }
+  .fb-conv-btn .fb-caret { transition:transform .15s; }
+  .fb-conv-btn.open .fb-caret { transform:rotate(180deg); }
+  .fb-conv-chip { display:inline-flex; align-items:center; gap:7px; max-width:100%; padding:6px 8px 6px 10px; border:1px solid rgba(0,200,75,.35); background:#f2fbf5; border-radius:9px; font-size:12px; }
+  .fcc-ic { font-size:12px; }
+  .fcc-name { max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#2b3540; font-weight:500; }
+  .fcc-rm { border:none; background:none; color:#98a2ad; cursor:pointer; font-size:11px; padding:2px 4px; line-height:1; }
+  .fcc-rm:hover { color:#e5484d; }
+  .fb-conv-pop { position:absolute; top:calc(100% + 6px); left:0; width:100%; z-index:20; background:#fff; border:1px solid #e3e8ee; border-radius:10px; box-shadow:0 12px 32px rgba(16,24,40,.14); padding:8px; animation: fadeInUp .15s ease; }
+  .fb-conv-search { width:100%; box-sizing:border-box; border:1px solid #e3e8ee; border-radius:8px; padding:6px 9px; font-size:12px; color:#2b3540; outline:none; margin-bottom:6px; }
+  .fb-conv-search:focus { border-color:var(--brand); }
+  .fb-conv-list { max-height:180px; overflow-y:auto; }
+  .fb-conv-item { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; border:none; background:none; padding:7px 9px; border-radius:8px; cursor:pointer; font-size:12px; text-align:left; }
+  .fb-conv-item:hover { background:#f2f7f3; }
+  .fb-conv-item.on { background:rgba(0,200,75,.1); }
+  .fci-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#2b3540; }
+  .fb-conv-item.on .fci-name { color:var(--brand-dark); font-weight:600; }
+  .fci-time { flex-shrink:0; color:#98a2ad; font-size:11px; }
+  .fb-conv-empty { padding:14px 0; text-align:center; color:#a8b2bd; font-size:12px; }
+  /* 问题截图缩略图 */
+  .fb-imgs { display:flex; flex-wrap:wrap; gap:8px; }
+  .fb-thumb { position:relative; width:56px; height:56px; border-radius:8px; overflow:hidden; border:1px solid #e3e8ee; }
+  .fb-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .fb-thumb-rm { position:absolute; top:2px; right:2px; width:16px; height:16px; border:none; border-radius:50%; background:rgba(16,24,40,.6); color:#fff; font-size:10px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+  .fb-thumb-rm:hover { background:rgba(229,72,77,.85); }
+  .fb-thumb-add { width:56px; height:56px; border:1px dashed #cfd6de; border-radius:8px; background:#fafbfc; color:#98a2ad; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .fb-thumb-add:hover { border-color:var(--brand); color:var(--brand-dark); background:#f2fbf5; }
 
   /* ====================================================== */
   /* === 任务执行卡（趣虾风格：紫色图标 + 步骤节点） ====== */
