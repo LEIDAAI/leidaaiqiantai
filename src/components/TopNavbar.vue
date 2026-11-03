@@ -26,6 +26,22 @@ function scheduleNpClose() {
 }
 function npGoPricing() { npOpen.value = false; openPricing() }
 function npGoConsume() { npOpen.value = false; navigatePage('consume') }
+/* r64：导航栏「客服 · 交流群」hover 弹层（复用 np 同款 mouseenter/延迟关闭模式） */
+const pub = import.meta.env.BASE_URL
+const groupQr = pub + 'wx-qrcode.png'
+const kefuQr = ref(pub + 'wx-kefu.png') // 客服码未配置时 onerror 回退群码，后续放置 public/wx-kefu.png 即自动生效
+function onKefuErr() { kefuQr.value = groupQr }
+const csOpen = ref(false)
+const csRoot = ref<HTMLElement | null>(null)
+let csCloseTimer: ReturnType<typeof setTimeout> | undefined
+function openCs() {
+  if (csCloseTimer) { clearTimeout(csCloseTimer); csCloseTimer = undefined }
+  csOpen.value = true
+}
+function scheduleCsClose() {
+  if (csCloseTimer) clearTimeout(csCloseTimer)
+  csCloseTimer = setTimeout(() => { csOpen.value = false; csCloseTimer = undefined }, 150)
+}
 /* r59：主账号胶囊下拉（账号与积分 / 退出登录）；未登录（含游客）显示「登录 / 注册」 */
 const avOpen = ref(false)
 const avRoot = ref<HTMLElement | null>(null)
@@ -37,6 +53,10 @@ function onDocClick(e: MouseEvent) {
   if (npOpen.value && npRoot.value && !npRoot.value.contains(t)) {
     npOpen.value = false
     if (npCloseTimer) { clearTimeout(npCloseTimer); npCloseTimer = undefined }
+  }
+  if (csOpen.value && csRoot.value && !csRoot.value.contains(t)) {
+    csOpen.value = false
+    if (csCloseTimer) { clearTimeout(csCloseTimer); csCloseTimer = undefined }
   }
   if (avOpen.value && avRoot.value && !avRoot.value.contains(t)) avOpen.value = false
 }
@@ -62,6 +82,52 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
     </div>
 
     <div class="navbar-right">
+      <!-- r64：客服 · 交流群 hover 弹层（双栏二维码） -->
+      <div ref="csRoot" class="cs-wrap" @mouseenter="openCs" @mouseleave="scheduleCsClose">
+        <button class="cs-pill" :class="{ 'cs-on': csOpen }" @click="openCs">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <rect x="2.5" y="11" width="4" height="7" rx="1.8" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="17.5" y="11" width="4" height="7" rx="1.8" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M20 18v1a3 3 0 0 1-3 3h-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span>客服 · 交流群</span>
+        </button>
+
+        <div v-if="csOpen" class="cs-card">
+          <div class="cs-col">
+            <div class="cs-col-head">
+              <span class="cs-ico cs-ico-kefu">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                  <rect x="2.5" y="11" width="4" height="7" rx="1.8" stroke="currentColor" stroke-width="2"/>
+                  <rect x="17.5" y="11" width="4" height="7" rx="1.8" stroke="currentColor" stroke-width="2"/>
+                  <path d="M20 18v1a3 3 0 0 1-3 3h-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <b>客服微信</b>
+            </div>
+            <p class="cs-tip">一对一解答使用与付费问题</p>
+            <div class="cs-qr-box"><img class="cs-qr" :src="kefuQr" alt="客服微信二维码" @error="onKefuErr"></div>
+          </div>
+          <div class="cs-div"></div>
+          <div class="cs-col">
+            <div class="cs-col-head">
+              <span class="cs-ico cs-ico-group">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <circle cx="9" cy="8.5" r="3.2" stroke="currentColor" stroke-width="2"/>
+                  <path d="M3.5 18.5c.8-2.6 3-4 5.5-4s4.7 1.4 5.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <circle cx="17" cy="9.5" r="2.4" stroke="currentColor" stroke-width="2"/>
+                  <path d="M16.5 14.6c2 .3 3.5 1.5 4.2 3.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <b>交流群</b>
+            </div>
+            <p class="cs-tip">扫码加入交流群，获取更多新资讯，分享真实反馈</p>
+            <div class="cs-qr-box"><img class="cs-qr" :src="groupQr" alt="交流群二维码"></div>
+          </div>
+        </div>
+      </div>
       <div v-if="authState.logged" ref="npRoot" class="np-wrap" @mouseenter="openNp" @mouseleave="scheduleNpClose">
         <!-- r54：剩余积分改为浅绿 soft 胶囊（闪电图标 + 标签 + 加粗数值） -->
         <button class="np-pill" :class="{ 'np-on': npOpen }" @click="openNp">
