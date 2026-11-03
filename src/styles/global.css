@@ -4225,7 +4225,8 @@
 /* r51 温和降噪：选中 chip 由绿实心改浅绿 soft，绿色收敛为「开始查词」唯一强 CTA */
 .home-chip.on { background: #e7f6ed; color: #008a37; font-weight: 600; }
 .home-chip.on:hover { background: #d9f0e2; color: #007730; }
-.home-seg-row { margin-bottom: 12px; display: flex; justify-content: center; }
+/* r66：模式分段与平台分段并排一行，hero 纵向三层 tab 收敛为两层 */
+.home-mode-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; max-width: 100%; }
 .home-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 16px; }
 /* r65：技能 tab 一行三列（专家 tab 维持两列） */
 .home-grid.cols-3 { grid-template-columns: repeat(3, 1fr); gap: 12px 12px; }
