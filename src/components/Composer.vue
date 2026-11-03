@@ -416,7 +416,7 @@ onBeforeUnmount(() => {
               </div>
               <div class="cb-pop-list">
                 <button v-for="s in popSkills" :key="s.id" class="cb-pop-item" :class="{ on: chatState.selectedSkill?.id === s.id }" type="button" @click="pickSkill(s)">
-                  <span class="bp-ava skill" :style="{ background: skillVisual(s).grad }" v-html="skillVisual(s).icon"></span>
+                  <span class="bp-ava skill" v-html="skillVisual(s).icon"></span>
                   <span class="bp-meta">
                     <b>{{ s.name }}</b>
                     <i>{{ s.scenario || '通用' }} · {{ s.desc }}</i>
