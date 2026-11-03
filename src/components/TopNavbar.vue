@@ -136,7 +136,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
               </span>
               <b>交流群</b>
             </div>
-            <p class="cs-tip">进群交流反馈，获取新资讯</p>
+            <p class="cs-tip">进群交流反馈，获取最新咨询</p>
             <div class="cs-qr-box"><img class="cs-qr" :src="groupQr" alt="交流群二维码"></div>
           </div>
         </div>
