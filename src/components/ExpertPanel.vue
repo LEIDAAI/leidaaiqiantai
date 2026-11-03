@@ -197,7 +197,7 @@ function saveCreate() {
             <div v-for="(s, si) in plazaSkills" :key="s.id" class="dir-card">
               <span v-if="si < 2" class="dir-new">NEW</span>
               <div class="dir-body">
-                <span class="dc-icon grad" :style="{ background: skillVisual(s).grad }" v-html="skillVisual(s).icon"></span>
+                <span class="dc-icon grad" v-html="skillVisual(s).icon"></span>
                 <div>
                   <div class="dir-name">{{ s.name }}</div>
                   <div class="dir-desc">{{ s.desc }}</div>
@@ -241,7 +241,7 @@ function saveCreate() {
           <template v-else>
             <div v-for="s in mineSkills" :key="s.id" class="dir-card">
               <div class="dir-body">
-                <span class="dc-icon grad" :style="{ background: skillVisual(s).grad }" v-html="skillVisual(s).icon"></span>
+                <span class="dc-icon grad" v-html="skillVisual(s).icon"></span>
                 <div>
                   <div class="dir-name">{{ s.name }}</div>
                   <div class="dir-desc">{{ s.desc }}</div>
