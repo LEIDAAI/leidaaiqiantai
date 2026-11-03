@@ -4578,16 +4578,26 @@
 .lg-panel { min-width: 0; overflow-y: auto; }
 .lg-card { padding: 24px 36px 20px; background: #fff; }
 
-/* —— 卡内顶行：视图切换（左） + 关闭（右） —— */
-.lg-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
-.lg-corner {
-  display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; border-radius: 8px;
-  border: 0; background: none; color: #6b7a70;
-  cursor: pointer; transition: all .15s;
+/* —— 卡内顶行：登录方式切换（左） + 关闭（右） —— */
+.lg-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.lg-switch {
+  display: inline-flex; gap: 4px; padding: 4px;
+  border-radius: 12px; background: #eef2ef; border: 1px solid #e3e9e4;
 }
-.lg-corner:hover { color: var(--brand); background: #eef7f1; }
-.lg-corner-ph { width: 32px; height: 32px; flex: none; }
+.lg-switch button {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border: 0; border-radius: 9px;
+  background: none; cursor: pointer;
+  font-size: 13.5px; color: #66706a; font-family: inherit; font-weight: 500;
+  transition: all .15s; white-space: nowrap;
+}
+.lg-switch button:hover:not(.on):not(:disabled) { color: #17211b; }
+.lg-switch button.on {
+  background: #fff; color: #0a7a44; font-weight: 700;
+  box-shadow: 0 1px 3px rgba(16, 42, 28, .14), 0 0 0 1px rgba(0, 156, 76, .25);
+}
+.lg-switch button:disabled { cursor: default; opacity: .55; }
+.lg-switch.ph { flex: none; }
 .lg-close {
   display: flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; border-radius: 50%;
@@ -4647,20 +4657,14 @@
 .lg-submit:hover { filter: brightness(1.05); }
 .lg-submit:disabled { opacity: .6; cursor: default; }
 .lg-agree { margin: 12px 0 0; text-align: center; font-size: 11.5px; color: #9aa1a5; }
-.lg-agree a { color: var(--brand); cursor: pointer; }
+.lg-agree a { color: var(--brand); text-decoration: none; }
+.lg-agree a:hover { text-decoration: underline; }
 
-/* —— 微信扫码（模拟二维码） —— */
+/* —— 微信扫码（真实二维码图） —— */
 .lg-qr-wrap { display: flex; justify-content: center; margin: 16px 0 10px; }
 .lg-qr { position: relative; width: 192px; height: 192px; padding: 10px; border: 1px solid #e5e9e6; border-radius: 10px; background: #fff; }
-.lg-qr-grid { position: relative; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(21, 1fr); grid-template-rows: repeat(21, 1fr); }
-.lg-qr-grid i { border-radius: 1px; }
-.lg-qr-grid i.on { background: #161d18; }
-.lg-qr.scanned .lg-qr-grid { opacity: .3; filter: blur(1px); }
-.lg-qr-finder { position: absolute; width: 33.4%; height: 33.4%; border: 3px solid #161d18; border-radius: 7px; background: #fff; }
-.lg-qr-finder::after { content: ""; position: absolute; inset: 28%; border-radius: 2px; background: #161d18; }
-.lg-qr-finder.f1 { top: 0; left: 0; }
-.lg-qr-finder.f2 { top: 0; right: 0; }
-.lg-qr-finder.f3 { bottom: 0; left: 0; }
+.lg-qr-img { display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
+.lg-qr.scanned .lg-qr-img { opacity: .3; filter: blur(1px); }
 .lg-qr-center {
   position: absolute; inset: 0; margin: auto;
   display: flex; align-items: center; justify-content: center;
