@@ -200,7 +200,7 @@
     background: #d9f2e4;
   }
   .cs-ico-group { color: #0b6aa8; background: #d9ecfa; }
-  .cs-tip { margin: 6px 0 10px; font-size: 12px; line-height: 1.5; color: #6f8779; text-align: center; }
+  .cs-tip { margin: 6px 0 10px; font-size: 12px; line-height: 1.5; min-height: 18px; color: #6f8779; text-align: center; }
   .cs-qr-box {
     width: 152px;
     padding: 8px;
