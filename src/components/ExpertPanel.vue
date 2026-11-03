@@ -154,10 +154,14 @@ function saveCreate() {
     <div class="dir-page">
       <div class="dir-head">
         <div class="dir-tabs">
-          <button class="dir-tab" :class="{ on: tab === 'plaza' }" @click="switchTab('plaza')">灵感广场</button>
+          <button class="dir-tab" :class="{ on: tab === 'plaza' }" @click="switchTab('plaza')">{{ isSkills ? '灵感广场' : '电商专家' }}</button>
+          <!-- r72：我的专家暂时隐藏，保留代码便于恢复
           <button class="dir-tab" :class="{ on: tab === 'mine' }" @click="switchTab('mine')">{{ isSkills ? '我的技能' : '我的专家' }}</button>
+          -->
         </div>
+        <!-- r72：创建专家暂时隐藏，保留代码便于恢复
         <button class="dir-create-btn" @click="switchTab('create')">+ 创建{{ isSkills ? '技能' : '专家' }}</button>
+        -->
       </div>
 
       <!-- 灵感广场 -->
@@ -260,8 +264,8 @@ function saveCreate() {
         </div>
         <div v-else class="dir-empty">
           <div class="de-title">还没有{{ isSkills ? '技能' : '专家' }}</div>
-          <div class="de-sub">去灵感广场发现，或创建自己的{{ isSkills ? '技能' : '专家' }}</div>
-          <button class="da main" @click="switchTab('plaza')">去灵感广场</button>
+          <div class="de-sub">去电商专家发现，或创建自己的{{ isSkills ? '技能' : '专家' }}</div>
+          <button class="da main" @click="switchTab('plaza')">去电商专家</button>
         </div>
       </div>
 
