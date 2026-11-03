@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /* 专家/技能发现页（dir-page）：灵感广场 / 我的 / 创建 */
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { modals, navigatePage } from '../stores/modals'
 import { chatState } from '../stores/chat'
 import { expertState, expertDemo, skillDemo, type ExpertItem, type SkillItem } from '../stores/expert'
@@ -88,13 +88,32 @@ async function exportReport() {
 const plazaExperts = computed(() => {
   let list = expertState.experts.filter(e => e.source === 'official' && matchesPlatform(e))
   if (chip.value !== '推荐' && chip.value !== '全部') list = list.filter(e => e.category === chip.value || e.tags.includes(chip.value))
-  return chip.value === '推荐' ? list.slice(0, 6) : list
+  return list
 })
 const plazaSkills = computed(() => {
   let list = expertState.skills.filter(s => s.source === 'official' && matchesPlatform(s))
   if (chip.value !== '推荐' && chip.value !== '全部') list = list.filter(s => s.scenario === chip.value || s.tags.includes(chip.value))
-  return chip.value === '推荐' ? list.slice(0, 6) : list
+  return list
 })
+/* r73：广场列表前端分页（每页 8 个，4 列 × 2 行），筛选/切页时回到第 1 页 */
+const PAGE_SIZE = 8
+const page = ref(1)
+const pagedExperts = computed(() => plazaExperts.value.slice((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE))
+const pagedSkills = computed(() => plazaSkills.value.slice((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE))
+const plazaList = computed(() => isSkills.value ? plazaSkills.value : plazaExperts.value)
+const totalPages = computed(() => Math.max(1, Math.ceil(plazaList.value.length / PAGE_SIZE)))
+const pagerItems = computed(() => {
+  const t = totalPages.value, c = page.value
+  if (t <= 7) return Array.from({ length: t }, (_, i) => i + 1)
+  const set = new Set([1, t, c - 1, c, c + 1].filter(p => p >= 1 && p <= t))
+  const sorted = [...set].sort((a, b) => a - b)
+  const out: number[] = []
+  let prev = 0
+  for (const p of sorted) { if (p - prev > 1) out.push(-1); out.push(p); prev = p }
+  return out
+})
+watch([chip, platform, tab, isSkills], () => { page.value = 1 })
+const isNewItem = <T extends { id: string }>(item: T, list: T[]) => list.slice(0, 2).includes(item)
 const mineExperts = computed(() => expertState.experts.filter(e => e.source === 'user'))
 const mineSkills = computed(() => expertState.skills.filter(s => s.source === 'user'))
 function useExpert(e: ExpertItem) {
@@ -177,8 +196,8 @@ function saveCreate() {
         </div>
         <div class="dir-grid">
           <template v-if="!isSkills">
-            <div v-for="(e, ei) in plazaExperts" :key="e.id" class="dir-card">
-              <span v-if="ei < 2" class="dir-new">NEW</span>
+            <div v-for="e in pagedExperts" :key="e.id" class="dir-card">
+              <span v-if="isNewItem(e, plazaExperts)" class="dir-new">NEW</span>
               <div class="dir-body">
                 <span class="dc-ava"><img :src="platformLogo(e.platform)" alt=""></span>
                 <div>
@@ -197,8 +216,8 @@ function saveCreate() {
             </div>
           </template>
           <template v-else>
-            <div v-for="(s, si) in plazaSkills" :key="s.id" class="dir-card">
-              <span v-if="si < 2" class="dir-new">NEW</span>
+            <div v-for="s in pagedSkills" :key="s.id" class="dir-card">
+              <span v-if="isNewItem(s, plazaSkills)" class="dir-new">NEW</span>
               <div class="dir-body">
                 <span class="dc-icon grad" v-html="skillVisual(s).icon"></span>
                 <div>
@@ -216,6 +235,17 @@ function saveCreate() {
               </div>
             </div>
           </template>
+        </div>
+        <div v-if="!plazaList.length" class="dir-empty">
+          <div class="de-title">没有匹配的{{ isSkills ? '技能' : '专家' }}</div>
+          <div class="de-sub">换个平台或场景筛选试试</div>
+          <button class="da main" @click="selectPlatform('全部'); chip = '推荐'">重置筛选</button>
+        </div>
+        <div v-if="totalPages > 1" class="dir-pager">
+          <button class="dp-btn" :disabled="page === 1" @click="page--">‹</button>
+          <button v-for="(p, pi) in pagerItems" :key="pi" class="dp-btn" :class="{ on: p === page, dots: p === -1 }" :disabled="p === -1" @click="page = p">{{ p === -1 ? '…' : p }}</button>
+          <button class="dp-btn" :disabled="page === totalPages" @click="page++">›</button>
+          <span class="dp-total">共 {{ plazaList.length }} 个</span>
         </div>
       </div>
 
