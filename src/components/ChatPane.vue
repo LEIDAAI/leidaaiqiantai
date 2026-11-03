@@ -4,7 +4,7 @@ import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import MessageBubble from './MessageBubble.vue'
 import Composer from './Composer.vue'
 import {
-  chatState, activeView, isRunning, stopTask, newConversation
+  chatState, activeView, isRunning, stopTask
 } from '../stores/chat'
 import { modals, openFeedback } from '../stores/modals'
 import { resetRightPreview } from '../stores/panel'
@@ -228,9 +228,6 @@ function onSendClick() {
       </div>
 
       <div class="home-floats">
-        <button class="hf-btn" data-tip="新建对话" @click="newConversation()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
         <button class="hf-btn" data-tip="用户反馈" @click="openFeedback()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </button>
