@@ -3676,10 +3676,6 @@
 .plan-credits strong { color: #00a83e; }
 .plan-action { width: 100%; min-height: 42px; border: 0; background: linear-gradient(100deg, #00b84a, #00913a); }
 .plan-action:disabled { background: #d7d7d7; color: #999; cursor: default; }
-.model-cost { display: grid; gap: 10px; margin-top: 18px; padding: 14px; border-radius: 8px; background: #f0f0f1; font-size: 12px; }
-.model-cost strong { margin-bottom: 4px; font-weight: 500; }
-.model-cost div { display: flex; justify-content: space-between; color: #737b88; }
-.model-cost b { color: #303640; font-weight: 500; }
 .plan-limits { display: grid; gap: 11px; margin: 20px 0 0; padding: 0; list-style: none; color: #626c7b; font-size: 12px; }
 .plan-limits li::before { content: '✓'; margin-right: 9px; color: #00a83e; }
 .pricing-note { margin-top: 18px; color: #8c929d; font-size: 11px; }
