@@ -48,10 +48,10 @@ export const walletState = reactive({
   expiresAt: '2026-11-13',
   usedCoins: 4696,
   packages: [
-    { name: '基础版', coins: 5600, price: 99, yearlyPrice: 949, compareMonthly: 179, saving: 239, modelCost: ['0.937', '0.265', '0.071'], limits: ['图片/视频并发：10 / 1 个任务', '约每月生成 1,400 张图片或 373 条视频', '每月约查询 74 次或生成 31 份报告'], featured: false, features: ['选品调研、合规检测', 'Listing 生成和优化', '关键词库和商品库管理', '定时任务与自定义流程', '跨境工具技能库', '商品图设计器与模板：无限量', '支持所有单任务生图/生视频功能'] },
-    { name: '高级版', coins: 22000, price: 299, yearlyPrice: 2870, compareMonthly: 589, saving: 718, modelCost: ['0.720', '0.204', '0.054'], limits: ['图片/视频并发：30 / 10 个任务', '约每月生成 5,500 张图片或 1,466 条视频', '每月约查询 293 次或生成 122 份报告'], featured: true, features: ['选品调研、合规检测', 'Listing 生成和优化', '关键词库和商品库管理', '定时任务与自定义流程', '跨境工具技能库', '商品图设计器与模板：无限量', '支持批量任务'] },
-    { name: '团队版', coins: 52500, price: 499, yearlyPrice: 4788, compareMonthly: 999, saving: 7180, modelCost: ['0.715', '0.202', '0.054'], limits: ['每席位同时创建：图片 50 / 视频 25 个任务', '约每月生成 13,125 张图片或 3,500 条视频', '支持团队成员协同管理'], featured: false, features: ['选品调研、合规检测', 'Listing 生成和优化', '关键词库和商品库管理', '定时任务与自定义流程', '跨境工具技能库', '商品图设计器与模板：无限量', '团队协同与批量任务'] }
-  ] as Array<{ name: string; coins: number; price: number | null; yearlyPrice: number; compareMonthly: number; saving: number; modelCost: string[]; limits: string[]; features: string[]; featured: boolean; selected?: boolean }>,
+    { name: '基础版', coins: 5600, price: 99, yearlyPrice: 949, compareMonthly: 179, saving: 239, limits: ['图片/视频并发：10 / 1 个任务', '约每月生成 1,400 张图片或 373 条视频', '每月约查询 74 次或生成 31 份报告'], featured: false, features: ['1688 分销选品：Top10 爆款清单输出', '拿货价定位：价格分布与销量对比', '一件代发工厂筛选：源头工厂直连', '商品资源监测：同行价格与起订量跟踪', '六大场景技能：推荐 / 选品上架 / 店铺运营 / 评论分析', '多文件选品分析：一键生成报告（单任务）', '跨平台支持：1688 / OZON / 亚马逊 / TEMU'] },
+    { name: '高级版', coins: 22000, price: 299, yearlyPrice: 2870, compareMonthly: 589, saving: 718, limits: ['图片/视频并发：30 / 10 个任务', '约每月生成 5,500 张图片或 1,466 条视频', '每月约查询 293 次或生成 122 份报告'], featured: true, features: ['1688 分销选品：Top10 爆款清单输出', '拿货价定位：价格分布与销量对比', '一件代发工厂筛选：源头工厂直连', '商品资源监测：同行价格与起订量跟踪', '六大场景技能：推荐 / 选品上架 / 店铺运营 / 评论分析', '多文件选品分析：批量上传一键出报告', '支持批量任务并行处理'] },
+    { name: '团队版', coins: 52500, price: 499, yearlyPrice: 4788, compareMonthly: 999, saving: 7180, limits: ['每席位同时创建：图片 50 / 视频 25 个任务', '约每月生成 13,125 张图片或 3,500 条视频', '支持团队成员协同管理'], featured: false, features: ['1688 分销选品：Top10 爆款清单输出', '拿货价定位：价格分布与销量对比', '一件代发工厂筛选：源头工厂直连', '商品资源监测：同行价格与起订量跟踪', '六大场景技能：推荐 / 选品上架 / 店铺运营 / 评论分析', '多文件选品分析：批量上传一键出报告', '团队席位协同与批量任务'] }
+  ] as Array<{ name: string; coins: number; price: number | null; yearlyPrice: number; compareMonthly: number; saving: number; limits: string[]; features: string[]; featured: boolean; selected?: boolean }>,
   packageTip: '当前套餐信息以账号实际权益为准',
   buyRange: { start: '', end: '' },
   orderType: '' as '' | 'plan' | 'pack',   // 订单类型筛选：全部 / 套餐订购 / 加油包
