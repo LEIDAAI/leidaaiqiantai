@@ -3,11 +3,25 @@
  * 删除确认 / 重命名 / 会话右键菜单 / 输入框右键菜单
  * 页面切换：chat / experts / skills / account / pricing / orders / consume
  * ===================================================== */
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
+import { authState, openLogin } from './auth'
+
+type PageKey = 'chat' | 'experts' | 'skills' | 'account' | 'pricing' | 'orders' | 'consume'
+
+// 刷新后停留在当前访问页面：页面选择持久化到 localStorage
+const LAST_PAGE_KEY = 'dld_last_page'
+function restoreLastPage(): PageKey {
+  try {
+    const p = localStorage.getItem(LAST_PAGE_KEY)
+    if (p === 'account' || p === 'orders' || p === 'consume') return authState.logged ? p : 'chat'
+    if (p === 'chat' || p === 'experts' || p === 'skills' || p === 'pricing') return p
+  } catch (e) {}
+  return 'chat'
+}
 
 export const modals = reactive({
   settings: false,
-  page: 'chat' as 'chat' | 'experts' | 'skills' | 'account' | 'pricing' | 'orders' | 'consume',
+  page: restoreLastPage(),
   wallet: false,
   feedback: false,
   feedbackSubmitted: false,
@@ -29,11 +43,32 @@ export const modals = reactive({
   walletRunsTip: '预计可完成约 <strong>42</strong> 次标准选品分析'
 })
 
+// 页面切换持久化：navigatePage 与模板直接赋值（modals.page = 'xxx'）两条路径都兜住
+watch(() => modals.page, p => { try { localStorage.setItem(LAST_PAGE_KEY, p) } catch (e) {} })
+watch(() => authState.logged, logged => {
+  if (logged) return
+  modals.wallet = false
+  modals.buyConfirm = false
+  modals.buyPendingPkg = null
+  if (modals.page === 'account' || modals.page === 'orders' || modals.page === 'consume') modals.page = 'chat'
+})
+
 export function openSettings() { modals.settings = true }
 export function closeSettings() { modals.settings = false }
-export function openWallet() { modals.wallet = true; modals.walletRunsTip = '' }
+export function openWallet() {
+  if (!authState.logged) { openLogin('购买积分包'); return }
+  modals.wallet = true
+  modals.walletRunsTip = ''
+}
 export function closeWallet() { modals.wallet = false }
-export function navigatePage(page: typeof modals.page) { modals.page = page; modals.wallet = false }
+export function navigatePage(page: typeof modals.page) {
+  if (!authState.logged && (page === 'account' || page === 'orders' || page === 'consume')) {
+    openLogin('查看账户信息')
+    return
+  }
+  modals.page = page
+  modals.wallet = false
+}
 export function openPricing() { navigatePage('pricing') }
 export function openAccount() { navigatePage('account') }
 export function openFeedback() { modals.feedback = true; modals.feedbackSubmitted = false }
@@ -59,6 +94,7 @@ export function closeRename() {
   modals.renameTarget = null
 }
 export function openBuyConfirm(pkg: any) {
+  if (!authState.logged) { modals.wallet = false; openLogin('购买套餐或积分包'); return }
   modals.buyPendingPkg = pkg
   modals.buyConfirm = true
 }

@@ -1,10 +1,10 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import './styles/global.css'
-import { bootstrapDld, setAccountEvents } from './stores/account'
-import { initialSelect, onAccountSwitched } from './stores/chat'
+import { bootstrapDld, setAccountEvents, accountState } from './stores/account'
+import { chatState, initialSelect, onAccountSwitched } from './stores/chat'
 import { bindResultCardDelegation, setRightEmpty } from './stores/panel'
-import { appState } from './stores/state'
+import { appState, readCachedSessions } from './stores/state'
 import { applyAgentOpening } from './stores/opening'
 import { renderWalletPackagesFromMember } from './stores/wallet'
 
@@ -26,7 +26,21 @@ setAccountEvents({
   }
 })
 
-bootstrapDld().then(() => {
+const boot = bootstrapDld()
+
+// 刷新后先用本地缓存即时恢复上次打开的会话（不等接口），
+// 消除"接口返回前停留在新建对话首页"的闪现；接口返回后
+// onConversationsLoaded → initialSelect 会再校正一次。
+try {
+  const acc = accountState.currentAccountId
+  const cached = readCachedSessions(acc)
+  if (cached.length && !chatState.activeConvKey) {
+    accountState.sessionsByAccount[acc] = cached
+    initialSelect()
+  }
+} catch (e) {}
+
+boot.then(() => {
   // 智能体开场白
   if (appState.dldApps.length) applyAgentOpening(appState.dldApps[0])
   // 积分中心套餐接入真数据

@@ -10,10 +10,18 @@ import { currentAccount } from '../stores/account'
 import { send } from '../stores/send'
 import { appState } from '../stores/state'
 import AliProductCard from './AliProductCard.vue'
+import TraeTaskCard from './TraeTaskCard.vue'
 
 const props = defineProps<{ msg: ChatMessage; prev?: ChatMessage }>()
 
 const timeStr = computed(() => props.msg.createdAt ? new Date(props.msg.createdAt).toLocaleString('zh-CN', { hour12: false }) : '')
+
+/* —— 附件 chip（Trae 式紧凑卡片） —— */
+const AC_ICON_TEXT: Record<string, string> = { img: 'IMG', xls: 'XLS', pdf: 'PDF', doc: 'DOC', txt: 'TXT', code: 'CODE', audio: 'AUD', video: 'VID', zip: 'ZIP', file: 'FILE' }
+function iconText(type: string) { return AC_ICON_TEXT[type] || 'FILE' }
+function sizeText(size: number) {
+  return size < 1024 ? size + ' B' : size < 1048576 ? (size / 1024).toFixed(0) + ' KB' : (size / 1048576).toFixed(1) + ' MB'
+}
 
 const AZ_STEP_LABELS = ['理解需求', '检索数据', '分析对比', '生成结果']
 
@@ -72,12 +80,12 @@ function onSuggest(item: { q: string }) {
       <div class="msg-bubble">
         <p>{{ msg.content }}</p>
         <div v-if="msg.attachments && msg.attachments.length" class="msg-attach-list">
-          <div v-for="(a, i) in msg.attachments" :key="i" class="msg-attach">
-            <span class="ac-icon" :class="a.type">{{ a.icon }}</span>
-            <div class="ma-info">
-              <div class="ma-name">{{ a.name }}</div>
-              <div class="ma-meta"><span class="ext">{{ a.ext || 'FILE' }}</span>{{ a.size < 1024 ? a.size + ' B' : a.size < 1048576 ? (a.size / 1024).toFixed(1) + ' KB' : (a.size / 1048576).toFixed(2) + ' MB' }}</div>
-            </div>
+          <div v-for="(a, i) in msg.attachments" :key="i" class="msg-attach" :title="a.name">
+            <span class="ac-icon" :class="a.type">{{ iconText(a.type) }}</span>
+            <span class="ma-info">
+              <span class="ma-name">{{ a.name }}</span>
+              <span class="ma-meta">{{ sizeText(a.size) }}</span>
+            </span>
           </div>
         </div>
       </div>
@@ -97,6 +105,9 @@ function onSuggest(item: { q: string }) {
       <div class="msg-role">{{ (currentAccount as any).agent || '店雷达 AI' }} <span class="time">{{ timeStr ? '· ' + timeStr + (msg.phase === 'done' ? ' · 已完成' : '') : msg.statusText }}</span></div>
       <div v-if="timeStr === ''" class="msg-role-time-fallback" style="display:none"></div>
       <div class="msg-bubble">
+        <!-- Trae 式任务卡片（演示） -->
+        <TraeTaskCard v-if="msg.taskCard" :data="msg.taskCard" />
+
         <!-- 历史恢复：搜索分析完成静态卡 -->
         <div v-if="msg.showAnalyzeDone" class="analyze-card done collapsed">
           <div class="analyze-head" style="cursor:default"><span class="az-ic">✓</span><span class="az-stage">搜索分析完成</span></div>

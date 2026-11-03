@@ -6,8 +6,9 @@ import ChatPane from './components/ChatPane.vue'
 import RightPanel from './components/RightPanel.vue'
 import Modals from './components/Modals.vue'
 import ExpertPanel from './components/ExpertPanel.vue'
+import TopNavbar from './components/TopNavbar.vue'
 import DateRangePicker from './components/DateRangePicker.vue'
-import { modals, openBuyConfirm } from './stores/modals'
+import { modals, openBuyConfirm, openWallet, navigatePage } from './stores/modals'
 import { walletState, filteredBuy, filteredConsume, type BuyRecord } from './stores/wallet'
 import { appState, pad } from './stores/state'
 import { currentAccount } from './stores/account'
@@ -15,12 +16,14 @@ import { flashToast } from './utils/common'
 import { chatState, activeView } from './stores/chat'
 import { panel, setCollapsed } from './stores/panel'
 import { accountState } from './stores/account'
+import LoginView from './components/LoginView.vue'
+import { authState } from './stores/auth'
 const benefitsOpen = ref(false)
 
 const workEl = ref<HTMLElement | null>(null)
 const currentPlanPrice = (pkg: typeof walletState.packages[number]) => walletState.billingCycle === 'monthly' ? (pkg.price ?? 0) : pkg.yearlyPrice
 function openPackage(pkg: typeof walletState.packages[number]) {
-  if (pkg.name === walletState.currentPackage) return
+  if (authState.logged && pkg.name === walletState.currentPackage) return
   openBuyConfirm({ ...pkg, price: currentPlanPrice(pkg), coins: pkg.coins })
 }
 let sidebarObserver: ResizeObserver | null = null
@@ -188,6 +191,8 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
 
 <template>
   <div class="app-container">
+    <!-- 全局固定顶部导航栏（所有页面常显吸顶） -->
+    <TopNavbar />
     <div class="work" ref="workEl">
       <!-- 左：导航（所有页面常显） -->
       <Sidebar :style="leftStyle" />
@@ -199,37 +204,38 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
       <ChatPane v-if="modals.page === 'chat'" />
       <ExpertPanel v-else-if="modals.page === 'experts' || modals.page === 'skills'" />
       <main v-else-if="modals.page === 'pricing'" class="pricing-page">
-        <header class="page-heading"><div><h1>个人中心</h1><p>个人账号</p></div></header>
-        <section class="current-plan"><div><span class="plan-crown">♛</span><strong>{{ walletState.currentPackage }}（{{ walletState.billingCycle === 'monthly' ? '月付' : '年付' }}）</strong><small>套餐到期时间：{{ walletState.expiresAt }}</small></div><!-- 隐藏：升级套餐入口（待恢复）<button class="page-primary" @click="walletState.billingCycle = 'yearly'">升级套餐</button> --><button class="page-secondary" @click="modals.wallet = true">购买加油包</button><div class="balance-meter"><div><span>剩余算力：</span><strong>{{ appState.totalCoins.toLocaleString() }}</strong></div><div class="balance-track"><i :style="{ width: Math.max(4, (appState.totalCoins / (appState.totalCoins + walletState.usedCoins)) * 100) + '%' }"></i></div><small>{{ walletState.usedCoins.toLocaleString() }}（已使用）</small></div></section>
+        <header class="page-heading"><div><h1>{{ authState.logged ? '个人中心' : '套餐购买' }}</h1><p>{{ authState.logged ? '个人账号' : '登录后即可购买' }}</p></div></header>
+        <section v-if="authState.logged" class="current-plan"><div><span class="plan-crown">♛</span><strong>{{ walletState.currentPackage }}（{{ walletState.billingCycle === 'monthly' ? '月付' : '年付' }}）</strong><small>套餐到期时间：{{ walletState.expiresAt }}</small></div><button class="page-secondary" @click="openWallet()">购买积分包</button><div class="balance-meter"><div><span>剩余积分</span><strong>{{ appState.totalCoins.toLocaleString() }}</strong></div><div class="balance-track"><i :style="{ width: Math.max(4, (appState.totalCoins / (appState.totalCoins + walletState.usedCoins)) * 100) + '%' }"></i></div><small>{{ walletState.usedCoins.toLocaleString() }}（已使用）</small></div></section>
+        <section v-else class="current-plan"><div><strong>登录后查看账户积分与当前套餐</strong><small>可先浏览套餐，登录后即可购买</small></div><button class="page-secondary" @click="openWallet()">登录后增购积分包</button></section>
         <section class="account-content">
           <aside class="account-menu">
             <div class="account-menu-caption">个人中心</div>
-            <button @click="modals.page = 'account'">个人信息</button>
+            <button @click="navigatePage('account')">个人信息</button>
             <div class="account-menu-caption">套餐管理</div>
             <button class="active" @click="modals.page = 'pricing'">套餐购买</button>
-            <button @click="modals.page = 'orders'">订单中心</button>
-            <button @click="modals.page = 'consume'">消耗明细</button>
+            <button @click="navigatePage('orders')">订单中心</button>
+            <button @click="navigatePage('consume')">消耗明细</button>
           </aside>
           <div class="account-details">
-            <h2>套餐购买<small>选择适合的算力套餐</small></h2>
+            <h2>套餐购买<small>选择适合的积分套餐</small></h2>
         <div class="billing-row"><div class="billing-switch"><button :class="{ active: walletState.billingCycle === 'monthly' }" @click="walletState.billingCycle = 'monthly'">月付</button><button :class="{ active: walletState.billingCycle === 'yearly' }" @click="walletState.billingCycle = 'yearly'">年付 <b>8折</b></button></div><!-- 隐藏：权益对比入口（待恢复）<button class="benefit-link" @click="benefitsOpen = !benefitsOpen">套餐权益对比 {{ benefitsOpen ? '⌄' : '›' }}</button> --></div>
         <div v-if="benefitsOpen" class="benefit-compare"><strong>套餐权益对比</strong><span>每月积分额度、并发任务数、图片与视频生成量、报告查询次数</span></div>
-        <div class="pricing-grid"><article v-for="pkg in walletState.packages" :key="pkg.name" class="pricing-plan" :class="{ featured: pkg.featured, current: pkg.name === walletState.currentPackage }"><div v-if="pkg.featured" class="plan-ribbon">最受欢迎</div><div class="plan-name"><span>♛</span>{{ pkg.name }}<b v-if="walletState.billingCycle === 'yearly'">{{ pkg.name === '基础版' ? '8折' : pkg.name === '高级版' ? '6.1折' : '4.3折' }}</b></div><div class="plan-price">¥ {{ currentPlanPrice(pkg).toLocaleString() }} <small>/ {{ walletState.billingCycle === 'monthly' ? '月' : '年' }}</small><del>¥ {{ (walletState.billingCycle === 'monthly' ? pkg.compareMonthly : pkg.compareMonthly * 12).toLocaleString() }}/{{ walletState.billingCycle === 'monthly' ? '月' : '年' }}</del></div><div class="plan-renew">{{ walletState.billingCycle === 'monthly' ? `次月续费 ¥${pkg.price ?? 0}/月，可随时取消` : `相比月付省下 ¥${pkg.saving}/年` }}</div><div class="plan-credits">{{ walletState.billingCycle === 'monthly' ? '每月' : '每月发放' }} <strong>{{ pkg.coins.toLocaleString() }}</strong> 点算力{{ walletState.billingCycle === 'monthly' ? '，有效期 1 个月，不结转' : `，12 个月有效 · 不结转 · 共 ${(pkg.coins * 12).toLocaleString()} 点算力` }}</div><button class="page-primary plan-action" :disabled="pkg.name === walletState.currentPackage" @click="openPackage(pkg)">{{ pkg.name === walletState.currentPackage ? '当前套餐' : walletState.billingCycle === 'yearly' ? '补差价，立即升级' : '立即开通' }}</button><div class="model-cost"><strong>订阅后模型使用成本低至</strong><div><span>Seedance 2.5</span><b>约 ¥{{ pkg.modelCost[0] }} /秒</b></div><div><span>全能模型 Lite</span><b>约 ¥{{ pkg.modelCost[1] }} /张</b></div><div><span>智能模型 G-2</span><b>约 ¥{{ pkg.modelCost[2] }} /张</b></div></div><ul class="plan-limits"><li v-for="limit in pkg.features" :key="limit">{{ limit }}</li></ul></article></div><p class="pricing-note">套餐价格与权益请以账户结算信息为准。</p>
+        <div class="pricing-grid"><article v-for="pkg in walletState.packages" :key="pkg.name" class="pricing-plan" :class="{ featured: pkg.featured, current: authState.logged && pkg.name === walletState.currentPackage }"><div v-if="pkg.featured" class="plan-ribbon">最受欢迎</div><div class="plan-name"><span>♛</span>{{ pkg.name }}<b v-if="walletState.billingCycle === 'yearly'">{{ pkg.name === '基础版' ? '8折' : pkg.name === '高级版' ? '6.1折' : '4.3折' }}</b></div><div class="plan-price">¥ {{ currentPlanPrice(pkg).toLocaleString() }} <small>/ {{ walletState.billingCycle === 'monthly' ? '月' : '年' }}</small><del>¥ {{ (walletState.billingCycle === 'monthly' ? pkg.compareMonthly : pkg.compareMonthly * 12).toLocaleString() }}/{{ walletState.billingCycle === 'monthly' ? '月' : '年' }}</del></div><div class="plan-renew">{{ walletState.billingCycle === 'monthly' ? `次月续费 ¥${pkg.price ?? 0}/月，可随时取消` : `相比月付省下 ¥${pkg.saving}/年` }}</div><div class="plan-credits">{{ walletState.billingCycle === 'monthly' ? '每月' : '每月发放' }} <strong>{{ pkg.coins.toLocaleString() }}</strong> 积分{{ walletState.billingCycle === 'monthly' ? '，有效期 1 个月，不结转' : `，12 个月有效 · 不结转 · 共 ${(pkg.coins * 12).toLocaleString()} 积分` }}</div><button class="page-primary plan-action" :disabled="authState.logged && pkg.name === walletState.currentPackage" @click="openPackage(pkg)">{{ authState.logged && pkg.name === walletState.currentPackage ? '当前套餐' : !authState.logged ? '登录后购买' : walletState.billingCycle === 'yearly' ? '补差价，立即升级' : '立即开通' }}</button><ul class="plan-limits"><li v-for="limit in pkg.features" :key="limit">{{ limit }}</li></ul></article></div><p class="pricing-note">套餐价格与权益请以账户结算信息为准。</p>
           </div>
         </section>
       </main>
       <!-- 个人中心区块：个人信息 / 套餐购买 / 订单中心 / 消耗明细（套餐购买页复用同一左侧子导航，当前项高亮） -->
       <main v-else class="account-page">
         <header class="page-heading"><div><h1>个人中心</h1><p>个人账号</p></div></header>
-        <section class="current-plan"><div><span class="plan-crown">♛</span><strong>{{ walletState.currentPackage }}（{{ walletState.billingCycle === 'monthly' ? '月付' : '年付' }}）</strong><small>套餐到期时间：{{ walletState.expiresAt }}</small></div><!-- 隐藏：升级套餐入口（待恢复）<button class="page-primary" @click="modals.page = 'pricing'">升级套餐</button> --><button class="page-secondary" @click="modals.wallet = true">购买积分包</button><div class="balance-meter"><div><span>剩余积分</span><strong>{{ appState.totalCoins.toLocaleString() }}</strong></div><div class="balance-track"><i :style="{ width: Math.max(4, (appState.totalCoins / (appState.totalCoins + walletState.usedCoins)) * 100) + '%' }"></i></div><small>{{ walletState.usedCoins.toLocaleString() }}（已使用）</small></div></section>
+        <section v-if="authState.logged" class="current-plan"><div><span class="plan-crown">♛</span><strong>{{ walletState.currentPackage }}（{{ walletState.billingCycle === 'monthly' ? '月付' : '年付' }}）</strong><small>套餐到期时间：{{ walletState.expiresAt }}</small></div><button class="page-secondary" @click="openWallet()">购买积分包</button><div class="balance-meter"><div><span>剩余积分</span><strong>{{ appState.totalCoins.toLocaleString() }}</strong></div><div class="balance-track"><i :style="{ width: Math.max(4, (appState.totalCoins / (appState.totalCoins + walletState.usedCoins)) * 100) + '%' }"></i></div><small>{{ walletState.usedCoins.toLocaleString() }}（已使用）</small></div></section>
         <section class="account-content">
           <aside class="account-menu">
             <div class="account-menu-caption">个人中心</div>
-            <button :class="{ active: modals.page === 'account' }" @click="modals.page = 'account'">个人信息</button>
+            <button :class="{ active: modals.page === 'account' }" @click="navigatePage('account')">个人信息</button>
             <div class="account-menu-caption">套餐管理</div>
             <button @click="modals.page = 'pricing'">套餐购买</button>
-            <button :class="{ active: modals.page === 'orders' }" @click="modals.page = 'orders'">订单中心</button>
-            <button :class="{ active: modals.page === 'consume' }" @click="modals.page = 'consume'">消耗明细</button>
+            <button :class="{ active: modals.page === 'orders' }" @click="navigatePage('orders')">订单中心</button>
+            <button :class="{ active: modals.page === 'consume' }" @click="navigatePage('consume')">消耗明细</button>
           </aside>
           <div class="account-details">
             <template v-if="modals.page === 'account'">
@@ -253,7 +259,7 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
                   <div class="ps-caption">账户资产</div>
                   <div class="ps-row"><span>当前套餐</span><strong>{{ walletState.currentPackage }}</strong><button class="ps-link" type="button" @click="modals.page = 'pricing'">升级套餐</button></div>
                   <div class="ps-row"><span>套餐到期</span><strong>{{ walletState.expiresAt }}</strong></div>
-                  <div class="ps-row"><span>剩余积分</span><strong class="ps-coins">{{ appState.totalCoins.toLocaleString() }}</strong><button class="ps-link" type="button" @click="modals.page = 'consume'">查看明细</button></div>
+                  <div class="ps-row"><span>剩余积分</span><strong class="ps-coins">{{ appState.totalCoins.toLocaleString() }}</strong><button class="ps-link" type="button" @click="navigatePage('consume')">查看明细</button></div>
                   <div class="ps-row"><span>累计消耗</span><strong>{{ walletState.usedCoins.toLocaleString() }}</strong></div>
                 </section>
               </div>
@@ -393,5 +399,8 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
     <div class="account-loading" :class="{ show: accountState.accountSwitching }"></div>
 
     <Modals />
+
+    <!-- 登录弹窗（r60：modal 叠加在工作台上；未登录首访自动弹，游客操作拦截时带原因再弹） -->
+    <LoginView v-if="authState.loginView" />
   </div>
 </template>

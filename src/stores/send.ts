@@ -22,6 +22,7 @@ import {
   isReportAnswer, buildLastReport
 } from './panel'
 import { modals, openWallet } from './modals'
+import { requireLogin } from './auth'
 import { flashToast } from '../utils/common'
 import {
   parseNestedJson, getWorkflowOutputs, getAnswerEnvelope, loadObsProducts,
@@ -102,11 +103,13 @@ function visibleAnswer(s: string): string {
 const inThink = (s: string) => s.includes('<think>') && s.lastIndexOf('<think>') > s.lastIndexOf('</think>')
 
 /* ==================== 发送 ==================== */
-export async function send(regenerate = false, silent = false, silentUi: any = null) {
+export async function send(regenerate = false, silent = false, silentUi: any = null, promptText?: string) {
   const isSilent = Boolean(silent)
+  /* r59：游客/未登录时拦截发送（silent 后台任务不拦），弹出登录页 */
+  if (!isSilent && requireLogin('发送消息')) return
   if (!isSilent) appState.autoReport = null
   appState.initialPreviewGuard = false
-  const text = chatState.inputText.trim()
+  const text = (promptText ?? chatState.inputText).trim()
   if (!text && chatState.attaches.length === 0) return
 
   // 1688商品链接/ID自动识别
@@ -444,7 +447,61 @@ export async function send(regenerate = false, silent = false, silentUi: any = n
       writeCachedMessages(persistView.convId || convKey, persistView.messages)
     }
   }
+  // 模拟分析任务卡：后端不可达/未登录时降级展示，保证访客也能看到完整对话流程
+  const buildSimCard = (q: string) => {
+    const kw = (q || '').replace(/[，。！？,.!?帮我看分析一下这个出个报告：：、\s]+/g, '').slice(0, 12) || '选品分析'
+    return {
+      title: kw + ' · 智能分析',
+      steps: [
+        { label: '理解分析需求', detail: kw },
+        { label: '检索平台数据', detail: '1688 · Ozon · 亚马逊' },
+        { label: '竞品对比分析', detail: 'Top 100' },
+        { label: '测算利润模型', detail: '含头程物流' },
+        { label: '生成分析报告', detail: '' }
+      ],
+      thinking: [
+        '正在解析需求「' + kw + '」，拆解为数据检索、竞品对比与利润测算三个子任务',
+        '聚合 1688 货源数据与跨境平台竞品表现，按销量、价格带、评分维度对齐',
+        '按海运头程 8 元/kg、平台佣金 15%、退货率 4% 估算利润区间，输出可执行建议'
+      ],
+      stepMs: [1200, 1500, 1400, 1300, 1000],
+      resultHtml: [
+        '<div class="ttc-r-sec"><h4>核心结论</h4><p>围绕「<b>' + kw + '</b>」完成模拟分析。当前为<b>演示数据</b>（未连接后端服务），接入真实服务后将展示实时检索、比价与利润测算结果。</p></div>',
+        '<div class="ttc-r-metrics">',
+        '<div class="tr-metric"><div class="tr-metric-val">Top 100</div><div class="tr-metric-lab">竞品样本</div></div>',
+        '<div class="tr-metric"><div class="tr-metric-val">35.8%</div><div class="tr-metric-lab">平均毛利率</div></div>',
+        '<div class="tr-metric"><div class="tr-metric-val">2,600+</div><div class="tr-metric-lab">月销预估</div></div>',
+        '</div>',
+        '<div class="ttc-r-sec"><h4>分析维度</h4><table class="ttc-r-table"><thead><tr><th>维度</th><th>数据来源</th><th>结论</th></tr></thead><tbody>',
+        '<tr><td>货源价格</td><td>1688</td><td class="ok">有价格优势</td></tr>',
+        '<tr><td>市场需求</td><td>跨境平台</td><td class="mid">中等偏上</td></tr>',
+        '<tr><td>竞争强度</td><td>竞品榜单</td><td class="no">头部集中</td></tr>',
+        '</tbody></table></div>',
+        '<div class="ttc-r-sec"><h4>行动建议</h4><ul>',
+        '<li>优先对比 1688 同款货源，筛选实力工厂与 30 天销量稳定的供应链接</li>',
+        '<li>按竞品差评高频点做差异化卖点，主图突出核心优势</li>',
+        '<li>首单小批量试销（200-500 件），验证转化后再批量补货</li>',
+        '</ul></div>'
+      ].join('')
+    }
+  }
   const showError = (msg: string) => {
+    // 后端不可达/未登录（线上静态部署无有效 token）→ 降级为模拟分析流程
+    const raw = String(msg || '')
+    const offline = /鉴权失败|未登录|Access-Token|Failed to fetch|NetworkError|Load failed|ERR_|网络|超时|timeout/i.test(raw)
+    const hasOut = String(ai.content || '').trim().length > 0 || !!ai.taskCard
+    if (offline && !hasOut && !ai.reportTask) {
+      runEnded = true
+      ai.phase = 'done'
+      ai.statusText = '· 已完成（演示）'
+      ai.content = '已完成「' + (text.slice(0, 30) || '选品分析') + '」的模拟分析，当前为演示数据（未连接后端服务）。'
+      ai.taskCard = buildSimCard(text)
+      removeLiveStatus()
+      discardAnalyze()
+      const pv = chatState.views[convKey]
+      if (pv && pv.messages.length) writeCachedMessages(pv.convId || convKey, pv.messages)
+      return
+    }
     runEnded = true
     ai.phase = 'error'
     ai.statusText = '· 失败'
