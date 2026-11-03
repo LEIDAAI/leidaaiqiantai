@@ -2,8 +2,7 @@
 /* 专家/技能发现页（dir-page）：灵感广场 / 我的 / 创建 */
 import { ref, computed } from 'vue'
 import { modals, navigatePage } from '../stores/modals'
-import { chatState, newConversation } from '../stores/chat'
-import { send } from '../stores/send'
+import { chatState } from '../stores/chat'
 import { expertState, expertDemo, skillDemo, type ExpertItem, type SkillItem } from '../stores/expert'
 import { skillVisual, platformLogo } from '../stores/skillVisual'
 
@@ -102,11 +101,11 @@ function useExpert(e: ExpertItem) {
   chatState.inputText = e.prompts?.[0] || e.desc
   navigatePage('chat')
 }
+/* r72b：点击样例改为填入对话框，不自动发起查询 */
 function askExpertPrompt(prompt: string) {
   caseItem.value = null
+  chatState.inputText = prompt
   navigatePage('chat')
-  newConversation()
-  void send(false, false, null, prompt)
 }
 function useSkill(s: SkillItem) {
   chatState.inputText = s.instructions || s.desc
