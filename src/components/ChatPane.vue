@@ -172,9 +172,6 @@ function onSendClick() {
             </div>
           </div>
           <div class="home-sec">
-            <div class="home-side">
-              <button v-for="c in homeScenarios" :key="c" class="home-chip" :class="{ on: homeChip === c }" @click="homeChip = c">{{ c }}</button>
-            </div>
             <div class="home-main">
             <div class="home-pager">
               <button v-if="homePageCount > 1" class="hp-arrow prev" :disabled="homePage === 0" aria-label="上一页" @click="prevHomePage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
