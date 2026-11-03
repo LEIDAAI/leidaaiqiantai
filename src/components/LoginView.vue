@@ -12,6 +12,10 @@ type View = 'form' | 'qr' | 'bind'
 const view = ref<View>('qr')
 const tab = ref<'sms' | 'pwd'>('sms')
 
+/* public 资源（base 为 ./ 相对路径） */
+const pub = import.meta.env.BASE_URL
+const qrSrc = pub + 'wx-qrcode.png'
+
 const phone = ref(''), code = ref(''), pwd = ref(''), registerPwd = ref('')
 const isNewPhone = computed(() => /^1\d{10}$/.test(phone.value) && !registeredPhones().includes(phone.value))
 const bindPhone = ref(''), bindCode = ref('')
@@ -89,19 +93,6 @@ function onResetDemo() {
   flashToast('已重置扫码绑定：下次扫码将重新走手机号关联注册')
 }
 
-/* ---------- 假二维码（21×21 种子网格 + 三角定位框） ---------- */
-const qrCells = computed<boolean[]>(() => {
-  const arr: boolean[] = []
-  let s = 9527
-  const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 }
-  for (let i = 0; i < 21 * 21; i++) {
-    const r = Math.floor(i / 21), c = i % 21
-    const corner = (r < 7 && c < 7) || (r < 7 && c > 13) || (r > 13 && c < 7)
-    arr.push(corner ? false : rnd() > 0.52)
-  }
-  return arr
-})
-
 onMounted(startScan)
 onBeforeUnmount(() => { if (cdTimer) clearInterval(cdTimer); stopScan() })
 </script>
@@ -127,24 +118,27 @@ onBeforeUnmount(() => { if (cdTimer) clearInterval(cdTimer); stopScan() })
       <div class="lg-card">
         <div v-if="authState.intercept" class="lg-intercept">{{ authState.intercept }}前，请先登录雷达AI 账号</div>
 
-        <!-- 卡内顶行：视图切换（左） + 关闭（右） -->
+        <!-- 卡内顶行：登录方式切换（左） + 关闭（右） -->
         <div class="lg-topbar">
-          <button v-if="view === 'form'" class="lg-corner" title="微信扫码登录" @click="switchView('qr')">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <rect x="1.5" y="1.5" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.4"/>
-              <rect x="10.5" y="1.5" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.4"/>
-              <rect x="1.5" y="10.5" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.4"/>
-              <path d="M10.5 10.5h2.6v2.6h-2.6zM14 14h2.5v2.5H14z" fill="currentColor"/>
-            </svg>
-          </button>
-          <button v-else-if="view === 'qr'" class="lg-corner" title="手机号登录" @click="switchView('form')">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <rect x="2" y="3" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/>
-              <path d="M5 12.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-              <path d="M5 6h.01M7.5 6h.01M10 6h.01M12.5 6h.01M5 8.2h.01M7.5 8.2h.01M10 8.2h.01M12.5 8.2h.01M6.2 10.4h5.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-            </svg>
-          </button>
-          <span v-else class="lg-corner-ph"></span>
+          <div class="lg-switch" :class="{ ph: view === 'bind' }">
+            <button :disabled="view === 'bind'" :class="{ on: view === 'qr' }" @click="switchView('qr')">
+              <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
+                <rect x="1.5" y="1.5" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.4"/>
+                <rect x="10.5" y="1.5" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.4"/>
+                <rect x="1.5" y="10.5" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M10.5 10.5h2.6v2.6h-2.6zM14 14h2.5v2.5H14z" fill="currentColor"/>
+              </svg>
+              微信扫码
+            </button>
+            <button :disabled="view === 'bind'" :class="{ on: view === 'form' }" @click="switchView('form')">
+              <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
+                <rect x="2" y="3" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M5 12.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <path d="M5 6h.01M7.5 6h.01M10 6h.01M12.5 6h.01M5 8.2h.01M7.5 8.2h.01M10 8.2h.01M12.5 8.2h.01M6.2 10.4h5.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+              手机号登录
+            </button>
+          </div>
           <button class="lg-close" aria-label="关闭登录" title="关闭（可先以游客模式浏览）" @click="closeLogin">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           </button>
@@ -186,7 +180,7 @@ onBeforeUnmount(() => { if (cdTimer) clearInterval(cdTimer); stopScan() })
 
           <p class="lg-err" v-if="err">{{ err }}</p>
           <button class="lg-submit" :disabled="busy" @click="submit">{{ busy ? '处理中…' : (tab === 'sms' && isNewPhone ? '注册并登录' : '登录') }}</button>
-          <p class="lg-agree">注册/登录即同意 <a>《用户协议》</a> 与 <a>《隐私政策》</a></p>
+          <p class="lg-agree">注册/登录即同意 <a :href="pub + 'user-agreement.html'" target="_blank">《用户协议》</a> 与 <a :href="pub + 'privacy-policy.html'" target="_blank">《隐私政策》</a></p>
         </template>
 
         <!-- ===== 微信扫码 ===== -->
@@ -194,22 +188,19 @@ onBeforeUnmount(() => { if (cdTimer) clearInterval(cdTimer); stopScan() })
           <h2 class="lg-title">微信扫码登录/注册</h2>
           <div class="lg-qr-wrap">
             <div class="lg-qr" :class="{ scanned: qrStatus === 1 }">
-              <div class="lg-qr-grid">
-                <i v-for="(on, i) in qrCells" :key="i" :class="{ on }"></i>
-                <b class="lg-qr-finder f1"></b><b class="lg-qr-finder f2"></b><b class="lg-qr-finder f3"></b>
-                <span class="lg-qr-center">
-                  <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" fill="#00C84B"/><path d="M14 8v6l3.5 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
-                </span>
-              </div>
+              <img class="lg-qr-img" :src="qrSrc" alt="微信登录二维码">
+              <span class="lg-qr-center">
+                <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" fill="#00C84B"/><path d="M14 8v6l3.5 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+              </span>
               <div v-if="qrStatus === 1" class="lg-qr-mask">
                 <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="16" fill="#00C84B"/><path d="M10 17.5l4.5 4.5L24 12.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <span>已扫码，请在手机上确认</span>
               </div>
             </div>
           </div>
-          <p class="lg-qr-tip">{{ qrStatus === 0 ? '请使用微信扫一扫（模拟环境约 3 秒后自动扫码）' : '确认中，请稍候…' }}</p>
+          <p class="lg-qr-tip">{{ qrStatus === 0 ? '请使用微信扫一扫，登录 / 注册雷达AI（演示环境约 3 秒后自动确认）' : '确认中，请稍候…' }}</p>
           <a class="lg-link lg-refresh" @click="startScan">刷新二维码</a>
-          <p class="lg-agree">扫码登录即同意 <a>《用户协议》</a> 与 <a>《隐私政策》</a></p>
+          <p class="lg-agree">扫码登录即同意 <a :href="pub + 'user-agreement.html'" target="_blank">《用户协议》</a> 与 <a :href="pub + 'privacy-policy.html'" target="_blank">《隐私政策》</a></p>
         </template>
 
         <!-- ===== 微信注册 · 绑定手机号（手机号必填） ===== -->
