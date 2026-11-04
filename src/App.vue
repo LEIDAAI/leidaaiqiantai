@@ -7,6 +7,7 @@ import RightPanel from './components/RightPanel.vue'
 import Modals from './components/Modals.vue'
 import ExpertPanel from './components/ExpertPanel.vue'
 import TopNavbar from './components/TopNavbar.vue'
+import PromoBanner from './components/PromoBanner.vue'
 import DateRangePicker from './components/DateRangePicker.vue'
 import { modals, openBuyConfirm, openWallet, navigatePage } from './stores/modals'
 import { walletState, filteredBuy, filteredConsume, type BuyRecord } from './stores/wallet'
@@ -191,6 +192,8 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
 
 <template>
   <div class="app-container">
+    <!-- r76：活动通栏 Banner（首次注册送100积分），关闭后会话内不再出现 -->
+    <PromoBanner />
     <!-- 全局固定顶部导航栏（所有页面常显吸顶） -->
     <TopNavbar />
     <div class="work" ref="workEl">
