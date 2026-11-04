@@ -432,7 +432,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <div class="cb-right">
-        <div class="cb-pop-wrap assist">
+        <div v-if="false" class="cb-pop-wrap assist">
           <button class="cb-coin-info cb-assist-btn" :class="{ open: assistOpen }" type="button" title="选择助手" @click="assistOpen = !assistOpen">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4m-4 0h8"/><path d="M9 14h.01M15 14h.01"/></svg>
             {{ assistant }}
