@@ -344,6 +344,7 @@ onBeforeUnmount(() => {
       ref="inputEl"
       v-model="chatState.inputText"
       placeholder="输入您的选品需求...（Enter 发送，Shift+Enter 换行）"
+      aria-label="选品需求输入框"
       @keydown="onKeydown"
       @contextmenu="onContext"
     ></textarea>
@@ -367,7 +368,7 @@ onBeforeUnmount(() => {
               <div class="cb-pop-head">选择电商专家<small>选中后随本条消息一起发送</small></div>
               <div class="cb-pop-search">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-                <input ref="expertSearchEl" v-model="popSearch" type="text" placeholder="搜索专家" />
+                <input ref="expertSearchEl" v-model="popSearch" type="text" placeholder="搜索专家" aria-label="搜索专家" />
               </div>
               <div class="cb-pop-filters">
                 <div class="seg-track">
@@ -404,7 +405,7 @@ onBeforeUnmount(() => {
               <div class="cb-pop-head">选择技能<small>选中后随本条消息一起发送</small></div>
               <div class="cb-pop-search">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-                <input ref="skillSearchEl" v-model="popSearch" type="text" placeholder="搜索技能" />
+                <input ref="skillSearchEl" v-model="popSearch" type="text" placeholder="搜索技能" aria-label="搜索技能" />
               </div>
               <div class="cb-pop-filters">
                 <div class="seg-track">
