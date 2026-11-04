@@ -75,11 +75,11 @@ function Remove-File($Branch, $RemotePath, $Msg) {
   Write-Host "DEL $RemotePath ok"
 }
 
-$Msg1 = 'fix: skills plaza tab renamed to 电商技能 (r72c)'
-$Msg2 = 'deploy: skills plaza tab rename'
+$Msg1 = 'ui: 专家/技能广场前端分页与空状态 (r73)'
+$Msg2 = 'deploy: plaza pagination (r73)'
 
 # ---- 1. codex/radar-pages sources ----
-foreach ($f in @('src/components/ExpertPanel.vue')) {
+foreach ($f in @('src/components/ExpertPanel.vue', 'src/styles/global.css')) {
   Set-File 'codex/radar-pages' $f (Join-Path (Get-Location) $f) $Msg1
 }
 # ---- 2. gh-pages dist ----
