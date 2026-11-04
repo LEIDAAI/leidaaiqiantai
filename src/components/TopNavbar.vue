@@ -2,6 +2,7 @@
 /* 全局顶部导航栏 */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { navigatePage, openPricing, openAccount } from '../stores/modals'
+import { chatState } from '../stores/chat'
 import { currentAccount } from '../stores/account'
 import { authState, logout, openLogin } from '../stores/auth'
 import { appState } from '../stores/state'
@@ -80,6 +81,10 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 <template>
   <header class="global-navbar">
     <div class="navbar-left">
+      <!-- r77：移动端会话列表入口（窄视口显示，配合侧栏抽屉与遮罩） -->
+      <button class="mb-menu-btn" aria-label="打开会话列表" @click="chatState.mobileSidebar = true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
       <div class="navbar-logo">
         <div class="logo-icon">
           <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -97,7 +102,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
     <div class="navbar-right">
       <!-- r64：客服 · 交流群 hover 弹层（双栏二维码） -->
       <div ref="csRoot" class="cs-wrap" @mouseenter="openCs" @mouseleave="scheduleCsClose">
-        <button class="cs-pill" :class="{ 'cs-on': csOpen }" @click="openCs">
+        <button class="cs-pill" :class="{ 'cs-on': csOpen }" aria-label="客服与交流群" @click="openCs">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             <rect x="2.5" y="11" width="4" height="7" rx="1.8" stroke="currentColor" stroke-width="1.8"/>

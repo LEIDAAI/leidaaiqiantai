@@ -51,8 +51,25 @@ function ApiRetry($Method, $Path, $Body) {
   throw "API $Method $Path failed after 5 attempts"
 }
 
+# 文本文件读取时把 CRLF 归一为 LF，与 git blob 保持一致（二进制文件原样读取）
+function Get-UploadBytes($Path) {
+  $bytes = [IO.File]::ReadAllBytes($Path)
+  $ext = [IO.Path]::GetExtension($Path).ToLowerInvariant()
+  $textExts = @('.vue', '.ts', '.js', '.css', '.html', '.json', '.md', '.svg', '.txt')
+  if ($textExts -contains $ext) {
+    $out = New-Object System.Collections.Generic.List[byte]
+    for ($i = 0; $i -lt $bytes.Length; $i++) {
+      if ($bytes[$i] -eq 13 -and ($i + 1) -lt $bytes.Length -and $bytes[$i + 1] -eq 10) { continue }
+      $out.Add($bytes[$i])
+    }
+    return ,$out.ToArray()
+  }
+  return ,$bytes
+}
+
 function Set-File($Branch, $RemotePath, $LocalPath, $Msg) {
-  $content = [Convert]::ToBase64String([IO.File]::ReadAllBytes($LocalPath))
+  $bytes = Get-UploadBytes $LocalPath
+  $content = [Convert]::ToBase64String($bytes)
   $existing = ApiRetry GET "/contents/${RemotePath}?ref=$Branch" $null
   $sha = $null
   if ($existing -and $existing.content) {
@@ -75,11 +92,11 @@ function Remove-File($Branch, $RemotePath, $Msg) {
   Write-Host "DEL $RemotePath ok"
 }
 
-$Msg1 = 'ui: 专家/技能广场前端分页与空状态 (r73)'
-$Msg2 = 'deploy: plaza pagination (r73)'
+$Msg1 = 'ui: 移动端侧栏抽屉+专家卡2×2+可访问性+代码分割 (r78)'
+$Msg2 = 'deploy: mobile drawer + code split (r78)'
 
 # ---- 1. codex/radar-pages sources ----
-foreach ($f in @('src/components/ExpertPanel.vue', 'src/styles/global.css')) {
+foreach ($f in @('src/App.vue', 'src/components/Sidebar.vue', 'src/components/ChatPane.vue', 'src/components/Composer.vue', 'src/components/TopNavbar.vue', 'src/components/PromoBanner.vue', 'src/components/ExpertPanel.vue', 'src/stores/account.ts', 'src/styles/global.css')) {
   Set-File 'codex/radar-pages' $f (Join-Path (Get-Location) $f) $Msg1
 }
 # ---- 2. gh-pages dist ----

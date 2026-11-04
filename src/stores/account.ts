@@ -120,7 +120,7 @@ export async function bootstrapDld() {
       appState.dldMember = { ...appState.dldMember, ...d }
     }
   } catch (e) {
-    console.warn('[DLD] getMemberDetail 失败 → 保留 mock：', (e as Error).message)
+    console.debug('[DLD] getMemberDetail 失败 → 保留 mock：', (e as Error).message)
   }
 
   // 2. 积分余额
@@ -133,7 +133,7 @@ export async function bootstrapDld() {
       appState.totalCoins = remain
     }
   } catch (e) {
-    console.warn('[DLD] getMemberLimit 失败 → 保留 mock：', (e as Error).message)
+    console.debug('[DLD] getMemberLimit 失败 → 保留 mock：', (e as Error).message)
   }
 
   // 3. 套餐信息
@@ -142,7 +142,7 @@ export async function bootstrapDld() {
     const d = res.result || {}
     appState.dldMember = { ...(appState.dldMember || {}), ...d }
   } catch (e) {
-    console.warn('[DLD] getMemberVerObj 失败 → 保留演示套餐：', (e as Error).message)
+    console.debug('[DLD] getMemberVerObj 失败 → 保留演示套餐：', (e as Error).message)
   }
 
   // 4. 智能体列表
@@ -153,7 +153,7 @@ export async function bootstrapDld() {
       appState.dldApps = list
     }
   } catch (e) {
-    console.warn('[DLD] chatApps 失败：', (e as Error).message)
+    console.debug('[DLD] chatApps 失败：', (e as Error).message)
   }
 
   // 5. 会话列表：沿用已验证接口，并兼容 cursor 分页与不同响应包裹层。
@@ -207,7 +207,7 @@ export async function bootstrapDld() {
       }
     }
   } catch (e) {
-    console.warn('[DLD] conversations 失败：', (e as Error).message)
+    console.debug('[DLD] conversations 失败：', (e as Error).message)
     // 接口失败：从本地持久化恢复会话列表兜底，历史对话不再丢失
     const cached = readCachedSessions(accountState.currentAccountId)
     if (cached.length) {
@@ -247,7 +247,7 @@ export async function bootstrapDld() {
       }
     }
   } catch (e) {
-    console.warn('[DLD] slaveList 失败 → 保留 mock 子账号：', (e as Error).message)
+    console.debug('[DLD] slaveList 失败 → 保留 mock 子账号：', (e as Error).message)
   }
 }
 

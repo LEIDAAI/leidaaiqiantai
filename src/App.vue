@@ -1,14 +1,15 @@
 <script setup lang="ts">
 /* 三栏主布局：左会话 / 中对话 / 右预览 + 弹窗挂载 */
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import ChatPane from './components/ChatPane.vue'
 import RightPanel from './components/RightPanel.vue'
-import Modals from './components/Modals.vue'
-import ExpertPanel from './components/ExpertPanel.vue'
+/* r77 代码分割：非首屏重组件（弹窗/专家广场/日期选择/登录页）异步按需加载，减小主 chunk */
+const Modals = defineAsyncComponent(() => import('./components/Modals.vue'))
+const ExpertPanel = defineAsyncComponent(() => import('./components/ExpertPanel.vue'))
 import TopNavbar from './components/TopNavbar.vue'
 import PromoBanner from './components/PromoBanner.vue'
-import DateRangePicker from './components/DateRangePicker.vue'
+const DateRangePicker = defineAsyncComponent(() => import('./components/DateRangePicker.vue'))
 import { modals, openBuyConfirm, openWallet, navigatePage } from './stores/modals'
 import { walletState, filteredBuy, filteredConsume, type BuyRecord } from './stores/wallet'
 import { appState, pad } from './stores/state'
@@ -17,7 +18,7 @@ import { flashToast } from './utils/common'
 import { chatState, activeView } from './stores/chat'
 import { panel, setCollapsed } from './stores/panel'
 import { accountState } from './stores/account'
-import LoginView from './components/LoginView.vue'
+const LoginView = defineAsyncComponent(() => import('./components/LoginView.vue'))
 import { authState } from './stores/auth'
 const benefitsOpen = ref(false)
 
