@@ -98,6 +98,14 @@ const plazaSkills = computed(() => {
 /* r73：广场列表前端分页（每页 8 个，4 列 × 2 行），筛选/切页时回到第 1 页 */
 const PAGE_SIZE = 8
 const page = ref(1)
+const jumpPage = ref<number | string>(1)
+function goToPage() {
+  const target = Number(jumpPage.value)
+  if (!Number.isFinite(target) || jumpPage.value === '') { jumpPage.value = page.value; return }
+  page.value = Math.min(totalPages.value, Math.max(1, Math.trunc(target)))
+  jumpPage.value = page.value
+}
+watch(page, value => { jumpPage.value = value })
 const pagedExperts = computed(() => plazaExperts.value.slice((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE))
 const pagedSkills = computed(() => plazaSkills.value.slice((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE))
 const plazaList = computed(() => isSkills.value ? plazaSkills.value : plazaExperts.value)
@@ -246,6 +254,12 @@ function saveCreate() {
           <button v-for="(p, pi) in pagerItems" :key="pi" class="dp-btn" :class="{ on: p === page, dots: p === -1 }" :disabled="p === -1" @click="page = p">{{ p === -1 ? '…' : p }}</button>
           <button class="dp-btn" :disabled="page === totalPages" @click="page++">›</button>
           <span class="dp-total">共 {{ plazaList.length }} 个</span>
+          <form class="dp-jump" @submit.prevent="goToPage">
+            <label for="plaza-jump">跳至</label>
+            <input id="plaza-jump" v-model="jumpPage" type="number" min="1" :max="totalPages" step="1" aria-label="跳转页码" />
+            <span>页</span>
+            <button class="dp-btn" type="submit">跳转</button>
+          </form>
         </div>
       </div>
 
