@@ -130,7 +130,7 @@ function onToggleLeft() {
     <!-- 搜索框 -->
     <div class="left-search">
       <div class="left-search-wrap" :class="{ 'has-val': chatState.searchQuery }">
-        <input type="text" v-model="chatState.searchQuery" placeholder="搜索对话标题 / 标签" autocomplete="off" />
+        <input type="text" v-model="chatState.searchQuery" placeholder="搜索对话标题 / 标签" autocomplete="off" aria-label="搜索对话标题或标签" />
         <span class="clear-x" title="清空" @click="chatState.searchQuery = ''">×</span>
       </div>
     </div>

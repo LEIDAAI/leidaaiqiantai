@@ -4226,8 +4226,9 @@
 .home-side { display: none; }
 .home-side .home-chip { min-width: 96px; text-align: center; white-space: nowrap; }
 .home-main { flex: 1; min-width: 0; }
-.home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px 16px; }
-/* r70：卡片自适应列数——专家 ≥320px/列，技能 ≥256px/列（宽屏自动多列） */
+/* r77：专家卡固定 2×2 布局——每页 4 卡均衡满排，修复 auto-fill 三列时第 4 卡换行失衡 */
+.home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+/* r70：卡片自适应列数——技能卡 ≥256px/列（宽屏自动多列） */
 .home-grid.cols-3 { grid-template-columns: repeat(auto-fill, minmax(256px, 1fr)); gap: 12px 12px; }
 .home-pager { position: relative; padding: 0 46px; }
 .hp-arrow { position: absolute; z-index: 6; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid #e3e3e3; border-radius: 50%; background: #fff; color: #8a8a90; box-shadow: 0 2px 8px rgba(0,0,0,.06); cursor: pointer; transition: color .15s ease, border-color .15s ease, opacity .15s ease, transform .15s ease; }
@@ -4566,6 +4567,16 @@
 
   /* —— 对话顶栏：汉堡按钮 + 压缩布局 —— */
   .mb-menu-btn { display: flex; }
+  /* r78：窄视口顶栏防挤压——logo 副标题收起、客服胶囊收成纯图标、右侧胶囊禁换行 */
+  .global-navbar { padding: 0 10px; }
+  .navbar-left { gap: 8px; }
+  .logo-subtitle { display: none; }
+  .navbar-right { gap: 8px; }
+  .cs-pill { padding: 0 9px; }
+  .cs-pill > span { display: none; }
+  .np-pill { white-space: nowrap; padding: 0 10px; }
+  .nav-avatar { white-space: nowrap; padding: 0 10px 0 4px; }
+  .avatar-phone { display: none; }
   .chat-head { padding: 0 10px; gap: 8px; }
   .chat-head .title { font-size: 13.5px; }
 

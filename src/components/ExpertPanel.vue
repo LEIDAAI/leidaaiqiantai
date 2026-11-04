@@ -207,7 +207,7 @@ function saveCreate() {
             <div v-for="e in pagedExperts" :key="e.id" class="dir-card">
               <span v-if="isNewItem(e, plazaExperts)" class="dir-new">NEW</span>
               <div class="dir-body">
-                <span class="dc-ava"><img :src="platformLogo(e.platform)" alt=""></span>
+                <span class="dc-ava"><img :src="platformLogo(e.platform)" :alt="e.platform"></span>
                 <div>
                   <div class="dir-name">{{ e.name }}</div>
                   <div class="dir-desc">{{ e.desc }}</div>
@@ -269,7 +269,7 @@ function saveCreate() {
           <template v-if="!isSkills">
             <div v-for="e in mineExperts" :key="e.id" class="dir-card">
               <div class="dir-body">
-                <span class="dc-ava"><img :src="platformLogo(e.platform)" alt=""></span>
+                <span class="dc-ava"><img :src="platformLogo(e.platform)" :alt="e.platform"></span>
                 <div>
                   <div class="dir-name">{{ e.name }}</div>
                   <div class="dir-desc">{{ e.desc }}</div>
@@ -422,7 +422,7 @@ function saveCreate() {
             </div>
             <aside class="case-side">
               <div class="cs-head">
-                <span v-if="caseExpert" class="cs-ava"><img :src="platformLogo(caseExpert.platform)" alt=""></span>
+                <span v-if="caseExpert" class="cs-ava"><img :src="platformLogo(caseExpert.platform)" :alt="caseExpert.platform"></span>
                 <span v-else class="cs-ava skill">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
                 </span>

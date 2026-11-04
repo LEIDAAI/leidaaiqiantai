@@ -229,10 +229,10 @@ function onSendClick() {
       </div>
 
       <div class="home-floats">
-        <button class="hf-btn" data-tip="用户反馈" @click="openFeedback()">
+        <button class="hf-btn" data-tip="用户反馈" aria-label="用户反馈" @click="openFeedback()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </button>
-        <button class="hf-btn" data-tip="消息交互演示" @click="startDemoConversation()">
+        <button class="hf-btn" data-tip="消息交互演示" aria-label="消息交互演示" @click="startDemoConversation()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
         </button>
       </div>
@@ -313,7 +313,7 @@ function onSendClick() {
             </div>
             <aside class="case-side">
               <div class="cs-head">
-                <span v-if="caseExpert" class="cs-ava"><img :src="platformLogo(caseExpert.platform)" alt=""></span>
+                <span v-if="caseExpert" class="cs-ava"><img :src="platformLogo(caseExpert.platform)" :alt="caseExpert.platform"></span>
                 <span v-else class="cs-ava skill">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
                 </span>
