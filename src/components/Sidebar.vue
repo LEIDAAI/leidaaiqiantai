@@ -104,7 +104,8 @@ function onToggleLeft() {
 <template>
   <aside class="col-left" :class="{ collapsed: chatState.leftCollapsed, 'mobile-open': chatState.mobileSidebar }">
     <div class="left-head">
-      <div class="lh-agent">
+      <!-- r75: 助手标题块先隐藏，需要时把 v-if 改回 true 即可恢复 -->
+      <div v-if="false" class="lh-agent">
         <div class="lh-agent-info">
           <b class="lh-agent-name">跨境电商运营助手</b>
           <span class="lh-agent-sub">选品、分析、运营，让跨境生意更简单</span>
