@@ -42,7 +42,8 @@ export const modals = reactive({
   inputMenuX: 0,
   inputMenuY: 0,
   walletBalanceTip: '',
-  walletRunsTip: '预计可完成约 <strong>42</strong> 次标准选品分析'
+  walletRunsTip: '预计可完成约 <strong>42</strong> 次标准选品分析',
+  welcome: false   // 首次注册欢迎弹窗（赠 100 积分）
 })
 
 // 页面切换持久化：navigatePage 与模板直接赋值（modals.page = 'xxx'）两条路径都兜住
@@ -54,11 +55,20 @@ watch(() => authState.logged, logged => {
   modals.buyPendingPkg = null
   modals.upgradeConfirm = false
   modals.upgradePayload = null
+  modals.welcome = false
   if (modals.page === 'account' || modals.page === 'orders' || modals.page === 'consume') modals.page = 'chat'
+})
+
+/* 首次注册欢迎弹窗：注册成功登录态就绪后稍作延迟再弹，避免与登录弹层关闭动画重叠 */
+watch(() => authState.welcomeGift, v => {
+  if (!v) return
+  authState.welcomeGift = false
+  setTimeout(() => { modals.welcome = true }, 400)
 })
 
 export function openSettings() { modals.settings = true }
 export function closeSettings() { modals.settings = false }
+export function closeWelcome() { modals.welcome = false }
 export function openWallet() {
   if (!authState.logged) { openLogin('购买积分包'); return }
   modals.wallet = true
