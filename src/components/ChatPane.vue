@@ -35,20 +35,20 @@ const homeScenarios = computed(() => {
 })
 const homeExperts = computed(() => {
   const list = expertState.experts.filter(e => e.source === 'official' && matchesHomePlatform(e))
-  if (homeChip.value === '推荐') return list.slice(0, 8)
-  return list.filter(e => e.category === homeChip.value || e.tags.includes(homeChip.value)).slice(0, 16)
+  if (homeChip.value === '推荐') return list.slice(0, 12)
+  return list.filter(e => e.category === homeChip.value || e.tags.includes(homeChip.value)).slice(0, 18)
 })
 const homeSkills = computed(() => {
   const list = expertState.skills.filter(s => s.source === 'official' && matchesHomePlatform(s))
-  if (homeChip.value === '推荐') return list.slice(0, 8)
-  return list.filter(s => s.scenario === homeChip.value || s.tags.includes(homeChip.value)).slice(0, 16)
+  if (homeChip.value === '推荐') return list.slice(0, 12)
+  return list.filter(s => s.scenario === homeChip.value || s.tags.includes(homeChip.value)).slice(0, 18)
 })
 function selectHomePlatform(value: string) {
   homePlatform.value = value
   if (!homeScenarios.value.includes(homeChip.value)) homeChip.value = '推荐'
 }
 /* —— 卡片左右翻页 —— */
-const HOME_PAGE_SIZE = 4
+const HOME_PAGE_SIZE = 6
 const homePage = ref(0)
 const homeActiveList = computed(() => homeTab.value === 'expert' ? homeExperts.value : homeSkills.value)
 const homePageCount = computed(() => Math.max(1, Math.ceil(homeActiveList.value.length / HOME_PAGE_SIZE)))
