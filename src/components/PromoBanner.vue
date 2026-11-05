@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/* r76：顶部活动通栏 Banner —— 首次注册雷达AI赠送100积分（参照 LinkFox 促销条样式）
+/* r79c：顶部活动通栏 Banner —— 首次注册雷达AI赠送100积分（浅色轻量方案，与整体 UI 同风格）
    关闭后会话内不再出现（sessionStorage）；活动结束移除 App.vue 中的 <PromoBanner /> 即可下线 */
 import { ref } from 'vue'
 import { openLogin, authState } from '../stores/auth'
