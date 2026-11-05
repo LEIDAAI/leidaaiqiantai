@@ -92,11 +92,11 @@ function Remove-File($Branch, $RemotePath, $Msg) {
   Write-Host "DEL $RemotePath ok"
 }
 
-$Msg1 = 'ui: 移动端侧栏抽屉+专家卡2×2+可访问性+代码分割 (r78)'
-$Msg2 = 'deploy: mobile drawer + code split (r78)'
+$Msg1 = 'feat: 套餐升级补差价两步式确认+升级订单类型+增购阶梯定价+演示数据自洽 (r79)'
+$Msg2 = 'deploy: upgrade pricing/flow (r79)'
 
 # ---- 1. codex/radar-pages sources ----
-foreach ($f in @('src/App.vue', 'src/components/Sidebar.vue', 'src/components/ChatPane.vue', 'src/components/Composer.vue', 'src/components/TopNavbar.vue', 'src/components/PromoBanner.vue', 'src/components/ExpertPanel.vue', 'src/stores/account.ts', 'src/styles/global.css')) {
+foreach ($f in @('src/App.vue', 'src/components/Sidebar.vue', 'src/components/Modals.vue', 'src/components/ChatPane.vue', 'src/components/Composer.vue', 'src/components/TopNavbar.vue', 'src/components/PromoBanner.vue', 'src/components/ExpertPanel.vue', 'src/stores/wallet.ts', 'src/stores/modals.ts', 'src/stores/state.ts', 'src/stores/account.ts', 'src/styles/global.css')) {
   Set-File 'codex/radar-pages' $f (Join-Path (Get-Location) $f) $Msg1
 }
 # ---- 2. gh-pages dist ----
