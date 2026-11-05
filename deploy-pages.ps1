@@ -92,8 +92,8 @@ function Remove-File($Branch, $RemotePath, $Msg) {
   Write-Host "DEL $RemotePath ok"
 }
 
-$Msg1 = 'feat(r84): change slogan text (top navbar & login page)'
-$Msg2 = 'deploy(r84): update slogan'
+$Msg1 = 'feat(r85): redesign promo banner (gradient, gift, gold number, CTA)'
+$Msg2 = 'deploy(r85): promo banner redesign'
 
 # ---- 1. codex/radar-pages sources ----
 foreach ($f in @('src/App.vue', 'src/components/Sidebar.vue', 'src/components/Modals.vue', 'src/components/ChatPane.vue', 'src/components/Composer.vue', 'src/components/TopNavbar.vue', 'src/components/PromoBanner.vue', 'src/components/ExpertPanel.vue', 'src/components/LoginView.vue', 'src/stores/wallet.ts', 'src/stores/modals.ts', 'src/stores/state.ts', 'src/stores/account.ts', 'src/styles/global.css')) {
