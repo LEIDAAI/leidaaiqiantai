@@ -9,7 +9,7 @@ import { parseAgentOpening } from './opening'
 
 export const accountState = reactive({
   accounts: [
-    { id: 'main-001', name: '主账号', role: 'main', roleLabel: '主', avatar: '🏬', phone: '176****6666', shop: '总店', lastActive: '刚刚' }
+    { id: 'main-001', name: '雷达用户', role: 'main', roleLabel: '主', avatar: '🏬', phone: '176****6666', shop: '总店', lastActive: '刚刚' }
   ] as Account[],
   currentAccountId: 'main-001',
   sessionsByAccount: {
@@ -94,7 +94,7 @@ export function saveSubSettings(subMutual: boolean, mainControl: boolean) {
   accountState.mainControl = mainControl
   try { localStorage.setItem('dld_sub_mutual', subMutual ? '1' : '0') } catch (e) {}
   try { localStorage.setItem('dld_main_control', mainControl ? '1' : '0') } catch (e) {}
-  flashToast(subMutual ? '已开启子账号互看' : (mainControl ? '已开启主账号控制' : '已关闭子账号查看权限'))
+  flashToast(subMutual ? '已开启子账号互看' : (mainControl ? '已开启查看权限控制' : '已关闭子账号查看权限'))
 }
 
 export function maskPhone(p: string): string {
@@ -115,7 +115,8 @@ export async function bootstrapDld() {
     const d = res.result || {}
     if (d.loginAccount) {
       const main = accountState.accounts[0]
-      main.name = (d.loginAccount || '主账号')
+      // 展示名不暴露「主账号」概念：后端为空或本身即“主账号”时统一显示中性名
+      main.name = (!d.loginAccount || d.loginAccount === '主账号') ? '雷达用户' : d.loginAccount
       main.phone = d.mobilePhone ? maskPhone(d.mobilePhone) : main.phone
       appState.dldMember = { ...appState.dldMember, ...d }
     }

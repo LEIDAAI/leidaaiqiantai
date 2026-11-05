@@ -331,7 +331,7 @@ onBeforeUnmount(() => {
     <div class="settings-dialog">
       <div class="settings-head">
         <span>🛡</span>
-        <div><div class="sh-title">子账号设置</div><div class="sh-sub">主子账号权限与可见范围</div></div>
+        <div><div class="sh-title">子账号设置</div><div class="sh-sub">子账号权限与可见范围</div></div>
         <button class="settings-close" aria-label="关闭" @click="closeSettings">×</button>
       </div>
       <div class="settings-body">
@@ -350,8 +350,8 @@ onBeforeUnmount(() => {
           </div>
           <div class="settings-row">
             <div class="sr-text">
-              <strong>② 主账号控制</strong>
-              <small>主账号可切换查看任一账号；子账号不能查看其他账号信息</small>
+              <strong>② 查看权限控制</strong>
+              <small>开启后子账号不能查看其他账号信息</small>
             </div>
             <label class="switch">
               <input type="checkbox" v-model="mainControlSw" @change="onMainControlChange">
@@ -364,7 +364,7 @@ onBeforeUnmount(() => {
             <h3>子账号列表</h3>
             <a class="sl-manage" href="https://www.dianleida.net/1688/competeShop/memberCenter/subAccountManagement" target="_blank" rel="noopener" title="前往会员中心管理子账号">管理子账号 ›</a>
           </div>
-          <p>主子账号共享积分额度。当前已添加 <strong>{{ subAccounts.length }}</strong> 个子账号。</p>
+          <p>各账号共享积分额度。当前已添加 <strong>{{ subAccounts.length }}</strong> 个子账号。</p>
           <div>
             <div v-for="s in subAccounts" :key="s.id" class="settings-row" style="border-top:1px dashed var(--border-light)">
               <div class="sr-text">
