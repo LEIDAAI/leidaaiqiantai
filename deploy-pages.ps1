@@ -92,8 +92,8 @@ function Remove-File($Branch, $RemotePath, $Msg) {
   Write-Host "DEL $RemotePath ok"
 }
 
-$Msg1 = 'feat: 套餐升级补差价两步式确认+升级订单类型+增购阶梯定价+演示数据自洽 (r79)'
-$Msg2 = 'deploy: upgrade pricing/flow (r79)'
+$Msg1 = 'fix(r83): raise modal/drawer mask z-index above left sidebar (order drawer 120->1270, settings 400->1270)'
+$Msg2 = 'deploy(r83): modal masks above left sidebar'
 
 # ---- 1. codex/radar-pages sources ----
 foreach ($f in @('src/App.vue', 'src/components/Sidebar.vue', 'src/components/Modals.vue', 'src/components/ChatPane.vue', 'src/components/Composer.vue', 'src/components/TopNavbar.vue', 'src/components/PromoBanner.vue', 'src/components/ExpertPanel.vue', 'src/stores/wallet.ts', 'src/stores/modals.ts', 'src/stores/state.ts', 'src/stores/account.ts', 'src/styles/global.css')) {
