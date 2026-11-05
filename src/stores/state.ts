@@ -71,8 +71,8 @@ export const appState = reactive({
   initialPreviewGuard: true,                 // __initialPreviewGuard
   reportZoom: 1,                             // __reportZoom
   reportSrcdocCache: {} as Record<string, string>,  // __dldReportSrcdocCache
-  // 积分
-  totalCoins: 1000,
+  // 积分（演示：基础版年付额度 5600 − 已用 275 = 剩余 5325）
+  totalCoins: 5325,
   currentModel: 'gpt-5.6' as string
 })
 

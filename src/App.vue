@@ -10,7 +10,7 @@ const ExpertPanel = defineAsyncComponent(() => import('./components/ExpertPanel.
 import TopNavbar from './components/TopNavbar.vue'
 import PromoBanner from './components/PromoBanner.vue'
 const DateRangePicker = defineAsyncComponent(() => import('./components/DateRangePicker.vue'))
-import { modals, openBuyConfirm, openWallet, navigatePage } from './stores/modals'
+import { modals, openBuyConfirm, openUpgradeConfirm, openWallet, navigatePage } from './stores/modals'
 import { walletState, filteredBuy, filteredConsume, type BuyRecord } from './stores/wallet'
 import { appState, pad } from './stores/state'
 import { currentAccount } from './stores/account'
@@ -24,8 +24,53 @@ const benefitsOpen = ref(false)
 
 const workEl = ref<HTMLElement | null>(null)
 const currentPlanPrice = (pkg: typeof walletState.packages[number]) => walletState.billingCycle === 'monthly' ? (pkg.price ?? 0) : pkg.yearlyPrice
+/* ===================== 套餐升级（补差价） ===================== */
+/* 套餐档位：判断升级 / 降级（同档位仅切换付费周期） */
+const PLAN_TIER: Record<string, number> = { '基础版': 0, '高级版': 1, '团队版': 2 }
+const cycleText = (c: 'monthly' | 'yearly') => c === 'monthly' ? '月付' : '年付'
+/* 当前套餐剩余整月数（按 30 天/月折算，不足 1 个月按 0 计） */
+function remainingWholeMonths(): number {
+  const ms = new Date(walletState.expiresAt.replace(/-/g, '/')).getTime() - Date.now()
+  return Math.max(0, Math.floor(ms / (30 * 864e5)))
+}
+/* 套餐实际支付价：按指定周期取月付/年付实价 */
+function planPriceOf(name: string, cycle: 'monthly' | 'yearly'): number {
+  const p = walletState.packages.find(x => x.name === name)
+  if (!p) return 0
+  return cycle === 'monthly' ? (p.price ?? 0) : p.yearlyPrice
+}
+/* 补差价：同周期 = 目标价 − 当前套餐同周期价；月→年 = 目标年价 − 当前月价 × 剩余整月。
+ * 返回 -1 表示拦截（降级 / 年付转月付）。 */
+function upgradeDelta(pkg: typeof walletState.packages[number]): number {
+  if ((PLAN_TIER[pkg.name] ?? -1) < (PLAN_TIER[walletState.currentPackage] ?? 99)) return -1
+  const target = planPriceOf(pkg.name, walletState.billingCycle)
+  if (walletState.currentCycle === walletState.billingCycle) return Math.max(0, target - planPriceOf(walletState.currentPackage, walletState.currentCycle))
+  if (walletState.currentCycle === 'yearly') return -1 // 年付 → 月付：到期后再切换
+  return Math.max(0, target - planPriceOf(walletState.currentPackage, 'monthly') * remainingWholeMonths())
+}
 function openPackage(pkg: typeof walletState.packages[number]) {
-  if (authState.logged && pkg.name === walletState.currentPackage) return
+  const curName = walletState.currentPackage
+  if (authState.logged && pkg.name === curName) return
+  if (authState.logged && PLAN_TIER[pkg.name] != null && PLAN_TIER[curName] != null) {
+    const delta = upgradeDelta(pkg)
+    if (delta < 0) { flashToast('套餐降级或年付转月付需到期后切换'); return }
+    // 月→年：到期日重置为一年后；同周期升级不改变到期日
+    let newExpiry = walletState.expiresAt
+    if (walletState.currentCycle !== walletState.billingCycle) {
+      const d = new Date(Date.now() + 365 * 864e5)
+      newExpiry = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    }
+    openUpgradeConfirm({
+      curName: `${curName}（${cycleText(walletState.currentCycle)}）`,
+      curPrice: planPriceOf(curName, walletState.currentCycle),
+      name: `${pkg.name}（${cycleText(walletState.billingCycle)}）`,
+      fullPrice: planPriceOf(pkg.name, walletState.billingCycle),
+      price: delta, coins: pkg.coins, pay: '微信支付',
+      expiresAt: newExpiry, orderType: 'upgrade',
+      targetCycle: walletState.billingCycle, targetExpiresAt: newExpiry
+    })
+    return
+  }
   openBuyConfirm({ ...pkg, price: currentPlanPrice(pkg), coins: pkg.coins })
 }
 let sidebarObserver: ResizeObserver | null = null
@@ -167,10 +212,10 @@ const buyPage = computed(() => {
 const consumeFiltered = computed(() => filteredConsume())
 /* 订单详情抽屉 */
 const orderDetail = ref<BuyRecord | null>(null)
-function orderTypeName(t?: string) { return t === 'plan' ? '套餐订购' : '积分加油包' }
+function orderTypeName(t?: string) { return t === 'plan' ? '套餐订购' : t === 'upgrade' ? '套餐升级' : '积分加油包' }
 function orderDuration(item: BuyRecord) {
-  if (item.type === 'plan') return /年付/.test(item.pkg) ? '12 个月' : '1 个月'
-  return '长期有效'
+  if (item.type === 'pack') return '长期有效'
+  return /年付/.test(item.pkg) ? '12 个月' : '1 个月'
 }
 function fmtMoney(n: number | null | undefined) { return n == null ? '—' : '¥' + n.toFixed(2) }
 async function copyOrderId(id: string) {
@@ -209,7 +254,7 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
       <ExpertPanel v-else-if="modals.page === 'experts' || modals.page === 'skills'" />
       <main v-else-if="modals.page === 'pricing'" class="pricing-page">
         <header class="page-heading"><div><h1>{{ authState.logged ? '个人中心' : '套餐购买' }}</h1><p>{{ authState.logged ? '个人账号' : '登录后即可购买' }}</p></div></header>
-        <section v-if="authState.logged" class="current-plan"><div><span class="plan-crown">♛</span><strong>{{ walletState.currentPackage }}（{{ walletState.billingCycle === 'monthly' ? '月付' : '年付' }}）</strong><small>套餐到期时间：{{ walletState.expiresAt }}</small></div><button class="page-secondary" @click="openWallet()">购买积分包</button><div class="balance-meter"><div><span>剩余积分</span><strong>{{ appState.totalCoins.toLocaleString() }}</strong></div><div class="balance-track"><i :style="{ width: Math.max(4, (appState.totalCoins / (appState.totalCoins + walletState.usedCoins)) * 100) + '%' }"></i></div><small>{{ walletState.usedCoins.toLocaleString() }}（已使用）</small></div></section>
+        <section v-if="authState.logged" class="current-plan"><div><span class="plan-crown">♛</span><strong>{{ walletState.currentPackage }}（{{ walletState.currentCycle === 'monthly' ? '月付' : '年付' }}）</strong><small>套餐到期时间：{{ walletState.expiresAt }}</small></div><button class="page-secondary" @click="openWallet()">购买积分包</button><div class="balance-meter"><div><span>剩余积分</span><strong>{{ appState.totalCoins.toLocaleString() }}</strong></div><div class="balance-track"><i :style="{ width: Math.max(4, (appState.totalCoins / (appState.totalCoins + walletState.usedCoins)) * 100) + '%' }"></i></div><small>{{ walletState.usedCoins.toLocaleString() }}（已使用）</small></div></section>
         <section v-else class="current-plan"><div><strong>登录后查看账户积分与当前套餐</strong><small>可先浏览套餐，登录后即可购买</small></div><button class="page-secondary" @click="openWallet()">登录后增购积分包</button></section>
         <section class="account-content">
           <aside class="account-menu">
@@ -231,7 +276,7 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
       <!-- 个人中心区块：个人信息 / 套餐购买 / 订单中心 / 消耗明细（套餐购买页复用同一左侧子导航，当前项高亮） -->
       <main v-else class="account-page">
         <header class="page-heading"><div><h1>个人中心</h1><p>个人账号</p></div></header>
-        <section v-if="authState.logged" class="current-plan"><div><span class="plan-crown">♛</span><strong>{{ walletState.currentPackage }}（{{ walletState.billingCycle === 'monthly' ? '月付' : '年付' }}）</strong><small>套餐到期时间：{{ walletState.expiresAt }}</small></div><button class="page-secondary" @click="openWallet()">购买积分包</button><div class="balance-meter"><div><span>剩余积分</span><strong>{{ appState.totalCoins.toLocaleString() }}</strong></div><div class="balance-track"><i :style="{ width: Math.max(4, (appState.totalCoins / (appState.totalCoins + walletState.usedCoins)) * 100) + '%' }"></i></div><small>{{ walletState.usedCoins.toLocaleString() }}（已使用）</small></div></section>
+        <section v-if="authState.logged" class="current-plan"><div><span class="plan-crown">♛</span><strong>{{ walletState.currentPackage }}（{{ walletState.currentCycle === 'monthly' ? '月付' : '年付' }}）</strong><small>套餐到期时间：{{ walletState.expiresAt }}</small></div><button class="page-secondary" @click="openWallet()">购买积分包</button><div class="balance-meter"><div><span>剩余积分</span><strong>{{ appState.totalCoins.toLocaleString() }}</strong></div><div class="balance-track"><i :style="{ width: Math.max(4, (appState.totalCoins / (appState.totalCoins + walletState.usedCoins)) * 100) + '%' }"></i></div><small>{{ walletState.usedCoins.toLocaleString() }}（已使用）</small></div></section>
         <section class="account-content">
           <aside class="account-menu">
             <div class="account-menu-caption">个人中心</div>
@@ -250,7 +295,7 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
                   <strong>{{ profileName }}</strong>
                   <small>{{ currentAccount?.phone || '暂未绑定手机号' }}</small>
                 </div>
-                <span class="profile-badge">{{ walletState.currentPackage }} · {{ walletState.billingCycle === 'monthly' ? '月付' : '年付' }}</span>
+                <span class="profile-badge">{{ walletState.currentPackage }} · {{ walletState.currentCycle === 'monthly' ? '月付' : '年付' }}</span>
               </div>
               <div class="profile-grid">
                 <section class="profile-section">
@@ -277,6 +322,7 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
                     <option value="">全部</option>
                     <option value="plan">套餐订购</option>
                     <option value="pack">积分加油包</option>
+                    <option value="upgrade">套餐升级</option>
                   </select>
                 </label>
                 <DateRangePicker :range="walletState.buyRange" @change="walletState.blockPages.buy = 1" />
@@ -302,7 +348,7 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
                     <td>{{ orderTypeName(item.type) }}</td>
                     <td>
                       <div class="ot-pkg">{{ item.pkg || '—' }}</div>
-                      <small class="ot-coins">{{ item.amount >= 0 ? '+' : '' }}{{ item.amount.toLocaleString() }} 积分</small>
+                      <small class="ot-coins">{{ item.type === 'upgrade' ? '额度 ' + item.amount.toLocaleString() + ' 积分/月' : (item.amount >= 0 ? '+' : '') + item.amount.toLocaleString() + ' 积分' }}</small>
                     </td>
                     <td class="ot-paid">{{ fmtMoney(item.paid) }}</td>
                     <td>{{ item.pay || '—' }}</td>
@@ -337,7 +383,7 @@ function setConsumePage(p: number) { walletState.blockPages.consume = p }
                       <div class="od-row"><span>订购商户</span><strong>店雷达 AI</strong></div>
                       <div class="od-row"><span>订单类型</span><strong>{{ orderTypeName(orderDetail.type) }}</strong></div>
                       <div class="od-row"><span>套餐名称</span><strong>{{ orderDetail.pkg || '—' }}</strong></div>
-                      <div class="od-row"><span>套餐内容</span><strong>{{ Math.abs(orderDetail.amount).toLocaleString() }} 积分</strong></div>
+                      <div class="od-row"><span>套餐内容</span><strong>{{ Math.abs(orderDetail.amount).toLocaleString() }} 积分{{ orderDetail.type === 'upgrade' ? ' / 月（升级后月度额度）' : '' }}</strong></div>
                       <div class="od-row"><span>有效时长</span><strong>{{ orderDuration(orderDetail) }}</strong></div>
                     </section>
                     <section class="od-section">

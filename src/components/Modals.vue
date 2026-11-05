@@ -5,7 +5,8 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   modals, closeSettings, closeWallet,
   closeFeedback, openDeleteConfirm, closeDeleteConfirm, openRename, closeRename,
-  closeBuyConfirm, openBuyConfirm, closeConvMenu, openAccount
+  closeBuyConfirm, openBuyConfirm, closeConvMenu, openAccount,
+  closeUpgradeConfirm
 } from '../stores/modals'
 import { accountState, saveSubSettings, sessionsFor } from '../stores/account'
 import { walletState, confirmPay } from '../stores/wallet'
@@ -65,8 +66,14 @@ function onSelectPkg(p: { selected?: boolean }) {
 }
 // 自定义积分包：拖动滑块即切换为自定义模式（3万—10万，步进1万）
 const customCoins = ref(50000)
-const CUSTOM_RATE = 0.015 // 演示单价：元/积分
-const customPrice = computed(() => Math.round(customCoins.value * CUSTOM_RATE))
+// 阶梯单价（元/积分）：量大更优惠，与团队版加购档单价对齐，避免定价倒挂
+const CUSTOM_TIERS = [
+  { min: 50000, rate: 0.0095 },
+  { min: 40000, rate: 0.0125 },
+  { min: 30000, rate: 0.015 }
+]
+const customRate = computed(() => CUSTOM_TIERS.find(t => customCoins.value >= t.min)?.rate ?? 0.015)
+const customPrice = computed(() => Math.round(customCoins.value * customRate.value))
 function onCustomSlide() {
   walletState.packages.forEach(x => { x.selected = false })
 }
@@ -105,6 +112,8 @@ const payCountdownText = computed(() => Math.floor(paySeconds.value / 60) + ':' 
 const payOrderNo = ref('')
 const payType = computed(() => (pendingPkg.value?.pay || '微信支付').includes('支付宝') ? '支付宝' : '微信')
 const payExpireText = computed(() => {
+  // 套餐升级单：到期时间随目标套餐（同周期升级不变，月→年为一年后）
+  if (pendingPkg.value?.orderType === 'upgrade' && pendingPkg.value?.expiresAt) return pendingPkg.value.expiresAt
   const d = new Date(Date.now() + 365 * 864e5)
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
 })
@@ -281,6 +290,13 @@ function onEsc(e: KeyboardEvent) {
   if (modals.feedback) closeFeedback(false)
   if (modals.deleteConfirm) closeDeleteConfirm()
   if (modals.rename) closeRename()
+  if (modals.upgradeConfirm) closeUpgradeConfirm()
+}
+/* ==================== 套餐升级确认（补差价，两步式：确认订单 → 扫码支付） ==================== */
+function onUpgradeOk() {
+  const payload = modals.upgradePayload
+  closeUpgradeConfirm()
+  if (payload) openBuyConfirm(payload) // 第二步：进入扫码支付，与增购流程对齐
 }
 onMounted(() => {
   document.addEventListener('keydown', onEsc)
@@ -398,7 +414,7 @@ onBeforeUnmount(() => {
           <div class="wx-custom" :class="{ active: !activePkg }">
             <div class="wx-custom-head">
               <span>自定义积分包</span>
-              <span class="wx-custom-val">{{ customCoins.toLocaleString() }} 积分 · ¥{{ customPrice }}</span>
+              <span class="wx-custom-val">{{ customCoins.toLocaleString() }} 积分 · ¥{{ customPrice }}（{{ customRate }} 元/积分）</span>
             </div>
             <input class="wx-slider" type="range" min="30000" max="100000" step="10000" v-model.number="customCoins" @input="onCustomSlide" aria-label="自定义积分数量">
             <div class="wx-scale"><span>3万</span><span>5万</span><span>7.5万</span><span>10万</span></div>
@@ -512,9 +528,9 @@ onBeforeUnmount(() => {
         <div class="pay-info">
           <div class="pi-row"><span>订单号码：</span><span>{{ payOrderNo }}</span></div>
           <div class="pi-row"><span>购买账号：</span><span>{{ buyAccount }}</span></div>
-          <div class="pi-row"><span>订单类型：</span><span>积分加油包</span></div>
+          <div class="pi-row"><span>订单类型：</span><span>{{ pendingPkg?.orderType === 'upgrade' ? '套餐升级' : '积分加油包' }}</span></div>
           <div class="pi-row"><span>购买套餐：</span><span>{{ confirmPkgText }}</span></div>
-          <div class="pi-row"><span>获　　得：</span><span>{{ confirmCoinsText.replace('+', '') }} 积分</span></div>
+          <div class="pi-row"><span>{{ pendingPkg?.orderType === 'upgrade' ? '月度额度：' : '获　　得：' }}</span><span>{{ confirmCoinsText.replace('+', '') }} 积分</span></div>
           <div class="pi-row"><span>生效日期：</span><span>立即生效</span></div>
           <div class="pi-row"><span>到期时间：</span><span>{{ payExpireText }}</span></div>
         </div>
@@ -550,6 +566,36 @@ onBeforeUnmount(() => {
         <button class="cf-btn cf-cancel" type="button" @click="closeRename">取消</button>
         <button class="cf-btn cf-primary" type="button" @click="onRenameOk">确认</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 套餐升级确认弹窗（补差价，两步式：先确认订单再扫码支付） -->
+  <div class="confirm-modal" :class="{ open: modals.upgradeConfirm }" role="dialog" aria-modal="true" @click.self="closeUpgradeConfirm">
+    <div class="confirm-card upg-card">
+      <div class="cf-head">
+        <span class="cf-title">套餐升级确认</span>
+        <button class="cf-close" type="button" aria-label="关闭" @click="closeUpgradeConfirm">×</button>
+      </div>
+      <template v-if="modals.upgradePayload">
+        <div class="upg-route">
+          <span class="upg-from">{{ modals.upgradePayload.curName }}</span>
+          <span class="upg-arrow">→</span>
+          <span class="upg-to">{{ modals.upgradePayload.name }}</span>
+        </div>
+        <div class="upg-rows">
+          <div class="upg-row"><span>当前套餐实付</span><strong>¥{{ modals.upgradePayload.curPrice }}</strong></div>
+          <div class="upg-row"><span>目标套餐价格</span><strong>¥{{ modals.upgradePayload.fullPrice }}</strong></div>
+          <div class="upg-row"><span>目标月度额度</span><strong>{{ Number(modals.upgradePayload.coins || 0).toLocaleString() }} 积分</strong></div>
+          <div class="upg-row"><span>升级后到期时间</span><strong>{{ modals.upgradePayload.expiresAt }}</strong></div>
+        </div>
+        <div class="upg-pay-line">补差价金额</div>
+        <div class="upg-amount">¥{{ modals.upgradePayload.price }}</div>
+        <p class="upg-note">补差价 = 目标套餐价格 − 当前套餐剩余价值（按剩余整月折算）。支付成功后立即生效，套餐额度与权益按新套餐执行，已购积分余额不受影响。</p>
+        <div class="cf-actions">
+          <button class="cf-btn cf-cancel" type="button" @click="closeUpgradeConfirm">取消</button>
+          <button class="cf-btn upg-paybtn" type="button" @click="onUpgradeOk">补差价 ¥{{ modals.upgradePayload.price }}，确认升级</button>
+        </div>
+      </template>
     </div>
   </div>
 </template>
