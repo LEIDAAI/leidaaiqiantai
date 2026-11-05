@@ -27,6 +27,8 @@ export const modals = reactive({
   feedbackSubmitted: false,
   buyConfirm: false,
   buyPendingPkg: null as any,
+  upgradeConfirm: false,
+  upgradePayload: null as any,
   deleteConfirm: false,
   deletePendingFn: null as any,
   rename: false,
@@ -50,6 +52,8 @@ watch(() => authState.logged, logged => {
   modals.wallet = false
   modals.buyConfirm = false
   modals.buyPendingPkg = null
+  modals.upgradeConfirm = false
+  modals.upgradePayload = null
   if (modals.page === 'account' || modals.page === 'orders' || modals.page === 'consume') modals.page = 'chat'
 })
 
@@ -101,6 +105,15 @@ export function openBuyConfirm(pkg: any) {
 export function closeBuyConfirm() {
   modals.buyConfirm = false
   modals.buyPendingPkg = null
+}
+export function openUpgradeConfirm(payload: any) {
+  if (!authState.logged) { openLogin('升级套餐'); return }
+  modals.upgradePayload = payload
+  modals.upgradeConfirm = true
+}
+export function closeUpgradeConfirm() {
+  modals.upgradeConfirm = false
+  modals.upgradePayload = null
 }
 export function openConvMenu(target: any, x: number, y: number) {
   modals.convMenuTarget = target

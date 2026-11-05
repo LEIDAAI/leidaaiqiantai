@@ -7,7 +7,7 @@ import { flashToast } from '../utils/common'
 
 export interface BuyRecord {
   id: string; pkg: string; amount: number; time: string
-  type?: 'plan' | 'pack'          // 订单类型：套餐订购 / 积分加油包
+  type?: 'plan' | 'pack' | 'upgrade'   // 订单类型：套餐订购 / 积分加油包 / 套餐升级
   status?: 'paid' | 'refunded'    // 订单状态（负数为退款单）
   pay?: string                    // 支付方式
   paid?: number | null            // 实付金额（元）
@@ -20,8 +20,8 @@ export interface ConsumeRecord { title: string; conv: string; coins: number; tim
 export const walletState = reactive({
   // 【对接说明】后端暂未提供充值/消耗流水接口，暂用本地演示数据
   buyLedger: [
-    { id: 'dld20261016093241206', pkg: '基础版（月付）', amount: 5600, time: '2026-10-16 09:32:41', type: 'plan', status: 'paid', pay: '支付宝', paid: 99, orig: 199, disc: 100, createdAt: '2026-10-16 09:32:33' },
-    { id: 'dld20260914140527831', pkg: '高级版（年付）', amount: 22000, time: '2026-09-14 14:05:27', type: 'plan', status: 'paid', pay: '微信支付', paid: 2870, orig: 3588, disc: 718, createdAt: '2026-09-14 14:05:18' },
+    { id: 'dld20261016093241206', pkg: '基础版（年付）', amount: 67200, time: '2026-10-16 09:32:41', type: 'plan', status: 'paid', pay: '支付宝', paid: 949, orig: 2148, disc: 1199, createdAt: '2026-10-16 09:32:33' },
+    { id: 'dld20260914140527831', pkg: '基础版（月付）', amount: 5600, time: '2026-09-14 14:05:27', type: 'plan', status: 'paid', pay: '微信支付', paid: 99, orig: 199, disc: 100, createdAt: '2026-09-14 14:05:18' },
     { id: 'dld20260824102015842', pkg: '常用包', amount: 2000, time: '2026-08-24 10:20:15', type: 'pack', status: 'paid', pay: '微信支付', paid: 168, orig: null, disc: null, createdAt: '2026-08-24 10:20:09' },
     { id: 'dld20260822184110673', pkg: '体验包', amount: 500, time: '2026-08-22 18:41:10', type: 'pack', status: 'paid', pay: '支付宝', paid: 45, orig: null, disc: null, createdAt: '2026-08-22 18:41:04' },
     { id: 'dld20260818091542291', pkg: '—', amount: -200, time: '2026-08-18 09:15:42', type: 'pack', status: 'refunded', pay: '支付宝', paid: null, orig: null, disc: null, createdAt: '2026-08-18 09:15:42' }
@@ -44,9 +44,10 @@ export const walletState = reactive({
   blockPages: { buy: 1, consume: 1 } as Record<string, number>,
   // 套餐（演示；接口就绪后由 getMemberVerObj 真数据替换）
   billingCycle: 'monthly' as 'monthly' | 'yearly',
+  currentCycle: 'yearly' as 'monthly' | 'yearly',   // 当前生效套餐的付费周期（区别于购买页切换态 billingCycle）
   currentPackage: '基础版',
-  expiresAt: '2026-11-13',
-  usedCoins: 4696,
+  expiresAt: '2027-10-16',
+  usedCoins: 275,
   packages: [
     { name: '基础版', coins: 5600, price: 99, yearlyPrice: 949, compareMonthly: 179, saving: 239, limits: ['图片/视频并发：10 / 1 个任务', '约每月生成 1,400 张图片或 373 条视频', '每月约查询 74 次或生成 31 份报告'], featured: false, features: ['1688 分销选品：Top10 爆款清单输出', '拿货价定位：价格分布与销量对比', '一件代发工厂筛选：源头工厂直连', '商品资源监测：同行价格与起订量跟踪', '六大场景技能：推荐 / 选品上架 / 店铺运营 / 评论分析', '多文件选品分析：一键生成报告（单任务）', '跨平台支持：1688 / OZON / 亚马逊 / TEMU'] },
     { name: '高级版', coins: 22000, price: 299, yearlyPrice: 2870, compareMonthly: 589, saving: 718, limits: ['图片/视频并发：30 / 10 个任务', '约每月生成 5,500 张图片或 1,466 条视频', '每月约查询 293 次或生成 122 份报告'], featured: true, features: ['1688 分销选品：Top10 爆款清单输出', '拿货价定位：价格分布与销量对比', '一件代发工厂筛选：源头工厂直连', '商品资源监测：同行价格与起订量跟踪', '六大场景技能：推荐 / 选品上架 / 店铺运营 / 评论分析', '多文件选品分析：批量上传一键出报告', '支持批量任务并行处理'] },
@@ -54,7 +55,7 @@ export const walletState = reactive({
   ] as Array<{ name: string; coins: number; price: number | null; yearlyPrice: number; compareMonthly: number; saving: number; limits: string[]; features: string[]; featured: boolean; selected?: boolean }>,
   packageTip: '当前套餐信息以账号实际权益为准',
   buyRange: { start: '', end: '' },
-  orderType: '' as '' | 'plan' | 'pack',   // 订单类型筛选：全部 / 套餐订购 / 加油包
+  orderType: '' as '' | 'plan' | 'pack' | 'upgrade',   // 订单类型筛选：全部 / 套餐订购 / 加油包 / 套餐升级
   orderStatus: '' as '' | 'paid' | 'refunded', // 订单状态筛选：全部 / 支付成功 / 已退款
   consumeRange: { start: '', end: '' },
   consumeChip: '7d'
@@ -110,28 +111,55 @@ export function makeOrderId(): string {
   return id
 }
 
-export function confirmPay(pkg: { name: string; coins: number; price: number | null; pay?: string }) {
+export function confirmPay(pkg: {
+  name: string; coins: number; price: number | null; pay?: string
+  orderType?: 'pack' | 'upgrade'
+  targetCycle?: 'monthly' | 'yearly'      // 升级单：目标付费周期
+  targetExpiresAt?: string                // 升级单：顺延后的到期日
+}) {
   if (!pkg) return
-  appState.totalCoins += pkg.coins
   const now = nowString()
-  walletState.buyLedger.unshift({
-    id: makeOrderId(),
-    pkg: pkg.name,
-    amount: pkg.coins,
-    time: now,
-    type: 'pack',
-    status: 'paid',
-    pay: pkg.pay || '支付宝',
-    paid: pkg.price,
-    orig: null,
-    disc: null,
-    createdAt: now
-  })
+  if (pkg.orderType === 'upgrade') {
+    // 套餐升级（补差价）：切换当前套餐与周期、顺延到期日；新套餐额度随月发放，不单独加积分
+    walletState.currentPackage = pkg.name.replace(/（[^）]*）/, '')
+    if (pkg.targetCycle) walletState.currentCycle = pkg.targetCycle
+    if (pkg.targetExpiresAt) walletState.expiresAt = pkg.targetExpiresAt
+    walletState.buyLedger.unshift({
+      id: makeOrderId(),
+      pkg: pkg.name,
+      amount: pkg.coins,
+      time: now,
+      type: 'upgrade',
+      status: 'paid',
+      pay: pkg.pay || '支付宝',
+      paid: pkg.price,
+      orig: null,
+      disc: null,
+      createdAt: now
+    })
+  } else {
+    appState.totalCoins += pkg.coins
+    walletState.buyLedger.unshift({
+      id: makeOrderId(),
+      pkg: pkg.name,
+      amount: pkg.coins,
+      time: now,
+      type: 'pack',
+      status: 'paid',
+      pay: pkg.pay || '支付宝',
+      paid: pkg.price,
+      orig: null,
+      disc: null,
+      createdAt: now
+    })
+  }
   walletState.blockPages.buy = 1
-  closeBuyConfirmAndToast(pkg.coins)
+  closeBuyConfirmAndToast(pkg.orderType === 'upgrade', pkg.coins)
 }
-function closeBuyConfirmAndToast(coins: number) {
-  flashToast(`充值成功，到账 ${coins.toLocaleString()} 积分`)
+function closeBuyConfirmAndToast(isUpgrade: boolean, coins: number) {
+  flashToast(isUpgrade
+    ? `升级成功，当前套餐：${walletState.currentPackage}`
+    : `充值成功，到账 ${coins.toLocaleString()} 积分`)
 }
 
 // 过滤后明细
