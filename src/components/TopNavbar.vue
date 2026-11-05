@@ -185,7 +185,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
       <button v-if="!authState.logged" class="nav-login" @click="openLogin('')">登录 / 注册</button>
       <div v-else ref="avRoot" class="av-wrap" @mouseenter="openAv" @mouseleave="scheduleAvClose">
         <button class="nav-avatar" @click="toggleAv">
-          <span class="avatar-dot">主</span>
+          <span class="avatar-dot">{{ accountName.slice(0, 1) }}</span>
           <span class="avatar-name">{{ accountName }}</span>
           <span v-if="accountPhone" class="avatar-phone">{{ accountPhone }}</span>
         </button>
