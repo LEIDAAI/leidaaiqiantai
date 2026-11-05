@@ -4,12 +4,15 @@
  * ===================================================== */
 import { reactive, computed } from 'vue'
 import { accountState, maskPhone } from './account'
+import { appState } from './state'
 import { flashToast } from '../utils/common'
 
 const AUTH_KEY = 'dld_auth_v1'      // 登录态持久化
 const WX_BIND_KEY = 'dld_wx_bind_v1' // 微信号绑定的手机号（模拟服务端记忆）
 const REG_KEY = 'dld_reg_v1'         // 已注册手机号列表（模拟用户表）
 const PASSWORD_KEY = 'dld_passwords_v1' // 新注册账号的演示密码
+const WELCOME_GIFT_KEY = 'dld_welcome_gift_v1' // 已发放「首注注册礼」的手机号列表
+const WELCOME_GIFT_COINS = 100           // 首次注册赠送积分
 
 /* 演示规则（登录卡下方有提示） */
 export const DEMO = {
@@ -46,7 +49,8 @@ export const authState = reactive({
   guest: false,            // 游客模式（跳过登录可浏览，发消息时拦截）
   user: null as AuthUser | null,
   loginView: false,        // 点击登录或受限操作时显示弹窗
-  intercept: ''            // 非空 = 由某操作触发（可关闭返回游客）
+  intercept: '',           // 非空 = 由某操作触发（可关闭返回游客）
+  welcomeGift: false       // 首次注册礼包待弹窗标记（modals.ts 监听并打开欢迎弹窗）
 })
 
 /* 模块加载即恢复上次登录态，避免 gate 闪现 */
@@ -98,8 +102,20 @@ export function requireLogin(reason = '该操作'): boolean {
   return true
 }
 
+/* ---------- 首次注册礼包：赠送 100 积分（每手机号仅一次） ---------- */
+function grantWelcomeGiftIfNew(phone: string) {
+  const got = readJSON<string[]>(WELCOME_GIFT_KEY, [])
+  if (got.includes(phone)) return
+  got.push(phone)
+  writeJSON(WELCOME_GIFT_KEY, got)
+  appState.totalCoins += WELCOME_GIFT_COINS
+  flashToast(`首次注册福利：${WELCOME_GIFT_COINS} 积分已到账`)
+  authState.welcomeGift = true // modals.ts 监听后弹出欢迎弹窗
+}
+
 /* ---------- 登录成功 ---------- */
 function finishLogin(phone: string, source: AuthUser['source']) {
+  const isNewUser = !registeredPhones().includes(phone) // markRegistered 前判定：仅真新注册发放礼包
   authState.logged = true
   authState.guest = false
   authState.user = { phone, source }
@@ -110,7 +126,11 @@ function finishLogin(phone: string, source: AuthUser['source']) {
   // 主账号手机号联动（顶栏 / 侧栏同步显示真实登录号）
   const main = accountState.accounts[0]
   if (main) main.phone = maskPhone(phone)
-  flashToast(source === 'wx' ? '微信登录成功' : '登录成功，欢迎回来')
+  if (isNewUser) {
+    grantWelcomeGiftIfNew(phone)
+  } else {
+    flashToast(source === 'wx' ? '微信登录成功' : '登录成功，欢迎回来')
+  }
 }
 
 export function logout() {

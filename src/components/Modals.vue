@@ -6,7 +6,7 @@ import {
   modals, closeSettings, closeWallet,
   closeFeedback, openDeleteConfirm, closeDeleteConfirm, openRename, closeRename,
   closeBuyConfirm, openBuyConfirm, closeConvMenu, openAccount,
-  closeUpgradeConfirm
+  closeUpgradeConfirm, closeWelcome
 } from '../stores/modals'
 import { accountState, saveSubSettings, sessionsFor } from '../stores/account'
 import { walletState, confirmPay } from '../stores/wallet'
@@ -284,6 +284,7 @@ function onDeleteOk() {
 /* ==================== Escape 统一处理 ==================== */
 function onEsc(e: KeyboardEvent) {
   if (e.key !== 'Escape') return
+  if (modals.welcome) closeWelcome()
   if (modals.wallet) closeWallet()
   if (modals.settings) closeSettings()
   if (modals.buyConfirm) closeBuyConfirm()
@@ -309,6 +310,17 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <!-- 首次注册欢迎弹窗（注册赠 100 积分，每账号仅一次） -->
+  <div class="confirm-modal" :class="{ open: modals.welcome }" role="dialog" aria-modal="true" @click.self="closeWelcome">
+    <div class="welcome-card">
+      <div class="wc-gift">🎁</div>
+      <div class="wc-title">欢迎加入雷达AI</div>
+      <div class="wc-desc">恭喜您完成首次注册，新人大礼包已发放<br>100 积分已到账您的账户</div>
+      <div class="wc-coins">+100 <small>积分</small></div>
+      <button class="wc-btn" type="button" @click="closeWelcome">开始体验</button>
+    </div>
+  </div>
+
   <!-- 会话右键菜单 -->
   <div class="conv-menu" :class="{ open: modals.convMenu }" :style="{ left: modals.convMenuX + 'px', top: modals.convMenuY + 'px' }">
     <div class="cm-item" @click="onMenu('pin')">

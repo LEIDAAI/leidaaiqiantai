@@ -4973,3 +4973,34 @@
 .upg-note { font-size: 12px; line-height: 1.7; color: var(--tx-2); background: var(--bg-2); border-radius: 8px; padding: 10px 12px; margin: 0 0 16px; }
 .upg-paybtn { background: linear-gradient(100deg, #00b84a, #00913a) !important; color: #fff !important; border: none !important; }
 .upg-paybtn:hover { filter: brightness(1.06); }
+
+/* ==================== 首次注册欢迎弹窗（注册赠 100 积分） ==================== */
+.welcome-card {
+  width: 340px; max-width: 100%;
+  background: #fff; border-radius: 16px;
+  box-shadow: 0 16px 50px rgba(31, 35, 41, .22);
+  padding: 30px 26px 24px;
+  text-align: center;
+  animation: confirmIn .16s ease;
+}
+.wc-gift {
+  width: 68px; height: 68px; line-height: 68px; border-radius: 50%;
+  margin: 0 auto 14px; font-size: 34px;
+  background: linear-gradient(135deg, #e8f9ee, #d3f2de);
+}
+.wc-title { font-size: 19px; font-weight: 700; color: var(--text); }
+.wc-desc { margin-top: 10px; font-size: 13px; line-height: 1.7; color: var(--text-dim); }
+.wc-coins {
+  margin-top: 14px; font-size: 30px; font-weight: 800;
+  color: var(--brand); letter-spacing: .5px;
+}
+.wc-coins small { font-size: 14px; font-weight: 600; margin-left: 2px; }
+.wc-btn {
+  margin-top: 20px; width: 100%; height: 42px;
+  border: none; border-radius: 10px; cursor: pointer;
+  background: var(--brand); color: #fff;
+  font-size: 15px; font-weight: 600;
+  transition: background .15s ease, transform .1s ease;
+}
+.wc-btn:hover { background: var(--brand-dark); }
+.wc-btn:active { transform: scale(.98); }
