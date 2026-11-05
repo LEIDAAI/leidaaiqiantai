@@ -94,7 +94,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
         </div>
         <div class="logo-text">
           <div class="logo-title">雷达AI</div>
-          <div class="logo-subtitle">让电商更简单</div>
+          <div class="logo-subtitle">让电商运营更高效</div>
         </div>
       </div>
     </div>
