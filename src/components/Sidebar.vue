@@ -25,7 +25,7 @@ function popConsume() { userPop.value = false; navigatePage('consume') }
 const ACCOUNT_PAGES = ['account', 'pricing', 'orders', 'consume']
 const inAccountSection = computed(() => ACCOUNT_PAGES.includes(modals.page))
 function goAccount() { userPop.value = false; navigatePage('account') }
-const cycleText = computed(() => walletState.billingCycle === 'monthly' ? '月付' : '年付')
+const cycleText = computed(() => walletState.currentCycle === 'monthly' ? '月付' : '年付')
 
 const GROUP_ORDER = ['pinned', 'today', 'yesterday', 'thisWeek', 'earlier'] as const
 const GROUP_LABELS: Record<string, { cls: string; label: string; text: string }> = {

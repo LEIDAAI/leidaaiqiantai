@@ -4965,3 +4965,19 @@
   .pb-text { font-size: 13px; }
   .pb-num { font-size: 19px; }
 }
+
+/* ==================== 套餐升级确认弹窗（补差价） ==================== */
+.upg-card { width: 420px; max-width: calc(100vw - 32px); }
+.upg-route { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; }
+.upg-route .upg-from { color: var(--tx-2); font-size: 14px; }
+.upg-route .upg-arrow { color: var(--pri); font-weight: 600; }
+.upg-route .upg-to { color: var(--tx-0); font-size: 14px; font-weight: 600; }
+.upg-rows { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: var(--bg-2); border-radius: 10px; margin-bottom: 14px; }
+.upg-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+.upg-row span { color: var(--tx-2); }
+.upg-row strong { color: var(--tx-0); font-weight: 600; }
+.upg-pay-line { font-size: 13px; color: var(--tx-2); margin-bottom: 4px; }
+.upg-amount { font-size: 34px; font-weight: 700; color: var(--tx-0); margin-bottom: 12px; }
+.upg-note { font-size: 12px; line-height: 1.7; color: var(--tx-2); background: var(--bg-2); border-radius: 8px; padding: 10px 12px; margin: 0 0 16px; }
+.upg-paybtn { background: linear-gradient(100deg, #00b84a, #00913a) !important; color: #fff !important; border: none !important; }
+.upg-paybtn:hover { filter: brightness(1.06); }
