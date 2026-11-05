@@ -4226,8 +4226,8 @@
 .home-side { display: none; }
 .home-side .home-chip { min-width: 96px; text-align: center; white-space: nowrap; }
 .home-main { flex: 1; min-width: 0; }
-/* r77：专家卡固定 2×2 布局——每页 4 卡均衡满排，修复 auto-fill 三列时第 4 卡换行失衡 */
-.home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+/* r80：专家卡一行三列布局——每页 6 卡 3×2 满排（中屏降 2 列、≤760px 单列见末尾） */
+.home-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 14px; }
 /* r70：卡片自适应列数——技能卡 ≥256px/列（宽屏自动多列） */
 .home-grid.cols-3 { grid-template-columns: repeat(auto-fill, minmax(256px, 1fr)); gap: 12px 12px; }
 .home-pager { position: relative; padding: 0 46px; }
@@ -4242,6 +4242,8 @@
   /* r44：仅当存在翻页箭头（v-if 渲染）时才使用不对称内边距，单页时保持完全居中 */
   .home-pager:has(.hp-arrow) { padding: 0 80px 0 46px; }
   .hp-arrow.next { right: 36px; }
+  /* r80：中屏专家卡降为 2 列，避免三列过挤（技能卡 cols-3 特异性更高不受影响） */
+  .home-grid:not(.cols-3) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 /* r52：卡片悬停微上浮 + 阴影加深，增加悬停反馈感 */
 .home-card { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; border: 1px solid #ececec; border-radius: 12px; background: #fff; overflow: hidden; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
