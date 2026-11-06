@@ -58,7 +58,6 @@ function join() {
     </span>
     <div class="pb-main">
       <div class="pb-headline">首次注册雷达AI，赠送 <b class="pb-num">100</b><span class="pb-unit">积分</span></div>
-      <div class="pb-sub">积分即时到账 · 可用于 AI 选品分析 / 竞品监控 / 报告生成</div>
     </div>
     <button class="pb-join" type="button" @click="join">
       立即参与
