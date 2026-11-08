@@ -57,7 +57,7 @@ function join() {
       新人专享
     </span>
     <div class="pb-main">
-      <div class="pb-headline">首次注册雷达AI，赠送 <b class="pb-num">100</b><span class="pb-unit">积分</span></div>
+      <div class="pb-headline">首次注册雷达AI，赠送 <span class="pb-reward"><b class="pb-num">100</b><span class="pb-unit">积分</span></span></div>
     </div>
     <button class="pb-join" type="button" @click="join">
       立即参与
