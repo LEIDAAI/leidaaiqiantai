@@ -44,6 +44,18 @@ export function wxBindPhone(): string { return readJSON<string>(WX_BIND_KEY, '')
 function saveWxBind(phone: string) { writeJSON(WX_BIND_KEY, phone) }
 export function resetWxBind() { writeJSON(WX_BIND_KEY, '') }
 
+/* 封禁账号（2026-11-08 拍板，场景 34）：封禁 = 无法登录，提示联系客服；数据冻结不清除。
+ * 演示环境在此列表中的手机号登录会被拦截；真实接入时由服务端登录接口返回 status=banned。 */
+const BANNED_KEY = 'dld_banned_v1'
+export function bannedPhones(): string[] {
+  const list = readJSON<string[]>(BANNED_KEY, [])
+  // 预置一个演示封禁号便于验收：13900000000
+  if (!list.includes('13900000000')) list.push('13900000000')
+  return list
+}
+export const BANNED_TIP = '您的账号异常，无法登录！有疑问请联系客服'
+function isBanned(phone: string): boolean { return bannedPhones().includes(phone) }
+
 export const authState = reactive({
   logged: false,
   guest: false,            // 游客模式（跳过登录可浏览，发消息时拦截）
@@ -60,7 +72,7 @@ export const authState = reactive({
   authState.guest = !!saved.guest
   authState.user = saved.user || null
   authState.loginView = false
-  // 刷新后恢复登录态时，同步主账号手机号掩码（顶栏 / 侧栏联动）
+  // 刷新后恢复登录态时，同步账号手机号掩码（顶栏 / 侧栏联动）
   if (authState.logged && authState.user?.phone) {
     const main = accountState.accounts[0]
     if (main) main.phone = maskPhone(authState.user.phone)
@@ -123,7 +135,7 @@ function finishLogin(phone: string, source: AuthUser['source']) {
   authState.intercept = ''
   persist()
   markRegistered(phone)
-  // 主账号手机号联动（顶栏 / 侧栏同步显示真实登录号）
+  // 账号手机号联动（顶栏 / 侧栏同步显示真实登录号）
   const main = accountState.accounts[0]
   if (main) main.phone = maskPhone(phone)
   if (isNewUser) {
@@ -147,6 +159,7 @@ export function logout() {
 export function tryWxLogin(): boolean {
   const bind = wxBindPhone()
   if (!bind) return false
+  if (isBanned(bind)) { flashToast(BANNED_TIP); return true } // 已拦截，不再走关联注册
   finishLogin(bind, 'wx')
   return true
 }
@@ -163,6 +176,7 @@ export async function sendSmsCode(phone: string): Promise<boolean> {
 /* ---------- mock：已注册验证码登录；首次注册需验证码和设置密码 ---------- */
 export async function loginBySms(phone: string, code: string, password = ''): Promise<string | null> {
   if (!/^1\d{10}$/.test(phone)) return '请输入正确的手机号'
+  if (isBanned(phone)) return BANNED_TIP
   const newAccount = !registeredPhones().includes(phone)
   if (code !== DEMO.smsCode) return '验证码错误（模拟验证码 ' + DEMO.smsCode + '）'
   if (newAccount && password.length < 6) return '请设置至少 6 位密码'
@@ -179,6 +193,7 @@ export async function loginBySms(phone: string, code: string, password = ''): Pr
 /* ---------- mock：密码登录（需已注册） ---------- */
 export async function loginByPwd(phone: string, pwd: string): Promise<string | null> {
   if (!/^1\d{10}$/.test(phone)) return '请输入正确的手机号'
+  if (isBanned(phone)) return BANNED_TIP
   if (!registeredPhones().includes(phone)) return '该手机号未注册，请使用验证码注册'
   const passwords = readJSON<Record<string, string>>(PASSWORD_KEY, {})
   if (pwd !== (passwords[phone] ?? DEMO.password)) return '密码错误'
@@ -190,6 +205,7 @@ export async function loginByPwd(phone: string, pwd: string): Promise<string | n
 /* ---------- mock：微信扫码绑定手机号后完成注册 ---------- */
 export async function bindWxPhone(phone: string, code: string): Promise<string | null> {
   if (!/^1\d{10}$/.test(phone)) return '请输入正确的手机号'
+  if (isBanned(phone)) return BANNED_TIP
   if (code !== DEMO.smsCode) return '验证码错误（模拟验证码 ' + DEMO.smsCode + '）'
   await new Promise(r => setTimeout(r, 400))
   saveWxBind(phone)
