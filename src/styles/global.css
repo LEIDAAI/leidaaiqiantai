@@ -817,46 +817,6 @@
     font-size: 11px; padding: 2px 8px; border-radius: 3px;
     flex-shrink: 0; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  /* 遮罩层级须高于左侧边栏 .col-left 的 z-index:1200，否则盖不住侧边栏 */
-  .settings-modal { position:fixed; inset:0; z-index:1270; display:none; align-items:center; justify-content:center; background:rgba(31,35,41,.38); padding:20px; }
-  .settings-modal.open { display:flex; }
-  .settings-dialog { width:min(560px, 100%); background:#fff; border-radius:10px; box-shadow:0 16px 50px rgba(31,35,41,.22); overflow:hidden; }
-  .settings-head { display:flex; align-items:center; gap:10px; padding:16px 20px; border-bottom:1px solid var(--border-light); }
-  .settings-head .sh-title { font-size:16px; font-weight:600; }
-  .settings-head .sh-sub { font-size:11px; color:var(--text-dim); }
-  .settings-head .settings-close { margin-left:auto; width:28px; height:28px; border:0; background:transparent; color:var(--text-dim); cursor:pointer; font-size:20px; border-radius:4px; }
-  .settings-head .settings-close:hover { background:var(--bg); color:var(--text); }
-  .settings-body { padding:18px 20px 22px; }
-  .settings-block + .settings-block { margin-top:16px; padding-top:16px; border-top:1px dashed var(--border-light); }
-  .settings-block h3 { margin:0 0 4px; font-size:13px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:8px; }
-  .settings-block h3 .sb-tag { background:var(--bg); color:var(--text-muted); font-size:10px; padding:1px 5px; border-radius:3px; font-weight:500; }
-  .settings-block p { margin:0 0 10px; color:var(--text-muted); font-size:12px; line-height:1.6; }
-  .switch { position:relative; display:inline-block; width:38px; height:22px; }
-  .switch input { opacity:0; width:0; height:0; }
-  .switch .slider { position:absolute; inset:0; background:#dcdfe6; border-radius:22px; cursor:pointer; transition:background .2s; }
-  .switch .slider::before {
-    content:''; position:absolute; left:3px; top:3px; width:16px; height:16px;
-    background:#fff; border-radius:50%; transition:transform .2s;
-  }
-  .switch input:checked + .slider { background:var(--brand); }
-  .switch input:checked + .slider::before { transform:translateX(16px); }
-  .settings-row { display:flex; align-items:flex-start; gap:14px; padding:8px 0; }
-  .settings-row .sr-text { flex:1; }
-  .settings-row .sr-text strong { font-size:12.5px; color:var(--text); display:block; margin-bottom:2px; }
-  .settings-row .sr-text small { color:var(--text-muted); font-size:11.5px; line-height:1.5; }
-  .settings-actions { display:flex; justify-content:flex-end; gap:8px; padding-top:14px; margin-top:8px; border-top:1px solid var(--border-light); }
-  .settings-actions button { height:30px; padding:0 14px; border-radius:4px; border:1px solid var(--border); background:#fff; color:var(--text-muted); font-size:12px; cursor:pointer; }
-  .settings-actions button.primary { background:var(--brand); border-color:var(--brand); color:#fff; }
-  .settings-actions button:hover { color:var(--brand-dark); border-color:var(--brand); }
-  .settings-actions button.primary:hover { background:var(--brand-dark); border-color:var(--brand-dark); color:#fff; }
-  .sl-head { display:flex; align-items:center; justify-content:space-between; }
-  .sl-head h3 { margin:0; }
-  .sl-manage {
-    font-size:12px; font-weight:500; color:var(--brand);
-    text-decoration:none; transition:color .15s;
-  }
-  .sl-manage:hover { color:var(--brand-dark); text-decoration:underline; }
-
   /* 账号切换顶部加载条 */
   .account-loading {
     position:fixed; top:0; left:0; right:0; height:2px; z-index:200;
@@ -1055,6 +1015,9 @@
   .ledger-table .lt-amount.minus { color:var(--red); font-weight:600; }
   .ledger-table .lt-action { color:#1689e8; cursor:pointer; }
   .ledger-table .lt-action:hover { text-decoration:underline; }
+  /* 订单/消耗表横向滚动容器（2026-11-08 检查项）：窄屏防挤压 */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table-scroll .ledger-table { min-width: 640px; }
   .ledger-summary { display:flex; justify-content:space-between; align-items:center; padding:14px 4px 0; font-size:12px; color:var(--text-muted); }
   .ledger-summary .ls-total strong { color:var(--brand-dark); margin:0 4px; }
   .ledger-summary .ls-total .minus { color:var(--red); margin-left:12px; }
@@ -4813,6 +4776,16 @@
   .login-page { padding: 14px; }
   .lg-dialog { max-height: calc(100vh - 28px); }
   .lg-card { padding: 12px 18px 16px; }
+  /* 小屏弹窗适配（2026-11-08 检查项）：确认卡/积分中心贴边优化 */
+  .confirm-modal { padding: 12px; }
+  .confirm-card { width: 100%; max-height: calc(100vh - 24px); overflow-y: auto; padding: 16px 16px 14px; }
+  .wallet-modal { padding: 10px; }
+  .wallet-dialog { max-height: calc(100vh - 20px); }
+  .wx-packs { grid-template-columns: 1fr; }
+  .upg-route { flex-direction: column; gap: 4px; text-align: center; }
+  .upg-arrow { transform: rotate(90deg); }
+  .cf-actions { flex-direction: column-reverse; }
+  .cf-actions .cf-btn { width: 100%; }
 }
 
 /* —— 顶栏登录态（r59）：游客/未登录「登录 / 注册」钮 + 已登录账号下拉 —— */
@@ -4924,23 +4897,27 @@
   white-space: nowrap;
   text-shadow: 0 1px 3px rgba(0, 80, 30, .28);
 }
+.pb-reward {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 7px;
+  padding: 3px 9px;
+  border: 1px solid #ffe8a5;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #fff3bf, #ffd769);
+  box-shadow: 0 2px 8px rgba(0, 73, 29, .28);
+  color: #075126;
+  text-shadow: none;
+}
 .pb-num {
-  background: linear-gradient(180deg, #FFF3B8 10%, #FFD65C 55%, #FFB93E 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-size: 28px;
+  font-size: 27px;
   font-weight: 900;
-  padding: 0 3px;
   line-height: 1;
-  filter: drop-shadow(0 1px 2px rgba(140, 80, 0, .35));
+  font-variant-numeric: tabular-nums;
 }
 .pb-unit {
-  background: linear-gradient(180deg, #FFF3B8 10%, #FFD65C 60%, #FFB93E 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 800;
 }
 .pb-sub { font-size: 12px; color: rgba(255, 255, 255, .80); letter-spacing: .03em; white-space: nowrap; }
