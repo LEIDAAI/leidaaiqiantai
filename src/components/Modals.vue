@@ -1,14 +1,14 @@
 <script setup lang="ts">
-/* 弹层集合：会话右键菜单 / 子账号设置 / 积分中心 / 购买确认 / 反馈 / 删除确认 / 重命名。
+/* 弹层集合：会话右键菜单 / 积分中心 / 购买确认 / 反馈 / 删除确认 / 重命名 / 欢迎礼。
  * DOM 类名与文案与原版一致，交互对齐 index.html。 */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
-  modals, closeSettings, closeWallet,
+  modals, closeWallet,
   closeFeedback, openDeleteConfirm, closeDeleteConfirm, openRename, closeRename,
   closeBuyConfirm, openBuyConfirm, closeConvMenu, openAccount,
   closeUpgradeConfirm, closeWelcome
 } from '../stores/modals'
-import { accountState, saveSubSettings, sessionsFor } from '../stores/account'
+import { accountState, sessionsFor } from '../stores/account'
 import { walletState, confirmPay } from '../stores/wallet'
 import { chatState, togglePin, commitRename, deleteConversation } from '../stores/chat'
 import { appState } from '../stores/state'
@@ -28,36 +28,22 @@ function onMenu(action: 'pin' | 'rename' | 'delete') {
     openRename(target)
   } else if (action === 'delete') {
     if (chatState.runningTasks[target.id]) {
-      window.alert('该会话正在生成，请先停止并等待任务结束后再删除。')
+      flashToast('该会话正在生成，请先停止并等待任务结束后再删除')
       return
     }
     openDeleteConfirm(() => { deleteConversation(target) })
   }
 }
 
-/* ==================== 子账号设置 ==================== */
-const subMutualSw = ref(false)
-const mainControlSw = ref(false)
-watch(() => modals.settings, (v) => {
-  if (v) {
-    subMutualSw.value = accountState.subMutual
-    mainControlSw.value = accountState.mainControl
-  }
-})
-// 两种查看方式二选一：开启一个自动关闭另一个
-function onSubMutualChange() { if (subMutualSw.value) mainControlSw.value = false }
-function onMainControlChange() { if (mainControlSw.value) subMutualSw.value = false }
-const subAccounts = computed(() => accountState.accounts.filter(a => a.role === 'sub'))
-function onSettingsSave() {
-  saveSubSettings(subMutualSw.value, mainControlSw.value)
-  closeSettings()
-}
+/* ==================== 单账号制（2026-11-08 拍板：删除主子账号概念） ====================
+ * 原「子账号设置」弹窗（settings-modal）与 subMutual/mainControl 逻辑已移除；
+ * 账户积分、会员期、订单全部归属当前登录账号。 */
 
 /* ==================== 积分中心（双栏购买页） ==================== */
 const walletBalance = computed(() => appState.totalCoins.toLocaleString())
-// 购买账号：主账号掩码手机号
+// 购买账号：当前登录账号掩码手机号（单账号制）
 const buyAccount = computed(() => {
-  const main = accountState.accounts.find(a => a.role === 'main')
+  const main = accountState.accounts[0]
   return main ? main.phone : '176****6666'
 })
 function onSelectPkg(p: { selected?: boolean }) {
@@ -66,10 +52,10 @@ function onSelectPkg(p: { selected?: boolean }) {
 }
 // 自定义积分包：拖动滑块即切换为自定义模式（3万—10万，步进1万）
 const customCoins = ref(50000)
-// 阶梯单价（元/积分）：量大更优惠，与团队版加购档单价对齐，避免定价倒挂
+// 阶梯单价（元/积分）：量大更优惠，保证总价随数量单调不减（修复 4 万 ¥500 > 5 万 ¥475 的倒挂）
 const CUSTOM_TIERS = [
   { min: 50000, rate: 0.0095 },
-  { min: 40000, rate: 0.0125 },
+  { min: 40000, rate: 0.0115 },
   { min: 30000, rate: 0.015 }
 ]
 const customRate = computed(() => CUSTOM_TIERS.find(t => customCoins.value >= t.min)?.rate ?? 0.015)
@@ -82,7 +68,7 @@ const payMethod = ref<'微信支付' | '支付宝支付'>('微信支付')
 const activePkg = computed(() => walletState.packages.find(p => p.selected) || null)
 const activeCoins = computed(() => activePkg.value ? activePkg.value.coins : customCoins.value)
 const activePrice = computed(() => activePkg.value ? (activePkg.value.price || 0) : customPrice.value)
-const activeOriginPrice = computed(() => activePrice.value * 2)
+const activeOriginPrice = computed(() => activePrice.value * 2)   // 【未使用】演示原价口径已于 2026-11-07 从订单栏移除；真实原价接入后再展示划线价
 const activeDiscount = computed(() => activeOriginPrice.value - activePrice.value)
 // 有效期：购买起 365 天，到期次日清零
 function fmtDay(ms: number) {
@@ -91,7 +77,20 @@ function fmtDay(ms: number) {
 }
 const expireDate = computed(() => fmtDay(Date.now() + 365 * 864e5))
 const clearDate = computed(() => fmtDay(Date.now() + 366 * 864e5))
+/* 会员有效期校验（v0.2 口径）：增购包仅售会员有效账号。
+ * 到期前 7 天为临期：允许购买但付款前提示；已到期则引导先开通会员，不硬报错。 */
+const memberExpired = computed(() => new Date(walletState.expiresAt.replace(/-/g, '/')).getTime() <= Date.now())
+const memberExpiring = computed(() => {
+  const left = new Date(walletState.expiresAt.replace(/-/g, '/')).getTime() - Date.now()
+  return left > 0 && left <= 7 * 864e5
+})
 function onBuy() {
+  if (memberExpired.value) {
+    flashToast('积分包仅向会员有效账号销售，请先开通或续费会员；原有付费积分不受影响')
+    closeWallet()
+    import('../stores/modals').then(m => { m.modals.page = 'pricing' })
+    return
+  }
   openBuyConfirm({
     name: activePkg.value ? activePkg.value.name : `自定义积分包（${customCoins.value.toLocaleString()} 积分）`,
     coins: activeCoins.value,
@@ -105,6 +104,13 @@ function goBenefits() { openAccount() } // navigatePage 内部会关闭积分中
 const pendingPkg = computed(() => modals.buyPendingPkg)
 const confirmPkgText = computed(() => pendingPkg.value ? (pendingPkg.value.name || '充值包') : '')
 const confirmCoinsText = computed(() => pendingPkg.value ? '+' + Number(pendingPkg.value.coins || 0).toLocaleString() : '')
+/* 排队接续提示（2026-11-08 拍板，场景 32）：升级单目标期起点晚于当前到期时，
+ * 提示"已有未来期将顺延排队"；演示环境以当前套餐到期日作为未来期链起点示意。 */
+const queuedFutureTip = computed(() => {
+  const p = modals.upgradePayload
+  if (!p) return ''
+  return `您的当前会员期至 ${walletState.expiresAt}；本次升级后，未来期订单将自动排队接续在新期到期之后生效`
+})
 /* ==================== 订单支付（扫码支付） ==================== */
 const paySeconds = ref(15 * 60)
 let payTimer: number | null = null
@@ -286,7 +292,6 @@ function onEsc(e: KeyboardEvent) {
   if (e.key !== 'Escape') return
   if (modals.welcome) closeWelcome()
   if (modals.wallet) closeWallet()
-  if (modals.settings) closeSettings()
   if (modals.buyConfirm) closeBuyConfirm()
   if (modals.feedback) closeFeedback(false)
   if (modals.deleteConfirm) closeDeleteConfirm()
@@ -338,62 +343,6 @@ onBeforeUnmount(() => {
     </div>
   </div>
 
-  <!-- 子账号设置弹窗（仅主账号可见） -->
-  <div class="settings-modal" :class="{ open: modals.settings }" role="dialog" aria-modal="true" @click.self="closeSettings">
-    <div class="settings-dialog">
-      <div class="settings-head">
-        <span>🛡</span>
-        <div><div class="sh-title">子账号设置</div><div class="sh-sub">子账号权限与可见范围</div></div>
-        <button class="settings-close" aria-label="关闭" @click="closeSettings">×</button>
-      </div>
-      <div class="settings-body">
-        <div class="settings-block">
-          <h3>子账号查看权限 <span class="sb-tag">本版本</span></h3>
-          <p>子账号设置有以下两种设置方式，根据自己的需求选择：</p>
-          <div class="settings-row">
-            <div class="sr-text">
-              <strong>① 子账号互看</strong>
-              <small>开启后子账号之间可以相互切换查看对应账号的页面</small>
-            </div>
-            <label class="switch">
-              <input type="checkbox" v-model="subMutualSw" @change="onSubMutualChange">
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="settings-row">
-            <div class="sr-text">
-              <strong>② 查看权限控制</strong>
-              <small>开启后子账号不能查看其他账号信息</small>
-            </div>
-            <label class="switch">
-              <input type="checkbox" v-model="mainControlSw" @change="onMainControlChange">
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-        <div class="settings-block">
-          <div class="sl-head">
-            <h3>子账号列表</h3>
-            <a class="sl-manage" href="https://www.dianleida.net/1688/competeShop/memberCenter/subAccountManagement" target="_blank" rel="noopener" title="前往会员中心管理子账号">管理子账号 ›</a>
-          </div>
-          <p>各账号共享积分额度。当前已添加 <strong>{{ subAccounts.length }}</strong> 个子账号。</p>
-          <div>
-            <div v-for="s in subAccounts" :key="s.id" class="settings-row" style="border-top:1px dashed var(--border-light)">
-              <div class="sr-text">
-                <strong>{{ s.name }}</strong>
-                <small>{{ s.shop }} · {{ s.lastActive }}</small>
-              </div>
-              <span class="sb-tag">{{ s.roleLabel }}</span>
-            </div>
-          </div>
-          <div class="settings-actions">
-            <button @click="closeSettings">取消</button>
-            <button class="primary" @click="onSettingsSave">保存设置</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- 积分中心弹窗（双栏购买页） -->
   <div class="wallet-modal" :class="{ open: modals.wallet }" role="dialog" aria-modal="true" @click.self="closeWallet">
@@ -413,11 +362,11 @@ onBeforeUnmount(() => {
       <div class="wx-body">
         <!-- 左栏：购买积分包 -->
         <div class="wx-left">
-          <div class="wx-sec-title">购买积分包</div>
+          <div class="wx-sec-title">购买积分包 <small style="font-weight:400;color:#8a94a6">仅增加积分，不改变会员套餐</small></div>
           <div class="wx-packs">
             <div v-for="(p, i) in walletState.packages" :key="i" class="wx-pack" :class="{ selected: p.selected }" @click="onSelectPkg(p)">
-              <span class="wx-pack-badge">12个月</span>
-              <div class="wx-pack-name">{{ p.name }}</div>
+              <span class="wx-pack-badge">365天</span>
+              <div class="wx-pack-name">{{ p.name === '标准版' || p.name === '基础版' ? '小额包' : p.name === '高级版' ? '常用包' : '大额包' }}</div>
               <div class="wx-pack-coins">{{ p.coins.toLocaleString() }}<small> 积分</small></div>
               <div class="wx-pack-price">{{ p.price != null ? '¥' + p.price : '价格待定' }}</div>
               <span v-if="p.selected" class="wx-pack-check">✓</span>
@@ -431,7 +380,8 @@ onBeforeUnmount(() => {
             <input class="wx-slider" type="range" min="30000" max="100000" step="10000" v-model.number="customCoins" @input="onCustomSlide" aria-label="自定义积分数量">
             <div class="wx-scale"><span>3万</span><span>5万</span><span>7.5万</span><span>10万</span></div>
           </div>
-          <div class="wx-expire">🗓 积分包有效期至 {{ expireDate }}（购买后 365 天内有效，到期未使用部分次日清零）</div>
+          <div class="wx-expire">🗓 积分包有效期至 {{ expireDate }}（购买后 365 天内有效，不随会员到期清零；到期未使用部分次日清零）</div>
+          <div v-if="memberExpiring" class="wx-expire" style="color:#b06a00">⚠ 当前会员将于 {{ walletState.expiresAt }} 到期；积分包有效期独立计算，不代替会员，到期后剩余积分仍可在全部功能中使用</div>
           <div class="wx-sec-title" style="margin-top:16px">支付方式</div>
           <div class="wx-pays">
             <button type="button" class="wx-pay" :class="{ active: payMethod === '微信支付' }" @click="payMethod = '微信支付'">
@@ -448,20 +398,19 @@ onBeforeUnmount(() => {
           <div class="wx-order">
             <div class="wx-orow"><span>购买账号</span><strong>{{ buyAccount }}</strong></div>
             <div class="wx-orow"><span>订单类型</span><strong>积分加油包</strong></div>
-            <div class="wx-orow"><span>套餐名称</span><strong>{{ activePkg ? activePkg.name : '自定义积分包' }}</strong></div>
+            <div class="wx-orow"><span>商品名称</span><strong>{{ activePkg ? (activePkg.name === '标准版' || activePkg.name === '基础版' ? '小额包' : activePkg.name === '高级版' ? '常用包' : '大额包') : '自定义积分包' }}</strong></div>
             <div class="wx-orow"><span>获得</span><strong class="wx-green">+{{ activeCoins.toLocaleString() }} 积分</strong></div>
             <div class="wx-orow"><span>生效时间</span><strong>支付成功后立即生效</strong></div>
             <div class="wx-orow"><span>到期日期</span><strong>{{ expireDate }}</strong></div>
             <div class="wx-orow"><span>清零日期</span><strong>{{ clearDate }}</strong></div>
           </div>
           <div class="wx-amounts">
-            <div class="wx-orow"><span>订单原价</span><span>¥{{ activeOriginPrice }}</span></div>
-            <div class="wx-orow"><span>优惠金额</span><span class="wx-green">-¥{{ activeDiscount }}</span></div>
             <div class="wx-orow"><span>应付金额</span><strong>¥{{ activePrice }}</strong></div>
           </div>
           <button type="button" class="wx-pay-btn" @click="onBuy">确认支付 ¥{{ activePrice }}</button>
           <div class="wx-agree">支付即代表同意<a>《服务协议》</a>与<a>《付费授权协议》</a></div>
-          <div class="wx-note">虚拟商品，一经售出不支持退款</div>
+          <div class="wx-note">虚拟商品，一经售出不支持退款；积分包 365 天独立有效，不随会员到期清零</div>
+          <div v-if="memberExpired" class="wx-note" style="color:#b06a00;font-weight:600">当前会员已到期，暂不能购买积分包；请先在“套餐购买”页开通会员</div>
         </div>
       </div>
     </div>
@@ -541,7 +490,7 @@ onBeforeUnmount(() => {
           <div class="pi-row"><span>订单号码：</span><span>{{ payOrderNo }}</span></div>
           <div class="pi-row"><span>购买账号：</span><span>{{ buyAccount }}</span></div>
           <div class="pi-row"><span>订单类型：</span><span>{{ pendingPkg?.orderType === 'upgrade' ? '套餐升级' : '积分加油包' }}</span></div>
-          <div class="pi-row"><span>购买套餐：</span><span>{{ confirmPkgText }}</span></div>
+          <div class="pi-row"><span>购买商品：</span><span>{{ confirmPkgText }}</span></div>
           <div class="pi-row"><span>{{ pendingPkg?.orderType === 'upgrade' ? '月度额度：' : '获　　得：' }}</span><span>{{ confirmCoinsText.replace('+', '') }} 积分</span></div>
           <div class="pi-row"><span>生效日期：</span><span>立即生效</span></div>
           <div class="pi-row"><span>到期时间：</span><span>{{ payExpireText }}</span></div>
@@ -585,27 +534,32 @@ onBeforeUnmount(() => {
   <div class="confirm-modal" :class="{ open: modals.upgradeConfirm }" role="dialog" aria-modal="true" @click.self="closeUpgradeConfirm">
     <div class="confirm-card upg-card">
       <div class="cf-head">
-        <span class="cf-title">套餐升级确认</span>
+        <span class="cf-title">{{ modals.upgradePayload?.renewOnly ? '套餐续费确认' : '套餐升级确认' }}</span>
         <button class="cf-close" type="button" aria-label="关闭" @click="closeUpgradeConfirm">×</button>
       </div>
       <template v-if="modals.upgradePayload">
         <div class="upg-route">
           <span class="upg-from">{{ modals.upgradePayload.curName }}</span>
-          <span class="upg-arrow">→</span>
+          <span class="upg-arrow" v-if="!modals.upgradePayload?.renewOnly">→</span>
           <span class="upg-to">{{ modals.upgradePayload.name }}</span>
         </div>
         <div class="upg-rows">
-          <div class="upg-row"><span>当前套餐实付</span><strong>¥{{ modals.upgradePayload.curPrice }}</strong></div>
-          <div class="upg-row"><span>目标套餐价格</span><strong>¥{{ modals.upgradePayload.fullPrice }}</strong></div>
-          <div class="upg-row"><span>目标月度额度</span><strong>{{ Number(modals.upgradePayload.coins || 0).toLocaleString() }} 积分</strong></div>
-          <div class="upg-row"><span>升级后到期时间</span><strong>{{ modals.upgradePayload.expiresAt }}</strong></div>
+          <div class="upg-row" v-if="!modals.upgradePayload?.renewOnly"><span>当前套餐实付</span><strong>¥{{ modals.upgradePayload.curPrice }}</strong></div>
+          <div class="upg-row"><span>{{ modals.upgradePayload?.renewOnly ? '续费价格' : '目标套餐价格' }}</span><strong>¥{{ modals.upgradePayload.fullPrice }}</strong></div>
+          <div class="upg-row"><span>每期发放积分</span><strong>{{ Number(modals.upgradePayload.coins || 0).toLocaleString() }} 积分</strong></div>
+          <div class="upg-row"><span>{{ modals.upgradePayload?.renewOnly ? '当前到期时间' : '升级后到期时间' }}</span><strong>{{ modals.upgradePayload.expiresAt }}</strong></div>
         </div>
-        <div class="upg-pay-line">补差价金额</div>
-        <div class="upg-amount">¥{{ modals.upgradePayload.price }}</div>
-        <p class="upg-note">补差价 = 目标套餐价格 − 当前套餐剩余价值（按剩余整月折算）。支付成功后立即生效，套餐额度与权益按新套餐执行，已购积分余额不受影响。</p>
+        <template v-if="!modals.upgradePayload?.renewOnly">
+          <div class="upg-pay-line">补差价金额</div>
+          <div class="upg-amount">¥{{ modals.upgradePayload.price }}</div>
+        </template>
+        <p class="upg-note" v-if="modals.upgradePayload?.renewOnly">提前续费下一期：自当前到期日顺延一个周期，最多保留一笔未来期；续费不提前发放下期积分，当期剩余积分照常使用，到期未用完的套餐积分失效不结转。</p>
+        <p class="upg-note" v-else-if="modals.upgradePayload?.cycleChanged">月转年即时转换：补差 = 目标年价 − 当前月付剩余价值（按剩余天数折算）；年付自今天起算一年，到期日见下方。升级后立即发放新档首月积分，原有积分余额不受影响。</p>
+        <p class="upg-note" v-else>补差 = (目标套餐价 − 当前套餐实付价) × 剩余天数 ÷ 周期天数，负数取 0。三档功能完全一致，升级仅提升每月发放积分并补发当期差额；支付成功后立即生效，到期日不变，已购积分余额不受影响。</p>
+        <p class="upg-note" v-if="queuedFutureTip" style="border-left:3px solid #e6a23c;background:#fdf6ec;color:#8a6d3b;padding:8px 12px;border-radius:8px">⚠ {{ queuedFutureTip }}（未来期不退款，将按付款时价格排队生效）</p>
         <div class="cf-actions">
           <button class="cf-btn cf-cancel" type="button" @click="closeUpgradeConfirm">取消</button>
-          <button class="cf-btn upg-paybtn" type="button" @click="onUpgradeOk">补差价 ¥{{ modals.upgradePayload.price }}，确认升级</button>
+          <button class="cf-btn upg-paybtn" type="button" @click="onUpgradeOk">{{ modals.upgradePayload?.renewOnly ? '支付 ¥' + modals.upgradePayload.fullPrice + '，确认续费' : '补差价 ¥' + modals.upgradePayload.price + '，确认升级' }}</button>
         </div>
       </template>
     </div>

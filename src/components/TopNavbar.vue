@@ -43,7 +43,7 @@ function scheduleCsClose() {
   if (csCloseTimer) clearTimeout(csCloseTimer)
   csCloseTimer = setTimeout(() => { csOpen.value = false; csCloseTimer = undefined }, 150)
 }
-/* r59：主账号胶囊下拉（账号与积分 / 退出登录）；未登录（含游客）显示「登录 / 注册」 */
+/* r59：账号积分胶囊下拉（账号与积分 / 退出登录）；未登录（含游客）显示「登录 / 注册」 */
 /* r67：改为鼠标移入显示（复用 np/cs 同款 mouseenter/延迟关闭模式），点击保留作触屏降级 */
 const avOpen = ref(false)
 const avRoot = ref<HTMLElement | null>(null)
@@ -181,7 +181,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
       </div>
       <button v-if="!authState.logged" class="np-pill" @click="openPricing">查看套餐</button>
 
-      <!-- r59：未登录（含游客）→ 绿色「登录 / 注册」；已登录 → 主账号胶囊 + 下拉（账号与积分 / 退出登录） -->
+      <!-- r59：未登录（含游客）→ 绿色「登录 / 注册」；已登录 → 账号胶囊 + 下拉（账号与积分 / 退出登录） -->
       <button v-if="!authState.logged" class="nav-login" @click="openLogin('')">登录 / 注册</button>
       <div v-else ref="avRoot" class="av-wrap" @mouseenter="openAv" @mouseleave="scheduleAvClose">
         <button class="nav-avatar" @click="toggleAv">
