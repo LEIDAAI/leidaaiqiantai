@@ -8,28 +8,21 @@ import { formatRelativeTime, flashToast } from '../utils/common'
 import { parseAgentOpening } from './opening'
 
 export const accountState = reactive({
+  // 单账号制（2026-11-08 拍板：删除主子账号概念）——积分、会员期、订单全部归属当前登录账号
   accounts: [
-    { id: 'main-001', name: '雷达用户', role: 'main', roleLabel: '主', avatar: '🏬', phone: '176****6666', shop: '总店', lastActive: '刚刚' }
+    { id: 'main-001', name: '雷达用户', role: 'main', roleLabel: '', avatar: '🏬', phone: '176****6666', shop: '', lastActive: '刚刚' }
   ] as Account[],
   currentAccountId: 'main-001',
   sessionsByAccount: {
     'main-001': []
   } as Record<string, SessionItem[]>,
   memberDetailLoaded: false,
-  accountSwitching: false,
-  // 子账号互看 / 主账号控制
-  subMutual: (() => { try { return localStorage.getItem('dld_sub_mutual') === '1' } catch (e) { return false } })(),
-  mainControl: (() => { try { return localStorage.getItem('dld_main_control') === '1' } catch (e) { return false } })()
+  accountSwitching: false
 })
 
 export const currentAccount = computed<Account>(() =>
   accountState.accounts.find(a => a.id === accountState.currentAccountId) || accountState.accounts[0]
 )
-export const isMainAccount = computed(() => currentAccount.value && currentAccount.value.role === 'main')
-
-export function findAccount(id: string): Account {
-  return accountState.accounts.find(a => a.id === id) || accountState.accounts[0]
-}
 
 export function sessionsFor(accountId?: string): SessionItem[] {
   const key = accountId || accountState.currentAccountId
@@ -37,15 +30,7 @@ export function sessionsFor(accountId?: string): SessionItem[] {
   return accountState.sessionsByAccount[key]
 }
 
-export function getSwitchableAccounts(): Account[] {
-  // 主账号：始终可切换查看任一账号
-  if (isMainAccount.value) return accountState.accounts
-  // 子账号：互看模式下可看全部；主账号控制（或未开启）时仅能查看自己
-  if (accountState.subMutual && !accountState.mainControl) return accountState.accounts
-  return accountState.accounts.filter(a => a.id === currentAccount.value.id)
-}
-
-// 账号切换事件订阅（chat store 注入：切换后重载会话列表）
+// 账号事件订阅（chat store 注入：会话列表变更后落盘/通知）
 let _onAccountSwitched: ((id: string) => void) | null = null
 let _onConversationsLoaded: ((list: SessionItem[], skipSelect?: boolean) => void) | null = null
 export function setAccountEvents(handlers: {
@@ -61,40 +46,6 @@ export function notifyConversationsLoaded(list: SessionItem[], skipSelect?: bool
   const persistKey = accountState.currentAccountId
   writeCachedSessions(persistKey, accountState.sessionsByAccount[persistKey] || list || [])
   if (_onConversationsLoaded) _onConversationsLoaded(list, skipSelect)
-}
-
-export function switchAccount(id: string) {
-  if (accountState.currentAccountId === id) return
-  const next = findAccount(id)
-  accountState.accountSwitching = true
-  setTimeout(() => {
-    accountState.currentAccountId = next.id
-    try { localStorage.setItem(ACCOUNT_KEY, id) } catch (e) {}
-    if (_onAccountSwitched) _onAccountSwitched(next.id)
-    accountState.accountSwitching = false
-  }, 600)
-}
-
-// 一键回到主账号视图
-export function resetToMain(): boolean {
-  if (isMainAccount.value) return false
-  const main = accountState.accounts[0]
-  accountState.accountSwitching = true
-  setTimeout(() => {
-    accountState.currentAccountId = main.id
-    try { localStorage.setItem(ACCOUNT_KEY, main.id) } catch (e) {}
-    if (_onAccountSwitched) _onAccountSwitched(main.id)
-    accountState.accountSwitching = false
-  }, 600)
-  return true
-}
-
-export function saveSubSettings(subMutual: boolean, mainControl: boolean) {
-  accountState.subMutual = subMutual
-  accountState.mainControl = mainControl
-  try { localStorage.setItem('dld_sub_mutual', subMutual ? '1' : '0') } catch (e) {}
-  try { localStorage.setItem('dld_main_control', mainControl ? '1' : '0') } catch (e) {}
-  flashToast(subMutual ? '已开启子账号互看' : (mainControl ? '已开启查看权限控制' : '已关闭子账号查看权限'))
 }
 
 export function maskPhone(p: string): string {
@@ -115,7 +66,7 @@ export async function bootstrapDld() {
     const d = res.result || {}
     if (d.loginAccount) {
       const main = accountState.accounts[0]
-      // 展示名不暴露「主账号」概念：后端为空或本身即“主账号”时统一显示中性名
+      // 展示名：后端为空或为占位名时统一显示中性名
       main.name = (!d.loginAccount || d.loginAccount === '主账号') ? '雷达用户' : d.loginAccount
       main.phone = d.mobilePhone ? maskPhone(d.mobilePhone) : main.phone
       appState.dldMember = { ...appState.dldMember, ...d }
@@ -221,35 +172,7 @@ export async function bootstrapDld() {
 
   // 6. 不在初始化时加载首页榜单，避免覆盖当前会话的真实商品结果。
 
-  // 7. 子账号列表
-  try {
-    const res = await DLD.slaveList()
-    const list = res.result || []
-    if (Array.isArray(list) && list.length) {
-      const mains = accountState.accounts.filter(a => a.role === 'main')
-      const mapped: Account[] = list.map((s: any, i: number) => {
-        const phone = String(s.mobilePhone || s.mobile || s.phone || '')
-        return {
-          id: 'slave-' + (s.id ?? s.userId ?? s.memberId ?? i),
-          name: s.name || s.nickname || s.account || ('子账号' + (i + 1)),
-          role: 'sub', roleLabel: '子', avatar: '👤',
-          phone: maskPhone(phone),
-          shop: s.shopName || s.remark || s.department || '',
-          lastActive: s.lastLoginTime ? formatRelativeTime(s.lastLoginTime) : ''
-        }
-      })
-      accountState.accounts = [...mains, ...mapped]
-      mapped.forEach(a => { if (!accountState.sessionsByAccount[a.id]) accountState.sessionsByAccount[a.id] = [] })
-      // 当前账号若已被移出列表则回退主账号
-      if (!accountState.accounts.some(a => a.id === accountState.currentAccountId)) {
-        accountState.currentAccountId = accountState.accounts[0].id
-        try { localStorage.setItem(ACCOUNT_KEY, accountState.currentAccountId) } catch (e2) {}
-        if (_onAccountSwitched) _onAccountSwitched(accountState.currentAccountId)
-      }
-    }
-  } catch (e) {
-    console.debug('[DLD] slaveList 失败 → 保留 mock 子账号：', (e as Error).message)
-  }
+  // 7. 子账号列表（已废弃：单账号制，2026-11-08 拍板删除主子账号概念，不再拉取 slaveList）
 }
 
 export { parseAgentOpening }

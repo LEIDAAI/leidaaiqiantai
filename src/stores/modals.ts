@@ -1,5 +1,5 @@
 /* =====================================================
- * 弹窗状态：设置 / 积分中心 / 反馈 / 充值确认
+ * 弹窗状态：积分中心 / 反馈 / 充值确认
  * 删除确认 / 重命名 / 会话右键菜单 / 输入框右键菜单
  * 页面切换：chat / experts / skills / account / pricing / orders / consume
  * ===================================================== */
@@ -20,7 +20,6 @@ function restoreLastPage(): PageKey {
 }
 
 export const modals = reactive({
-  settings: false,
   page: restoreLastPage(),
   wallet: false,
   feedback: false,
@@ -66,8 +65,6 @@ watch(() => authState.welcomeGift, v => {
   setTimeout(() => { modals.welcome = true }, 400)
 })
 
-export function openSettings() { modals.settings = true }
-export function closeSettings() { modals.settings = false }
 export function closeWelcome() { modals.welcome = false }
 export function openWallet() {
   if (!authState.logged) { openLogin('购买积分包'); return }
