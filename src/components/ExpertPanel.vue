@@ -125,6 +125,8 @@ const isNewItem = <T extends { id: string }>(item: T, list: T[]) => list.slice(0
 const mineExperts = computed(() => expertState.experts.filter(e => e.source === 'user'))
 const mineSkills = computed(() => expertState.skills.filter(s => s.source === 'user'))
 function useExpert(e: ExpertItem) {
+  chatState.selectedExpert = e
+  chatState.selectedSkill = null
   chatState.inputText = e.prompts?.[0] || e.desc
   navigatePage('chat')
 }
@@ -135,6 +137,8 @@ function askExpertPrompt(prompt: string) {
   navigatePage('chat')
 }
 function useSkill(s: SkillItem) {
+  chatState.selectedSkill = s
+  chatState.selectedExpert = null
   chatState.inputText = s.instructions || s.desc
   navigatePage('chat')
 }
