@@ -81,7 +81,7 @@ const today = new Date().toLocaleDateString('zh-CN')
 const reportTitle = computed(() => caseExpert.value?.caseTitle || caseItem.value?.name || '案例报告')
 const reportMeta = computed(() => {
   if (caseExpert.value) return `${caseExpert.value.platform} · 数据样本近 30 天 · 生成于 ${today}`
-  return caseSkill.value ? `v${caseSkill.value.version} · ${caseSkill.value.author} · 生成于 ${today}` : ''
+  return caseSkill.value ? `${caseSkill.value.author} · 生成于 ${today}` : ''
 })
 const pdfName = computed(() => `${safeName(caseExpert.value?.caseTitle || '选品评估报告')}.pdf`)
 function safeName(v: string) { return v.replace(/[\\/:*?"<>|]/g, '-') }
@@ -207,7 +207,7 @@ function onSendClick() {
                       <span class="hc-icon grad" v-html="skillVisual(s).icon"></span>
                       <span class="hc-name">{{ s.name }}</span>
                     </div>
-                    <div class="hc-tags">{{ s.scenario || '通用' }} · v{{ s.version }}</div>
+                    <div class="hc-tags">{{ s.scenario || '通用' }}</div>
                   </div>
                   <div class="hc-desc">{{ s.desc }}</div>
                   <div class="hc-foot">
@@ -332,7 +332,7 @@ function onSendClick() {
                 <button v-for="(p, pi) in caseExpert.prompts || []" :key="pi" class="case-prompt" @click="caseExpert && askExpertPrompt(p)">{{ p }}</button>
               </template>
               <template v-else-if="caseSkill">
-                <div class="cs-meta">v{{ caseSkill.version }} · {{ caseSkill.downloadCount ?? 0 }} 次安装 · {{ caseSkill.author }}</div>
+                <div class="cs-meta">{{ caseSkill.downloadCount ?? 0 }} 次安装 · {{ caseSkill.author }}</div>
                 <div class="cs-h">适用场景</div>
                 <div><span class="cs-tag">{{ caseSkill.scenario }}</span></div>
                 <div class="cs-h">内置工具</div>

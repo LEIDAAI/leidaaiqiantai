@@ -38,7 +38,7 @@ const today = new Date().toLocaleDateString('zh-CN')
 const reportTitle = computed(() => caseExpert.value?.caseTitle || caseItem.value?.name || '案例报告')
 const reportMeta = computed(() => {
   if (caseExpert.value) return `${caseExpert.value.platform} · 数据样本近 30 天 · 生成于 ${today}`
-  return caseSkill.value ? `v${caseSkill.value.version} · ${caseSkill.value.author} · 生成于 ${today}` : ''
+  return caseSkill.value ? `${caseSkill.value.author} · 生成于 ${today}` : ''
 })
 const pdfName = computed(() => `${safeName(caseExpert.value?.caseTitle || '选品评估报告')}.pdf`)
 function safeName(v: string) { return v.replace(/[\\/:*?"<>|]/g, '-') }
@@ -235,7 +235,7 @@ function saveCreate() {
               </div>
               <div class="dir-divider"></div>
               <div class="dir-foot">
-                <span class="dir-stat">v{{ s.version }} · {{ s.downloadCount ?? 0 }} 次安装</span>
+                <span class="dir-stat">{{ s.downloadCount ?? 0 }} 次安装</span>
                 <span class="dir-actions">
                   <button class="da ghost" @click="caseItem = s">看案例</button>
                   <button class="da main" @click="useSkill(s)">立即使用</button>
@@ -296,7 +296,7 @@ function saveCreate() {
               </div>
               <div class="dir-divider"></div>
               <div class="dir-foot">
-                <span class="dir-stat">v{{ s.version }} · 我的</span>
+                <span class="dir-stat">我的</span>
                 <span class="dir-actions">
                   <button class="da ghost" @click="caseItem = s">看案例</button>
                   <button class="da main" @click="useSkill(s)">立即使用</button>
@@ -441,7 +441,7 @@ function saveCreate() {
                 <button v-for="(p, pi) in caseExpert.prompts || []" :key="pi" class="case-prompt" @click="askExpertPrompt(p)">{{ p }}</button>
               </template>
               <template v-else-if="caseSkill">
-                <div class="cs-meta">v{{ caseSkill.version }} · {{ caseSkill.downloadCount ?? 0 }} 次安装 · {{ caseSkill.author }}</div>
+                <div class="cs-meta">{{ caseSkill.downloadCount ?? 0 }} 次安装 · {{ caseSkill.author }}</div>
                 <div class="cs-h">适用场景</div>
                 <div><span class="cs-tag">{{ caseSkill.scenario }}</span></div>
                 <div class="cs-h">内置工具</div>
