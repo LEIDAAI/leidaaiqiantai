@@ -59,14 +59,11 @@ function prevHomePage() { if (homePage.value > 0) homePage.value-- }
 function nextHomePage() { if (homePage.value < homePageCount.value - 1) homePage.value++ }
 const caseItem = ref<ExpertItem | SkillItem | null>(null)
 const isCaseSkill = computed(() => !!caseItem.value && 'version' in caseItem.value)
-/* 立即使用：点亮对应专家/技能 chip + 填入提示词后直接自动发送 */
+/* 立即使用：点亮对应专家/技能 chip + 填入提示词，不自动发送（2026-11-09 拍板：由用户确认后发送） */
 function useExpert(e: ExpertItem) {
   chatState.selectedExpert = e
   chatState.selectedSkill = null
   chatState.inputText = e.prompts?.[0] || e.desc
-  const key = chatState.activeConvKey
-  if (key && chatState.runningTasks[key]) return
-  send()
 }
 function useSkill(s: SkillItem) {
   chatState.selectedSkill = s
