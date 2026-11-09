@@ -1,16 +1,21 @@
 <script setup lang="ts">
 /* r85：顶部活动通栏 Banner —— 首次注册雷达AI赠送100积分（渐变设计感方案：光带/星光/礼物/金币装饰）
-   关闭后会话内不再出现（sessionStorage）；活动结束移除 App.vue 中的 <PromoBanner /> 即可下线 */
+   展示规则（2026-11-09 拍板）：关闭后当前浏览器 1 小时内不再展示（localStorage 时间戳判定）；
+   活动结束移除 App.vue 中的 <PromoBanner /> 即可下线 */
 import { ref } from 'vue'
 import { openLogin, authState } from '../stores/auth'
 import { navigatePage } from '../stores/modals'
 
-const KEY = 'dld_promo_banner_closed'
+const KEY = 'dld_promo_banner_closed_at'
+const HIDE_MS = 60 * 60 * 1000   // 关闭后静默 1 小时
 const closed = ref(false)
-try { closed.value = sessionStorage.getItem(KEY) === '1' } catch (e) {}
+try {
+  const at = Number(localStorage.getItem(KEY) || 0)
+  closed.value = at > 0 && Date.now() - at < HIDE_MS
+} catch (e) {}
 function close() {
   closed.value = true
-  try { sessionStorage.setItem(KEY, '1') } catch (e) {}
+  try { localStorage.setItem(KEY, String(Date.now())) } catch (e) {}
 }
 /* 未登录 → 弹注册/登录；已登录 → 去套餐页 */
 function join() {
