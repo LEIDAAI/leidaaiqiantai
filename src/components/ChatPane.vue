@@ -6,7 +6,7 @@ import Composer from './Composer.vue'
 import {
   chatState, activeView, isRunning, stopTask
 } from '../stores/chat'
-import { modals, openFeedback, navigatePage } from '../stores/modals'
+import { modals, openFeedback } from '../stores/modals'
 import { resetRightPreview } from '../stores/panel'
 import { expertState, type ExpertItem, type SkillItem } from '../stores/expert'
 import { skillVisual, platformLogo } from '../stores/skillVisual'
@@ -20,41 +20,17 @@ const view = activeView
 const chatHero = computed(() => !view.value || view.value.messages.length === 0)
 const homeTab = ref<'expert' | 'skill'>('expert')
 const homeChip = ref('推荐')
-const homePlatform = ref('全部')
-const homePlatforms = ['全部', '1688', 'OZON', '亚马逊', 'TEMU']
-const platformAliases: Record<string, string[]> = { 'OZON': ['Ozon', 'OZON'], 'TEMU': ['Temu', 'TEMU'] }
-const matchesHomePlatform = (item: ExpertItem | SkillItem) => {
-  if (homePlatform.value === '全部') return true
-  if ('platform' in item) return (platformAliases[homePlatform.value] || [homePlatform.value]).includes(item.platform)
-  return item.tags.some(tag => (platformAliases[homePlatform.value] || [homePlatform.value]).includes(tag))
-}
-const homeScenarios = computed(() => {
-  const list = homeTab.value === 'skill' ? expertState.skills : expertState.experts
-  const values = list.filter(item => matchesHomePlatform(item)).map(item => 'platform' in item ? item.category : item.scenario).filter(Boolean) as string[]
-  return ['推荐', ...Array.from(new Set(values))]
-})
-const homeExperts = computed(() => {
-  const list = expertState.experts.filter(e => e.source === 'official' && matchesHomePlatform(e))
-  if (homeChip.value === '推荐') return list.slice(0, 12)
-  return list.filter(e => e.category === homeChip.value || e.tags.includes(homeChip.value)).slice(0, 18)
-})
 const homeSkills = computed(() => {
-  const list = expertState.skills.filter(s => s.source === 'official' && matchesHomePlatform(s))
+  const list = expertState.skills.filter(s => s.source === 'official')
   if (homeChip.value === '推荐') return list.slice(0, 12)
   return list.filter(s => s.scenario === homeChip.value || s.tags.includes(homeChip.value)).slice(0, 18)
 })
-function selectHomePlatform(value: string) {
-  homePlatform.value = value
-  if (!homeScenarios.value.includes(homeChip.value)) homeChip.value = '推荐'
-}
 /* —— 卡片左右翻页 —— */
 const HOME_PAGE_SIZE = 6
 const homePage = ref(0)
-const homeActiveList = computed(() => homeTab.value === 'expert' ? homeExperts.value : homeSkills.value)
-const homePageCount = computed(() => Math.max(1, Math.ceil(homeActiveList.value.length / HOME_PAGE_SIZE)))
-const pagedExperts = computed(() => homeExperts.value.slice(homePage.value * HOME_PAGE_SIZE, (homePage.value + 1) * HOME_PAGE_SIZE))
+const homePageCount = computed(() => Math.max(1, Math.ceil(homeSkills.value.length / HOME_PAGE_SIZE)))
 const pagedSkills = computed(() => homeSkills.value.slice(homePage.value * HOME_PAGE_SIZE, (homePage.value + 1) * HOME_PAGE_SIZE))
-watch([homeTab, homeChip, homePlatform], () => { homePage.value = 0 })
+watch([homeTab, homeChip], () => { homePage.value = 0 })
 function prevHomePage() { if (homePage.value > 0) homePage.value-- }
 function nextHomePage() { if (homePage.value < homePageCount.value - 1) homePage.value++ }
 const caseItem = ref<ExpertItem | SkillItem | null>(null)
@@ -70,25 +46,26 @@ function useSkill(s: SkillItem) {
   chatState.selectedExpert = null
   chatState.inputText = s.instructions || s.desc
 }
-/* —— 首页四平台专家小卡（2026-11-10 拍板：替代原专家卡片网格） ——
- * 点击即选中（绿色「已就位」），再点取消；选中后发送携带（指定专家：X专家）上下文。
- * 头像区 = 平台色块 + 平台 logo；数据聚合该平台全部官方专家，发送入口与选中态复用 chatState。 */
+/* 首页四专家：轻量头像入口，与输入框共用选中状态。 */
 const PLATFORM_EXPERTS = [
-  { key: '1688', label: '1688专家', color: '#FF6A00', plat: '1688' },
-  { key: 'OZON', label: 'OZON专家', color: '#005BFF', plat: 'Ozon' },
-  { key: '亚马逊', label: '亚马逊专家', color: '#146EB4', plat: '亚马逊' },
-  { key: 'TEMU', label: 'TEMU专家', color: '#FF6D3F', plat: 'Temu' }
+  { key: '1688', label: '1688专家', tint: '#FFF4E5', plat: '1688', role: '货源 · 采购' },
+  { key: 'OZON', label: 'OZON专家', tint: '#E9F1FF', plat: 'Ozon', role: '选品 · 运营' },
+  { key: '亚马逊', label: '亚马逊专家', tint: '#FFF8E8', plat: '亚马逊', role: '市场 · 增长' },
+  { key: 'TEMU', label: 'TEMU专家', tint: '#FFEEE7', plat: 'Temu', role: '爆品 · 趋势' }
 ] as const
-const selectedPlatformExpert = ref<string>('')
+const selectedPlatformExpert = computed(() => {
+  const id = chatState.selectedExpert?.id
+  return id?.startsWith('plat-') ? id.slice(5) : ''
+})
 function pickPlatformExpert(key: string) {
-  selectedPlatformExpert.value = selectedPlatformExpert.value === key ? '' : key
-}
-const activePlatformExpert = computed(() => PLATFORM_EXPERTS.find(p => p.key === selectedPlatformExpert.value) || null)
-/* 选中平台专家时：聚合该平台专家为选中态，占位文案派活风格（与参考样式一致） */
-watch(selectedPlatformExpert, key => {
-  if (!key) { chatState.selectedExpert = null; return }
-  const conf = PLATFORM_EXPERTS.find(p => p.key === key)!
+  if (selectedPlatformExpert.value === key) {
+    chatState.selectedExpert = null
+    return
+  }
+  const conf = PLATFORM_EXPERTS.find(p => p.key === key)
+  if (!conf) return
   const agg = expertState.experts.filter(e => e.source === 'official' && e.platform === conf.plat)
+  chatState.selectedSkill = null
   chatState.selectedExpert = {
     id: 'plat-' + key,
     name: conf.label,
@@ -98,7 +75,8 @@ watch(selectedPlatformExpert, key => {
     category: '平台专家',
     source: 'official'
   }
-})
+}
+const activePlatformExpert = computed(() => PLATFORM_EXPERTS.find(p => p.key === selectedPlatformExpert.value) || null)
 /* 占位文案：选中平台专家时切换为“给 X 派活”风格 */
 const composerPlaceholder = computed(() => {
   const conf = activePlatformExpert.value
@@ -207,26 +185,22 @@ function onSendClick() {
                 技能
               </button>
             </div>
-            <div class="seg-track">
-              <button v-for="p in homePlatforms" :key="p" class="seg-btn" :class="{ on: homePlatform === p }" @click="selectHomePlatform(p)">
-                <span v-if="p !== '全部'" class="seg-logo"><img :src="platformLogo(p)" alt=""></span>{{ p }}
-              </button>
-            </div>
           </div>
           <div class="home-sec">
             <div class="home-main">
-            <!-- 专家：四平台小卡（2026-11-10 拍板样式） -->
-            <div v-if="homeTab === 'expert'" class="plat-expert-row">
-              <button v-for="p in PLATFORM_EXPERTS" :key="p.key" class="pe-card" :class="{ on: selectedPlatformExpert === p.key }" type="button" @click="pickPlatformExpert(p.key)">
-                <span class="pe-avatar" :style="{ background: p.color }">
-                  <img :src="platformLogo(p.plat === 'Ozon' ? 'OZON' : p.key)" :alt="p.label">
+            <!-- 专家：居中紧凑头像卡片 -->
+            <div v-if="homeTab === 'expert'" class="plat-expert-row" role="group" aria-label="选择专家">
+              <button v-for="p in PLATFORM_EXPERTS" :key="p.key" class="pe-card" :class="{ on: selectedPlatformExpert === p.key }" :aria-pressed="selectedPlatformExpert === p.key" :aria-label="`${p.label}，${selectedPlatformExpert === p.key ? '已就位，再次点击取消' : p.role}`" type="button" @click="pickPlatformExpert(p.key)">
+                <span class="pe-avatar" :style="{ background: p.tint }" aria-hidden="true">
+                  <img :src="platformLogo(p.plat)" :alt="p.label">
                 </span>
-                <span class="pe-name" :class="{ on: selectedPlatformExpert === p.key }">{{ p.label }}</span>
-                <span class="pe-status" :class="{ on: selectedPlatformExpert === p.key }">
-                  <i class="pe-dot"></i>{{ selectedPlatformExpert === p.key ? '已就位' : '由它接手' }}
+                <span class="pe-name">{{ p.label }}</span>
+                <span class="pe-role">{{ p.role }}</span>
+                <span class="pe-status">
+                  <svg v-if="selectedPlatformExpert === p.key" width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m3.5 8 3 3 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  {{ selectedPlatformExpert === p.key ? '已就位' : '由它接手' }}
                 </span>
               </button>
-              <span class="pe-more" @click="navigatePage('experts')">更多 ›</span>
             </div>
             <!-- 技能：保留原卡片网格 -->
             <div v-else class="home-pager">

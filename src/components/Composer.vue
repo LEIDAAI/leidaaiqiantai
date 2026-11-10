@@ -357,7 +357,7 @@ onBeforeUnmount(() => {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           上传文件
         </button>
-        <div class="cb-pop-wrap">
+        <div v-if="false" class="cb-pop-wrap">
           <button class="cb-tool" :class="{ open: pop === 'expert', active: !!chatState.selectedExpert }" type="button" title="选择电商专家" @click="togglePop('expert')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             电商专家

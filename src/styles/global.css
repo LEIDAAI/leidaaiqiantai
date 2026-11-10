@@ -4193,33 +4193,45 @@
 .home-main { flex: 1; min-width: 0; }
 /* r80：专家卡一行三列布局——每页 6 卡 3×2 满排（中屏降 2 列、≤760px 单列见末尾） */
 .home-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 14px; }
-/* ==================== 首页四平台专家小卡（2026-11-10 拍板样式） ==================== */
-.plat-expert-row { display: flex; align-items: stretch; gap: 14px; }
+/* 首页专家入口：柔和头像、紧凑排布，选中态与输入框保持同步。 */
+.plat-expert-row {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px; width: 100%; max-width: 584px; margin: 0 auto;
+}
 .pe-card {
-  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;
-  padding: 10px 10px 12px; background: #fff; border: 1.5px solid var(--border, #e5e7eb);
-  border-radius: 14px; cursor: pointer; font-family: inherit;
-  transition: border-color .15s, box-shadow .15s, transform .15s; position: relative;
+  min-width: 0; display: flex; flex-direction: column; align-items: center;
+  padding: 20px 10px 14px; background: rgba(255,255,255,.85); border: 1px solid #e7ece9;
+  border-radius: 16px; cursor: pointer; font-family: inherit;
+  transition: border-color .18s, background .18s, box-shadow .18s, transform .18s;
 }
-.pe-card:hover { border-color: var(--brand, #00b14a); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,177,74,.12); }
-.pe-card.on { border-color: var(--brand, #00b14a); box-shadow: 0 6px 18px rgba(0,177,74,.16); }
+.pe-card:hover { border-color: #bdd8c8; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(36,64,47,.06); }
+.pe-card:focus-visible { outline: 2px solid #00a83e; outline-offset: 4px; }
+.pe-card.on { border-color: #59bd83; background: #f4fbf6; box-shadow: 0 0 0 1px rgba(53,169,101,.08); }
 .pe-avatar {
-  width: 100%; height: 74px; border-radius: 10px; display: flex; align-items: center;
-  justify-content: center; overflow: hidden; margin-bottom: 9px;
+  width: 56px; height: 56px; flex: none; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 12px;
 }
-.pe-avatar img { width: 40px; height: 40px; object-fit: contain; filter: brightness(0) invert(1); opacity: .95; }
-.pe-name { font-size: 13px; font-weight: 600; color: var(--text, #1c1c1c); margin-bottom: 5px; }
-.pe-name.on { color: var(--brand, #00b14a); }
-.pe-status { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-dim, #98a1ab); }
-.pe-status.on { color: var(--brand, #00b14a); font-weight: 600; }
-.pe-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .55; }
-.pe-status.on .pe-dot { opacity: 1; background: var(--brand, #00b14a); }
-.pe-more { flex: none; align-self: center; font-size: 12.5px; color: var(--text-dim, #98a1ab); cursor: pointer; padding: 0 4px; white-space: nowrap; }
-.pe-more:hover { color: var(--brand, #00b14a); }
-@media (max-width: 760px) {
-  .plat-expert-row { flex-wrap: wrap; }
-  .pe-card { flex: 1 1 calc(50% - 14px); }
-  .pe-more { flex-basis: 100%; text-align: right; }
+.pe-avatar img { width: 30px; height: 30px; object-fit: contain; }
+.pe-name { font-size: 14px; line-height: 21px; font-weight: 600; color: #303a34; white-space: nowrap; }
+.pe-role { margin-top: 4px; font-size: 11px; line-height: 18px; color: #9aa29c; white-space: nowrap; }
+.pe-status {
+  display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+  min-width: 68px; height: 24px; margin-top: 13px; padding: 0 9px;
+  border-radius: 7px; background: #f3f5f4; font-size: 11px; color: #87928b;
+}
+.pe-card:hover .pe-status { color: #43825d; background: #edf6f0; }
+.pe-card.on .pe-name { color: #16834b; }
+.pe-card.on .pe-status { color: #16834b; background: #e3f3e9; font-weight: 600; }
+@media (max-width: 600px) {
+  .plat-expert-row { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 340px; gap: 10px; }
+  .pe-card { padding: 15px 10px 12px; }
+  .pe-avatar { width: 48px; height: 48px; margin-bottom: 8px; }
+  .pe-avatar img { width: 26px; height: 26px; }
+  .pe-status { margin-top: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pe-card { transition: none; }
+  .pe-card:hover { transform: none; }
 }
 /* r70：卡片自适应列数——技能卡 ≥256px/列（宽屏自动多列） */
 .home-grid.cols-3 { grid-template-columns: repeat(auto-fill, minmax(256px, 1fr)); gap: 12px 12px; }
