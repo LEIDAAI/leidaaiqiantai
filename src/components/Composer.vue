@@ -8,7 +8,7 @@ import { skillVisual } from '../stores/skillVisual'
 import { flashToast, writeClipboard } from '../utils/common'
 import { send } from '../stores/send'
 
-const props = defineProps<{ running: boolean }>()
+const props = defineProps<{ running: boolean; placeholder?: string }>()
 const emit = defineEmits<{ (e: 'send'): void; (e: 'stop'): void }>()
 
 const inputEl = ref<HTMLTextAreaElement | null>(null)
@@ -343,7 +343,7 @@ onBeforeUnmount(() => {
     <textarea
       ref="inputEl"
       v-model="chatState.inputText"
-      placeholder="输入您的选品需求...（Enter 发送，Shift+Enter 换行）"
+      :placeholder="props.placeholder || '输入您的选品需求...（Enter 发送，Shift+Enter 换行）'"
       aria-label="选品需求输入框"
       @keydown="onKeydown"
       @contextmenu="onContext"

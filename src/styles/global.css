@@ -4193,6 +4193,34 @@
 .home-main { flex: 1; min-width: 0; }
 /* r80：专家卡一行三列布局——每页 6 卡 3×2 满排（中屏降 2 列、≤760px 单列见末尾） */
 .home-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 14px; }
+/* ==================== 首页四平台专家小卡（2026-11-10 拍板样式） ==================== */
+.plat-expert-row { display: flex; align-items: stretch; gap: 14px; }
+.pe-card {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;
+  padding: 10px 10px 12px; background: #fff; border: 1.5px solid var(--border, #e5e7eb);
+  border-radius: 14px; cursor: pointer; font-family: inherit;
+  transition: border-color .15s, box-shadow .15s, transform .15s; position: relative;
+}
+.pe-card:hover { border-color: var(--brand, #00b14a); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,177,74,.12); }
+.pe-card.on { border-color: var(--brand, #00b14a); box-shadow: 0 6px 18px rgba(0,177,74,.16); }
+.pe-avatar {
+  width: 100%; height: 74px; border-radius: 10px; display: flex; align-items: center;
+  justify-content: center; overflow: hidden; margin-bottom: 9px;
+}
+.pe-avatar img { width: 40px; height: 40px; object-fit: contain; filter: brightness(0) invert(1); opacity: .95; }
+.pe-name { font-size: 13px; font-weight: 600; color: var(--text, #1c1c1c); margin-bottom: 5px; }
+.pe-name.on { color: var(--brand, #00b14a); }
+.pe-status { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-dim, #98a1ab); }
+.pe-status.on { color: var(--brand, #00b14a); font-weight: 600; }
+.pe-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .55; }
+.pe-status.on .pe-dot { opacity: 1; background: var(--brand, #00b14a); }
+.pe-more { flex: none; align-self: center; font-size: 12.5px; color: var(--text-dim, #98a1ab); cursor: pointer; padding: 0 4px; white-space: nowrap; }
+.pe-more:hover { color: var(--brand, #00b14a); }
+@media (max-width: 760px) {
+  .plat-expert-row { flex-wrap: wrap; }
+  .pe-card { flex: 1 1 calc(50% - 14px); }
+  .pe-more { flex-basis: 100%; text-align: right; }
+}
 /* r70：卡片自适应列数——技能卡 ≥256px/列（宽屏自动多列） */
 .home-grid.cols-3 { grid-template-columns: repeat(auto-fill, minmax(256px, 1fr)); gap: 12px 12px; }
 .home-pager { position: relative; padding: 0 46px; }

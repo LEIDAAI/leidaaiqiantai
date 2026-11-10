@@ -6,7 +6,7 @@ import Composer from './Composer.vue'
 import {
   chatState, activeView, isRunning, stopTask
 } from '../stores/chat'
-import { modals, openFeedback } from '../stores/modals'
+import { modals, openFeedback, navigatePage } from '../stores/modals'
 import { resetRightPreview } from '../stores/panel'
 import { expertState, type ExpertItem, type SkillItem } from '../stores/expert'
 import { skillVisual, platformLogo } from '../stores/skillVisual'
@@ -70,6 +70,40 @@ function useSkill(s: SkillItem) {
   chatState.selectedExpert = null
   chatState.inputText = s.instructions || s.desc
 }
+/* —— 首页四平台专家小卡（2026-11-10 拍板：替代原专家卡片网格） ——
+ * 点击即选中（绿色「已就位」），再点取消；选中后发送携带（指定专家：X专家）上下文。
+ * 头像区 = 平台色块 + 平台 logo；数据聚合该平台全部官方专家，发送入口与选中态复用 chatState。 */
+const PLATFORM_EXPERTS = [
+  { key: '1688', label: '1688专家', color: '#FF6A00', plat: '1688' },
+  { key: 'OZON', label: 'OZON专家', color: '#005BFF', plat: 'Ozon' },
+  { key: '亚马逊', label: '亚马逊专家', color: '#146EB4', plat: '亚马逊' },
+  { key: 'TEMU', label: 'TEMU专家', color: '#FF6D3F', plat: 'Temu' }
+] as const
+const selectedPlatformExpert = ref<string>('')
+function pickPlatformExpert(key: string) {
+  selectedPlatformExpert.value = selectedPlatformExpert.value === key ? '' : key
+}
+const activePlatformExpert = computed(() => PLATFORM_EXPERTS.find(p => p.key === selectedPlatformExpert.value) || null)
+/* 选中平台专家时：聚合该平台专家为选中态，占位文案派活风格（与参考样式一致） */
+watch(selectedPlatformExpert, key => {
+  if (!key) { chatState.selectedExpert = null; return }
+  const conf = PLATFORM_EXPERTS.find(p => p.key === key)!
+  const agg = expertState.experts.filter(e => e.source === 'official' && e.platform === conf.plat)
+  chatState.selectedExpert = {
+    id: 'plat-' + key,
+    name: conf.label,
+    desc: agg[0]?.desc || conf.label,
+    tags: [conf.plat],
+    platform: conf.plat,
+    category: '平台专家',
+    source: 'official'
+  }
+})
+/* 占位文案：选中平台专家时切换为“给 X 派活”风格 */
+const composerPlaceholder = computed(() => {
+  const conf = activePlatformExpert.value
+  return conf ? `给 ${conf.label} 派活，例如“分析近 30 天 ${conf.plat} 热销类目”` : '输入您的选品需求...（Enter 发送，Shift+Enter 换行）'
+})
 /* r72b：点击样例改为填入对话框，不自动发送 */
 function askExpertPrompt(prompt: string) {
   chatState.inputText = prompt
@@ -181,29 +215,23 @@ function onSendClick() {
           </div>
           <div class="home-sec">
             <div class="home-main">
-            <div class="home-pager">
+            <!-- 专家：四平台小卡（2026-11-10 拍板样式） -->
+            <div v-if="homeTab === 'expert'" class="plat-expert-row">
+              <button v-for="p in PLATFORM_EXPERTS" :key="p.key" class="pe-card" :class="{ on: selectedPlatformExpert === p.key }" type="button" @click="pickPlatformExpert(p.key)">
+                <span class="pe-avatar" :style="{ background: p.color }">
+                  <img :src="platformLogo(p.plat === 'Ozon' ? 'OZON' : p.key)" :alt="p.label">
+                </span>
+                <span class="pe-name" :class="{ on: selectedPlatformExpert === p.key }">{{ p.label }}</span>
+                <span class="pe-status" :class="{ on: selectedPlatformExpert === p.key }">
+                  <i class="pe-dot"></i>{{ selectedPlatformExpert === p.key ? '已就位' : '由它接手' }}
+                </span>
+              </button>
+              <span class="pe-more" @click="navigatePage('experts')">更多 ›</span>
+            </div>
+            <!-- 技能：保留原卡片网格 -->
+            <div v-else class="home-pager">
               <button v-if="homePageCount > 1" class="hp-arrow prev" :disabled="homePage === 0" aria-label="上一页" @click="prevHomePage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-              <div class="home-grid" :class="{ 'cols-3': homeTab === 'skill' }">
-              <template v-if="homeTab === 'expert'">
-                <div v-for="e in pagedExperts" :key="e.id" class="home-card expert">
-                  <div class="hc-head">
-                    <div class="hc-meta">
-                      <div class="hc-name">{{ e.name.startsWith(e.platform + '-') ? e.name.slice(e.platform.length + 1) : e.name }}</div>
-                      <div class="hc-tags">{{ e.platform }} · {{ e.category }}</div>
-                    </div>
-                  </div>
-                  <div class="hc-desc">{{ e.desc }}</div>
-                  <div class="hc-foot">
-                    <span class="hc-usage">
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-                      <span class="hc-usage-txt">{{ e.usageCount ? e.usageCount.toLocaleString() + ' 次使用' : '新上架' }}</span>
-                    </span>
-                    <button class="hc-btn ghost" @click="caseItem = e">看案例</button>
-                    <button class="hc-btn main" @click="useExpert(e)">立即使用</button>
-                  </div>
-                </div>
-              </template>
-              <template v-else>
+              <div class="home-grid cols-3">
                 <div v-for="s in pagedSkills" :key="s.id" class="home-card skill">
                   <div class="hc-head inline">
                     <div class="hc-title">
@@ -217,7 +245,6 @@ function onSendClick() {
                     <button class="hc-btn main full" @click="useSkill(s)">前往使用 →</button>
                   </div>
                 </div>
-              </template>
               </div>
               <button v-if="homePageCount > 1" class="hp-arrow next" :disabled="homePage >= homePageCount - 1" aria-label="下一页" @click="nextHomePage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
             </div>
@@ -227,7 +254,7 @@ function onSendClick() {
       </div>
 
       <div class="home-bottom">
-        <Composer :running="false" @send="onSendClick" @stop="() => {}" />
+        <Composer :running="false" :placeholder="composerPlaceholder" @send="onSendClick" @stop="() => {}" />
         <div class="home-disclaimer">内容由AI大模型生成，请仔细甄别</div>
       </div>
 
